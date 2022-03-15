@@ -1,7 +1,7 @@
 ﻿namespace Magus.Data.Models.DotaEmbeds
 {
-    public record HeroPatchNote : BasePatchNote
+    public record HeroPatchNote : EntityPatchNote
     {
-        public int HeroId { get; init; }
+
     }
 }

@@ -1,7 +1,7 @@
 ﻿namespace Magus.Data.Models.DotaEmbeds
 {
-    public record NeutralCreepPatchNote : BasePatchNote
+    public record NeutralCreepPatchNote : EntityPatchNote
     {
-        public int InternalName { get; init; }
+
     }
 }
