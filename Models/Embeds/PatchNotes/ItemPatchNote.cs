@@ -1,4 +1,4 @@
-﻿namespace Magus.Data.Models.DotaEmbeds
+﻿namespace Magus.Data.Models.Embeds
 {
     public record ItemPatchNote : EntityPatchNote
     {

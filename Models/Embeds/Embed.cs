@@ -1,4 +1,4 @@
-﻿namespace Magus.Data.Models
+﻿namespace Magus.Data.Models.Embeds
 {
     public record Embed
     {
