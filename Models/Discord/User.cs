@@ -4,7 +4,7 @@
     {
         public string UserName { get; set; }
         /// <summary>
-        /// See https://discord.com/developers/docs/reference#locales
+        /// See <see href="https://discord.com/developers/docs/reference#locales"></see>
         /// </summary>
         public string? Locale { get; set; }
 

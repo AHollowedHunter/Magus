@@ -8,7 +8,7 @@
         public bool? Large { get; set; }
         public int MemberCount { get; set; }
         /// <summary>
-        /// See https://discord.com/developers/docs/reference#locales
+        /// See <see href="https://discord.com/developers/docs/reference#locales"></see>
         /// </summary>
         public string PreferredLocale { get; set; }
     }
