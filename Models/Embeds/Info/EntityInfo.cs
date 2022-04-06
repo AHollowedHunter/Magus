@@ -1,7 +1,8 @@
 ﻿namespace Magus.Data.Models.Embeds
 {
-    public abstract record EntityInfo : GuidRecord
+    public abstract record EntityInfo : IGuidRecord
     {
+        public Guid Id { get; set; }
         public int EntityId { get; init; }
         public string? InternalName { get; init; }
         public string? RealName { get; init; }

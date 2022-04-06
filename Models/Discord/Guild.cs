@@ -1,7 +1,8 @@
 ﻿namespace Magus.Data.Models.Discord
 {
-    public record Guild : SnowflakeRecord
+    public record Guild : ISnowflakeRecord
     {
+        public ulong Id { get; set; }
         public string Name { get; set; }
         public ulong OwnerId { get; set; }
         public DateTimeOffset JoinedAt { get; init; }

@@ -1,6 +1,6 @@
 ﻿namespace Magus.Data.Models
 {
-    public abstract record GuidRecord
+    public interface IGuidRecord
     {
         public Guid Id { get; set; }
     }
