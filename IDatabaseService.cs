@@ -15,20 +15,36 @@ namespace Magus.Data
         bool DeleteCollection<T>() where T : IGuidRecord, ISnowflakeRecord;
 
         /// <summary>
-        /// Insert a given record, and return the record as stored
+        /// Insert a given record
         /// </summary>
-        T InsertRecord<T>(T record) where T : IGuidRecord, ISnowflakeRecord;
+        void InsertRecord<T>(T record) where T : IGuidRecord, ISnowflakeRecord;
 
         /// <summary>
-        /// Update a given record, and return the record as stored
+        /// Insert a collection of records, and return an int
         /// </summary>
-        T UpdateRecord<T>(T record) where T : IGuidRecord, ISnowflakeRecord;
+        int InsertRecords<T>(IEnumerable<T> records) where T : IGuidRecord, ISnowflakeRecord;
 
         /// <summary>
-        /// Attempts to deletes the given record
+        /// Update a given record, and return true is successful
+        /// </summary>
+        bool UpdateRecord<T>(T record) where T : IGuidRecord, ISnowflakeRecord;
+
+        /// <summary>
+        /// Update a collection of records, and return an int
+        /// </summary>
+        int UpdateRecords<T>(IEnumerable<T> records) where T : IGuidRecord, ISnowflakeRecord;
+
+        /// <summary>
+        /// Attempts to deletes the given record type via the Id
         /// </summary>
         /// <returns>A bool indicating if deleting was successful</returns>
-        bool DeleteRecord<T>(T record) where T : IGuidRecord, ISnowflakeRecord;
+        bool DeleteRecord<T>(Guid id) where T : IGuidRecord;
+        
+        /// <summary>
+        /// Attempts to deletes the given record type via the Id
+        /// </summary>
+        /// <returns>A bool indicating if deleting was successful</returns>
+        bool DeleteRecord<T>(ulong id) where T : ISnowflakeRecord;
 
         /// <summary>
         /// Get record via an Id
@@ -99,7 +115,7 @@ namespace Magus.Data
         /// <summary>
         /// Get the specified types info via an entityId
         /// </summary>
-        IEnumerable<T> GetEntityInfo<T>(int entityId, int limit = int.MaxValue) where T : EntityInfo;
+        T GetEntityInfo<T>(int entityId) where T : EntityInfo;
         /// <summary>
         /// Get the specified types info via an entityName
         /// </summary>
