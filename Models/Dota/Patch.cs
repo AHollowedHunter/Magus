@@ -1,10 +1,13 @@
-﻿namespace Magus.Data.Models.Dota
+﻿using System.Text.Json.Serialization;
+
+namespace Magus.Data.Models.Dota
 {
-    public record Patch : IGuidRecord
+    public record Patch : ISnowflakeRecord
     {
-        public Guid Id { get; set; }
+        public ulong Id { get; set; }
+        [JsonPropertyName("patch_number")]
         public string PatchNumber { get; init; }
+        [JsonPropertyName("patch_timestamp")]
         public int PatchTimestamp { get; init; }
-        public string? PatchWebsite { get; init; }
     }
 }

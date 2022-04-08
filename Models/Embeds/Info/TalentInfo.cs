@@ -2,6 +2,6 @@
 {
     public record TalentInfo : EntityInfo
     {
-
+        public ulong HeroId { get; set; }
     }
 }

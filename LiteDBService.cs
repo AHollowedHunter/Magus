@@ -29,56 +29,44 @@ namespace Magus.Data
             _liteDB.Dispose();
         }
 
-        public void CreateCollection<T>() where T : IGuidRecord, ISnowflakeRecord
+        public void CreateCollection<T>() where T : ISnowflakeRecord
         {
             throw new NotImplementedException("LiteDB creates a collection when inserting a record");
         }
 
-        public bool DeleteCollection<T>() where T : IGuidRecord, ISnowflakeRecord
+        public bool DeleteCollection<T>() where T : ISnowflakeRecord
         {
             return _liteDB.DropCollection(typeof(T).Name);
         }
 
-        public void InsertRecord<T>(T record) where T : IGuidRecord, ISnowflakeRecord
+        public void InsertRecord<T>(T record) where T : ISnowflakeRecord
         {
             var collection = _liteDB.GetCollection<T>();
             collection.Insert(record);
         }
 
-        public int InsertRecords<T>(IEnumerable<T> records) where T : IGuidRecord, ISnowflakeRecord
+        public int InsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord
         {
             var collection = _liteDB.GetCollection<T>();
             return collection.InsertBulk(records);
         }
 
-        public bool UpdateRecord<T>(T record) where T : IGuidRecord, ISnowflakeRecord
+        public bool UpdateRecord<T>(T record) where T : ISnowflakeRecord
         {
             var collecton = _liteDB.GetCollection<T>();
             return collecton.Update(record);
         }
 
-        public int UpdateRecords<T>(IEnumerable<T> records) where T : IGuidRecord, ISnowflakeRecord
+        public int UpdateRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord
         {
             var collecton = _liteDB.GetCollection<T>();
             return collecton.Update(records);
-        }
-
-        public bool DeleteRecord<T>(Guid id) where T : IGuidRecord
-        {
-            var collecton = _liteDB.GetCollection<T>();
-            return collecton.Delete(id);
         }
 
         public bool DeleteRecord<T>(ulong id) where T : ISnowflakeRecord
         {
             var collecton = _liteDB.GetCollection<T>();
             return collecton.Delete(id);
-        }
-
-        public T GetRecord<T>(Guid id) where T : IGuidRecord
-        {
-            var collecton = _liteDB.GetCollection<T>();
-            return collecton.FindById(id);
         }
 
         public T GetRecord<T>(ulong id) where T : ISnowflakeRecord
@@ -197,6 +185,14 @@ namespace Magus.Data
             results.Concat(collection.Find(Query.Contains("InternalName", entityName), limit: limit));
             results.Concat(collection.Find(Query.Contains("Aliases[*]", entityName), limit: limit));
             return results.Take(limit);
+        }
+
+        public bool AddIndex<T>(string fieldName, bool unique = false) where T : ISnowflakeRecord
+        {
+            var collection = _liteDB.GetCollection<T>();
+            if (collection == null)
+                return false;
+            return collection.EnsureIndex(fieldName, unique);
         }
     }
 }

@@ -6,40 +6,34 @@ namespace Magus.Data
 {
     public interface IDatabaseService : IDisposable
     {
-        void CreateCollection<T>() where T : IGuidRecord, ISnowflakeRecord;
+        void CreateCollection<T>() where T : ISnowflakeRecord;
 
         /// <summary>
         /// Delete the collection associated with the type given
         /// </summary>
         /// <returns>A bool indicating if deleting was successful</returns>
-        bool DeleteCollection<T>() where T : IGuidRecord, ISnowflakeRecord;
+        bool DeleteCollection<T>() where T : ISnowflakeRecord;
 
         /// <summary>
         /// Insert a given record
         /// </summary>
-        void InsertRecord<T>(T record) where T : IGuidRecord, ISnowflakeRecord;
+        void InsertRecord<T>(T record) where T : ISnowflakeRecord;
 
         /// <summary>
         /// Insert a collection of records, and return an int
         /// </summary>
-        int InsertRecords<T>(IEnumerable<T> records) where T : IGuidRecord, ISnowflakeRecord;
+        int InsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord;
 
         /// <summary>
         /// Update a given record, and return true is successful
         /// </summary>
-        bool UpdateRecord<T>(T record) where T : IGuidRecord, ISnowflakeRecord;
+        bool UpdateRecord<T>(T record) where T : ISnowflakeRecord;
 
         /// <summary>
         /// Update a collection of records, and return an int
         /// </summary>
-        int UpdateRecords<T>(IEnumerable<T> records) where T : IGuidRecord, ISnowflakeRecord;
-
-        /// <summary>
-        /// Attempts to deletes the given record type via the Id
-        /// </summary>
-        /// <returns>A bool indicating if deleting was successful</returns>
-        bool DeleteRecord<T>(Guid id) where T : IGuidRecord;
-        
+        int UpdateRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord;
+                
         /// <summary>
         /// Attempts to deletes the given record type via the Id
         /// </summary>
@@ -120,5 +114,13 @@ namespace Magus.Data
         /// Get the specified types info via an entityName
         /// </summary>
         IEnumerable<T> GetEntityInfo<T>(string entityName, int limit = int.MaxValue) where T : EntityInfo;
+
+        /// <summary>
+        /// Create a index on the required field
+        /// </summary>
+        /// <param name="fieldName">Field to add as an index</param>
+        /// <param name="unique">Whether the index should be enforced unique</param>
+        /// <returns>True if the index was successfully created</returns>
+        bool AddIndex<T>(string fieldName, bool unique = false) where T : ISnowflakeRecord;
     }
 }

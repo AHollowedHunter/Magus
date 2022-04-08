@@ -1,13 +1,12 @@
 ﻿namespace Magus.Data.Models.Embeds
 {
-    public abstract record EntityInfo : IGuidRecord
+    public abstract record EntityInfo : ISnowflakeRecord
     {
-        public Guid Id { get; set; }
-        public int EntityId { get; init; }
-        public string? InternalName { get; init; }
-        public string? RealName { get; init; }
-        public string? LocalName { get; init; }
-        public IEnumerable<string>? Aliases { get; init; }
-        public Embed Embed { get; init; }
+        public ulong Id { get; set; }
+        public string? InternalName { get; set; }
+        public string? RealName { get; set; }
+        public string? LocalName { get; set; }
+        public IEnumerable<string>? Aliases { get; set; }
+        public Embed Embed { get; set; }
     }
 }
