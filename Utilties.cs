@@ -3,9 +3,9 @@ using System.Text.RegularExpressions;
 
 namespace Magus.DataBuilder
 {
-    internal class Utilities
+    internal static class Utilities
     {
-        public static BaseSpell FormatSpell(BaseSpell spell)
+        public static BaseSpell FormatSpell(this BaseSpell spell)
         {
             foreach (var value in spell.SpecialValues)
             {
@@ -57,7 +57,7 @@ namespace Magus.DataBuilder
             return spell;
         }
 
-        private static string ReplaceLocalFormatting(string local)
+        public static string ReplaceLocalFormatting(this string local)
         {
             //  Replace percentage signs. Dirty code
             local = local.Replace("**%%", "****%**");
@@ -65,6 +65,8 @@ namespace Magus.DataBuilder
             local = local.Replace("%****%**", "%**");
             local = local.Replace("****%**", "%**");
             // Replace certain HTML elements
+            var bTag = new Regex(@"(?i)<[/]?\s*b\s*/?>");
+            local = bTag.Replace(local, "**");
             var brTag = new Regex(@"(?i)<\s*br\s*/?>");
             local = brTag.Replace(local, "\n");
             var miscTag = new Regex(@"(?i)<[/]?\s*(font|span)[^>]*>");
