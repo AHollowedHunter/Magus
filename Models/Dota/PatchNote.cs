@@ -9,7 +9,7 @@ namespace Magus.Data.Models.Dota
         //public PatchNoteType PatchNoteType { get; init; }
     }
 
-    public record GenericPatchNote : PatchNote
+    public record GeneralPatchNote : PatchNote
     {
         public IList<Note> Notes { get; init; }
     }

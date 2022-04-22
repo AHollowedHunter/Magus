@@ -4,6 +4,7 @@
     {
         public ulong Id { get ; set ; }
         public string UserName { get; set; }
+        public string Discriminator { get; set; }
         /// <summary>
         /// See <see href="https://discord.com/developers/docs/reference#locales"></see>
         /// </summary>

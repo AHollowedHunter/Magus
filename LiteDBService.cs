@@ -65,14 +65,16 @@ namespace Magus.Data
 
         public bool DeleteRecord<T>(ulong id) where T : ISnowflakeRecord
         {
+            var liteId = (long)id;
             var collecton = _liteDB.GetCollection<T>();
-            return collecton.Delete(id);
+            return collecton.Delete(liteId);
         }
 
         public T GetRecord<T>(ulong id) where T : ISnowflakeRecord
         {
+            var liteId = (long)id;
             var collecton = _liteDB.GetCollection<T>();
-            return collecton.FindById(id);
+            return collecton.FindById(liteId);
         }
 
         public IEnumerable<T> GetRecords<T>(int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord
@@ -84,15 +86,16 @@ namespace Magus.Data
 
         public IEnumerable<T> GetRecords<T>(ulong id, int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord
         {
+            var liteId = (long)id;
             var collection = _liteDB.GetCollection<T>();
             IEnumerable<T> records;
             if (!orderByDesc)
             {
-                records = collection.Find(Query.GTE("Id", id.ToString())).OrderBy(x => x.Id);
+                records = collection.Find(Query.GTE("Id", liteId)).OrderBy(x => x.Id);
             }
             else
             {
-                records = collection.Find(Query.LTE("Id", id.ToString())).OrderByDescending(x => x.Id);
+                records = collection.Find(Query.LTE("Id", liteId)).OrderByDescending(x => x.Id);
             }
             return records.Take(limit);
         }
@@ -126,9 +129,9 @@ namespace Magus.Data
             return results.Take(limit);
         }
 
-        public GeneralPatchNote GetGeneralPatchNote(string patchNumber)
+        public Models.Embeds.GeneralPatchNote GetGeneralPatchNote(string patchNumber)
         {
-            var collection = _liteDB.GetCollection<GeneralPatchNote>();
+            var collection = _liteDB.GetCollection<Models.Embeds.GeneralPatchNote>();
             var results = collection.FindOne(Query.EQ("PatchNumber", patchNumber));
             return results;
         }

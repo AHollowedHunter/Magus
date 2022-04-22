@@ -45,12 +45,6 @@ namespace Magus.Data
         /// </summary>
         /// <typeparam name="T">Type of record desired</typeparam>
         /// <param name="id">Specific Id</param>
-        T GetRecord<T>(Guid id) where T : IGuidRecord;
-        /// <summary>
-        /// Get record via an Id
-        /// </summary>
-        /// <typeparam name="T">Type of record desired</typeparam>
-        /// <param name="id">Specific Id</param>
         /// <returns></returns>
         T GetRecord<T>(ulong id) where T : ISnowflakeRecord;
         /// <summary>
@@ -87,7 +81,7 @@ namespace Magus.Data
         /// <summary>
         /// Get the General notes for the specified patch
         /// </summary>
-        GeneralPatchNote GetGeneralPatchNote(string patchNumber);
+        Models.Embeds.GeneralPatchNote GetGeneralPatchNote(string patchNumber);
         /// <summary>
         /// Get the specified types patch note(s) for the specified entityId
         /// </summary>
