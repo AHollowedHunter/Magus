@@ -32,13 +32,9 @@ namespace Magus.DataBuilder
 
         public static void Main()
         {
-            db.DeleteCollection<Patch>();
-            db.DeleteCollection<Data.Models.Embeds.GeneralPatchNote>();
-            db.DeleteCollection<Data.Models.Embeds.HeroPatchNote>();
-            db.DeleteCollection<Data.Models.Embeds.ItemPatchNote>();
-            UpdatePatchNotes();
+            //UpdatePatchNotes();
             //UpdateHeroes();
-            //UpdateItems();
+            UpdateItems();
 
             db.Dispose();
         }
@@ -51,6 +47,12 @@ namespace Magus.DataBuilder
 
         public static void UpdatePatchNotes()
         {
+
+            db.DeleteCollection<Patch>();
+            db.DeleteCollection<Data.Models.Embeds.GeneralPatchNote>();
+            db.DeleteCollection<Data.Models.Embeds.HeroPatchNote>();
+            db.DeleteCollection<Data.Models.Embeds.ItemPatchNote>();
+
             var patchList = client
                 .GetFromJsonAsync<JsonElement>($"patchnoteslist?language={language}")
                 .Result
@@ -66,7 +68,7 @@ namespace Magus.DataBuilder
             var abilityList = client.GetFromJsonAsync<JsonElement>($"abilitylist?language={language}").Result;
             var abilityData = abilityList.GetProperty("result").GetProperty("data").GetProperty("itemabilities").Deserialize<IEnumerable<Ability>>();
             var itemList = client.GetFromJsonAsync<JsonElement>($"itemlist?language={language}").Result;
-            var itemData = itemList.GetProperty("result").GetProperty("data").GetProperty("itemabilities").Deserialize<IEnumerable<Item>>()
+            var itemData = itemList.GetProperty("result").GetProperty("data").GetProperty("itemabilities").Deserialize<IEnumerable<Item>>();
 
             foreach (var patch in patchList.EnumerateArray())
             {
@@ -91,6 +93,8 @@ namespace Magus.DataBuilder
                 generalPatchNotes.Add(PatchNoteUtils.GetGeneralPatchNote(patchData, patchNoteData));
                 heroPatchNotes.AddRange(PatchNoteUtils.GetHeroPatchNotes(patchData, patchNoteData, heroData, abilityData));
                 itemPatchNotes.AddRange(PatchNoteUtils.GetItemPatchNotes(patchData, patchNoteData, itemData));
+
+                Console.Write("#");
             }
             db.InsertRecords(generalPatchNotes);
             db.InsertRecords(heroPatchNotes);
@@ -102,10 +106,16 @@ namespace Magus.DataBuilder
             db.AddIndex<Data.Models.Embeds.HeroPatchNote>("PatchNumber");
             db.AddIndex<Data.Models.Embeds.ItemPatchNote>("EntityId");
             db.AddIndex<Data.Models.Embeds.ItemPatchNote>("PatchNumber");
+
+            Console.WriteLine("\nFinished Patches");
         }
 
         public static void UpdateHeroes()
         {
+            db.DeleteCollection<HeroInfo>();
+            db.DeleteCollection<AbilityInfo>();
+            db.DeleteCollection<TalentInfo>();
+
             var heroList = client
                 .GetFromJsonAsync<JsonElement>($"herolist?language={language}")
                 .Result
@@ -129,6 +139,8 @@ namespace Magus.DataBuilder
                 if (heroData == null)
                     return;
 
+                var latestPatch = db.GetLatestPatch();
+
                 var urlRegex = new Regex(@"[^a-zA-Z0-9-']");
                 var heroUrl = $"https://www.dota2.com/hero/{ urlRegex.Replace(heroData.LocalName.ToLower(), "")}";
 
@@ -138,8 +150,9 @@ namespace Magus.DataBuilder
                     Description = heroData.LocalNpeDesc,
                     Url = heroUrl,
                     ColorRaw = 0X00A84300,
-                    Timestamp = DateTimeOffset.Now,
-                    Footer = new() { Text = $"Most recent patch: {db.GetLatestPatch().PatchNumber}" }
+                    Timestamp = DateTimeOffset.FromUnixTimeSeconds(latestPatch.PatchTimestamp),
+                    ThumbnailUrl = $"{DotaUrls.Hero}{heroData.InternalName.Substring(14)}.png",
+                    Footer = new() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
                 };
 
                 List<Field> heroInfoFields = new();
@@ -266,8 +279,8 @@ namespace Magus.DataBuilder
                         Title = $"{ability.LocalName}",
                         Description = ability.LocalDesc + "\n",
                         ColorRaw = Color.Orange,
-                        Timestamp = DateTimeOffset.Now,
-                        Footer = new() { Text = $"Most recent patch: {db.GetLatestPatch().PatchNumber}" },
+                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(latestPatch.PatchTimestamp),
+                        Footer = new() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
                         ThumbnailUrl = $"{DotaUrls.Ability}{ability.InternalName}.png",
                     };
                 }
@@ -296,6 +309,7 @@ namespace Magus.DataBuilder
 
         public static void UpdateItems()
         {
+            db.DeleteCollection<ItemInfo>();
             var itemList = client
                 .GetFromJsonAsync<JsonElement>($"itemlist?language={language}")
                 .Result
@@ -304,6 +318,7 @@ namespace Magus.DataBuilder
                 .GetProperty("itemabilities");
 
             var items = new List<ItemInfo>();
+            var latestPatch = db.GetLatestPatch();
 
             foreach (var item in itemList.EnumerateArray())
             {
@@ -362,15 +377,27 @@ namespace Magus.DataBuilder
                     Title = itemData.LocalName,
                     Description = bonuses + localDesc + spellValues,
                     ColorRaw = Color.DarkBlue,
-                    Timestamp = DateTimeOffset.Now,
-                    Footer = new() { Text = $"Most recent patch: {db.GetLatestPatch().PatchNumber}" },
+                    Timestamp = DateTimeOffset.FromUnixTimeSeconds(latestPatch.PatchTimestamp),
+                    Footer = new() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
                     ThumbnailUrl = $"{DotaUrls.Item}{itemData.InternalName.Substring(5)}.png",
                 };
+                // Notes
+                var fields = new List<Field>();
+                if (itemData.LocalNotes != null && itemData.LocalNotes.Any())
+                {
+                    var notes = "";
+                    foreach (var note in itemData.LocalNotes)
+                    {
+                        notes += note + "\n";
+                    }
+                    fields.Add(new() { Name = "Notes", Value = xmlTag.Replace(notes, "") });
+                }
                 // About Row
                 if (itemData.LocalLore != null)
                 {
-                    itemInfoEmbed.Fields = new List<Field> () { new() { Name = "About", Value = xmlTag.Replace(itemData.LocalLore, "") } };
+                    fields.Add(new() { Name = "About", Value = xmlTag.Replace(itemData.LocalLore, "") });
                 }
+                itemInfoEmbed.Fields = fields;
                 var itemInfo = new ItemInfo()
                 {
                     Id = (ulong)itemData.Id,

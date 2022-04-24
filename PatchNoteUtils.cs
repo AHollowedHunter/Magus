@@ -42,7 +42,7 @@ namespace Magus.DataBuilder
                 Footer = new() { Text = "Patch " + patchData.PatchNumber },
             };
             generalPatchEmbed.Fields = new List<Field>() { new() {
-                    Name = "$Full patch notes",
+                    Name = "Full patch notes",
                     Value = $"[Click here for full patch notes]({patchUrl})" +
                     $"\nAdditionally, use the command `/patch <hero|item> <name>` to view the most recent changes for a specifc hero or item "
                 }};
