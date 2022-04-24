@@ -136,14 +136,22 @@ namespace Magus.Data
             return results;
         }
 
-        public IEnumerable<T> GetPatchNotes<T>(int entityId, int limit = int.MaxValue) where T : EntityPatchNote
+        public IEnumerable<T> GetPatchNotes<T>(int entityId, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNote
         {
             var collection = _liteDB.GetCollection<T>();
-            var results = collection.Find(Query.EQ("EntityId", entityId)).Take(limit);
-            return results;
+            var results = collection.Find(Query.EQ("EntityId", entityId));
+            if (!orderByDesc)
+            {
+                results = results.OrderBy(x => x.PatchNumber);
+            }
+            else
+            {
+                results = results.OrderByDescending(x => x.PatchNumber);
+            }
+            return results.Take(limit);
         }
 
-        public IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue) where T : EntityPatchNote
+        public IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNote
         {
             var collection = _liteDB.GetCollection<T>();
             IEnumerable<T> results;
@@ -154,39 +162,39 @@ namespace Magus.Data
             return results.Take(limit);
         }
 
-        public IEnumerable<T> GetPatchNotes<T>(string patchNumber, int entityId, int limit = int.MaxValue) where T : EntityPatchNote
+        public T GetPatchNote<T>(string patchNumber, int entityId) where T : EntityPatchNote
         {
             var collection = _liteDB.GetCollection<T>();
-            var results = collection.Find(Query.Or(Query.EQ("PatchNumber", patchNumber), Query.EQ("EntityId", entityId)), limit: limit);
-            return results;
+            var result = collection.FindOne(Query.And(Query.EQ("PatchNumber", patchNumber), Query.EQ("EntityId", entityId)));
+            return result;
         }
 
-        public IEnumerable<T> GetPatchNotes<T>(string patchNumber, string entityName, int limit = int.MaxValue) where T : EntityPatchNote
+        public IEnumerable<T> GetPatchNote<T>(string patchNumber, string entityName, int limit = int.MaxValue) where T : EntityPatchNote
         {
             var collection = _liteDB.GetCollection<T>();
             IEnumerable<T> results;
-            results = collection.Find(Query.Or(Query.EQ("PatchNumber", patchNumber), Query.Contains("LocalName", entityName)), limit: limit);
-            results.Concat(collection.Find(Query.Or(Query.EQ("PatchNumber", patchNumber), Query.Contains("RealName", entityName)), limit: limit));
-            results.Concat(collection.Find(Query.Or(Query.EQ("PatchNumber", patchNumber), Query.Contains("InternalName", entityName)), limit: limit));
-            results.Concat(collection.Find(Query.Or(Query.EQ("PatchNumber", patchNumber), Query.Contains("Aliases[*]", entityName)), limit: limit));
+            results = collection.Find(Query.And(Query.EQ("PatchNumber", patchNumber), Query.Contains("LocalName", entityName)), limit: limit);
+            results.Concat(collection.Find(Query.And(Query.EQ("PatchNumber", patchNumber), Query.Contains("RealName", entityName)), limit: limit));
+            results.Concat(collection.Find(Query.And(Query.EQ("PatchNumber", patchNumber), Query.Contains("InternalName", entityName)), limit: limit));
+            results.Concat(collection.Find(Query.And(Query.EQ("PatchNumber", patchNumber), Query.Contains("Aliases[*]", entityName)), limit: limit));
             return results.Take(limit);
         }
 
         public T GetEntityInfo<T>(int entityId) where T : EntityInfo
         {
             var collection = _liteDB.GetCollection<T>();
-            var results = collection.FindOne(Query.EQ("EntityId", entityId));
-            return results;
+            var result = collection.FindById(entityId);
+            return result;
         }
 
         public IEnumerable<T> GetEntityInfo<T>(string entityName, int limit = int.MaxValue) where T : EntityInfo
         {
             var collection = _liteDB.GetCollection<T>();
             IEnumerable<T> results;
-            results = collection.Find(Query.Contains("LocalName", entityName), limit: limit);
+            results = collection.Find(Query.Contains("LocalName", entityName), limit: limit); // todo startswith?
             results.Concat(collection.Find(Query.Contains("RealName", entityName), limit: limit));
             results.Concat(collection.Find(Query.Contains("InternalName", entityName), limit: limit));
-            results.Concat(collection.Find(Query.Contains("Aliases[*]", entityName), limit: limit));
+            //results.Concat(collection.Find(Query.Contains("Aliases[*]", entityName), limit: limit));
             return results.Take(limit);
         }
 

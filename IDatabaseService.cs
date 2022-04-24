@@ -85,20 +85,20 @@ namespace Magus.Data
         /// <summary>
         /// Get the specified types patch note(s) for the specified entityId
         /// </summary>
-        IEnumerable<T> GetPatchNotes<T>(int entityId, int limit = int.MaxValue) where T : EntityPatchNote;
+        IEnumerable<T> GetPatchNotes<T>(int entityId, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNote;
 
         /// <summary>
         /// Get the specified types patch note(s) for the specified entityName
         /// </summary>
-        IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue) where T : EntityPatchNote;
+        IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNote;
         /// <summary>
-        /// Get the specified types patch note(s) for the specified patch and entityId
+        /// Get the specified types patch note for the specified patch and entityId
         /// </summary>
-        IEnumerable<T> GetPatchNotes<T>(string patchNumber, int entityId, int limit = int.MaxValue) where T : EntityPatchNote;
+        T GetPatchNote<T>(string patchNumber, int entityId) where T : EntityPatchNote;
         /// <summary>
-        /// Get the specified types patch note(s) for the specified patch and entity name
+        /// Get the specified types patch note for the specified patch and entity name
         /// </summary>
-        IEnumerable<T> GetPatchNotes<T>(string patchNumber, string entityName, int limit = int.MaxValue) where T : EntityPatchNote;
+        //T GetPatchNote<T>(string patchNumber, string entityName) where T : EntityPatchNote;
         
         /// <summary>
         /// Get the specified types info via an entityId

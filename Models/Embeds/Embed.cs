@@ -9,7 +9,7 @@
         public string ThumbnailUrl { get; set; }
         public uint? ColorRaw { get; set; }
         public IEnumerable<Field>? Fields { get; set; }
-        public Footer Footer { get; set; }
+        public Footer? Footer { get; set; }
         public DateTimeOffset? Timestamp { get; set; }
     }
 
