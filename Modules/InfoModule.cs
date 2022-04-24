@@ -16,7 +16,6 @@ namespace Magus.Bot.Modules
         {
             _db = db;
             _services = services;
-
         }
 
         [SlashCommand("hero", "🎶 I need a hero 🎶")]
