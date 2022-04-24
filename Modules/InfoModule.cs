@@ -1,9 +1,7 @@
-﻿using Discord;
-using Discord.Interactions;
+﻿using Discord.Interactions;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Extensions;
 using Magus.Data;
-using Magus.Data.Models;
 using Magus.Data.Models.Embeds;
 
 namespace Magus.Bot.Modules
@@ -21,9 +19,8 @@ namespace Magus.Bot.Modules
 
         }
 
-        [SlashCommand("hero", "I need a hero")]
-        public async Task InfoHero(
-                [Autocomplete(typeof(HeroAutocompleteHandler))] string id)
+        [SlashCommand("hero", "🎶 I need a hero 🎶")]
+        public async Task InfoHero([Autocomplete(typeof(HeroAutocompleteHandler))] string id)
         {
             HeroInfo heroInfo;
             if (!int.TryParse(id, System.Globalization.NumberStyles.Integer, null, out int heroId))
@@ -46,25 +43,33 @@ namespace Magus.Bot.Modules
             await RespondAsync(embed: heroInfo.Embed.CreateDiscordEmbed());
         }
 
-        // Disabled for now
+        //Disabled for now
         //[SlashCommand("ability", "Ahh. How does this one work?")]
-        //public async Task InfoAbility(
-        //        [Autocomplete(typeof(AbilityAutocompleteHandler))] string id,
-        //        [Summary(description: "show to just to me")] bool only_me = false)
-        //{
-        //    if (!int.TryParse(id, System.Globalization.NumberStyles.Integer, null, out int ability))
-        //    {
-        //        ability = _db.SelectRecordsByName<Ability>(id, limit: 1).First().Id;
-        //    }
+        public async Task InfoAbility([Autocomplete(typeof(AbilityAutocompleteHandler))] string id)
+        {
+            AbilityInfo abilityInfo;
+            if (!int.TryParse(id, System.Globalization.NumberStyles.Integer, null, out int abilityId))
+            {
+                try
+                {
+                    abilityInfo = _db.GetEntityInfo<AbilityInfo>(id, limit: 1).First();
+                }
+                catch
+                {
+                    await RespondAsync("Error parsing id.", ephemeral: true);
+                    return;
+                }
+            }
+            else
+            {
+                abilityInfo = _db.GetEntityInfo<AbilityInfo>(abilityId);
+            }
 
-        //    var abilityInfo = _db.SelectAbilityById(ability);
-
-        //    await RespondAsync(embeds: new Embed[] { embed.Build() }, ephemeral: only_me);
-        //}
+            await RespondAsync(embed: abilityInfo.Embed.CreateDiscordEmbed());
+        }
 
         [SlashCommand("item", "Living in a material world")]
-        public async Task InfoItem(
-                [Autocomplete(typeof(ItemAutocompleteHandler))] string id)
+        public async Task InfoItem([Autocomplete(typeof(ItemAutocompleteHandler))] string id)
         {
             ItemInfo itemInfo;
             if (!int.TryParse(id, System.Globalization.NumberStyles.Integer, null, out int itemId))

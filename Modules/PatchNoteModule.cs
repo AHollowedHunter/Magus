@@ -1,9 +1,7 @@
-﻿using Discord;
-using Discord.Interactions;
+﻿using Discord.Interactions;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Extensions;
 using Magus.Data;
-using Magus.Data.Models;
 using Magus.Data.Models.Embeds;
 
 namespace Magus.Bot.Modules
