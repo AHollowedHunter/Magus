@@ -39,6 +39,7 @@ namespace Magus.Bot
             _intCommands.SlashCommandExecuted += SlashCommandExecuted;
             _intCommands.ContextCommandExecuted += ContextCommandExecuted;
             _intCommands.ComponentCommandExecuted += ComponentCommandExecuted;
+            _intCommands.ModalCommandExecuted += ModalCommandExecuted;
 
             _textCommands.CommandExecuted += CommandExecutedAsync;
 
@@ -107,6 +108,35 @@ namespace Magus.Bot
         }
 
         private Task SlashCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, InteractionsIResult arg3)
+        {
+            if (!arg3.IsSuccess)
+            {
+                switch (arg3.Error)
+                {
+                    case InteractionCommandError.UnmetPrecondition:
+                        // implement
+                        break;
+                    case InteractionCommandError.UnknownCommand:
+                        // implement
+                        break;
+                    case InteractionCommandError.BadArgs:
+                        // implement
+                        break;
+                    case InteractionCommandError.Exception:
+                        // implement
+                        break;
+                    case InteractionCommandError.Unsuccessful:
+                        // implement
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private Task ModalCommandExecuted(ModalCommandInfo arg1, IInteractionContext arg2, InteractionsIResult arg3)
         {
             if (!arg3.IsSuccess)
             {
