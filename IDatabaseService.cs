@@ -17,7 +17,7 @@ namespace Magus.Data
         /// <summary>
         /// Insert a given record
         /// </summary>
-        void InsertRecord<T>(T record) where T : ISnowflakeRecord;
+        ulong InsertRecord<T>(T record) where T : ISnowflakeRecord;
 
         /// <summary>
         /// Insert a collection of records, and return an int

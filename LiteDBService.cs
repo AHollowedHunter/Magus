@@ -39,10 +39,10 @@ namespace Magus.Data
             return _liteDB.DropCollection(typeof(T).Name);
         }
 
-        public void InsertRecord<T>(T record) where T : ISnowflakeRecord
+        public ulong InsertRecord<T>(T record) where T : ISnowflakeRecord
         {
             var collection = _liteDB.GetCollection<T>();
-            collection.Insert(record);
+            return (ulong)(long)collection.Insert(record);
         }
 
         public int InsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord
