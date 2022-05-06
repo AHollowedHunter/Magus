@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Magus.Bot.Services;
 using Magus.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -67,6 +68,7 @@ namespace Magus.Bot
                 .AddSingleton<CommandService>()
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .AddSingleton<CommandHandler>()
+                .AddSingleton<Services.IWebhook>(x => new DiscordWebhook())
                 .BuildServiceProvider();
 
         static bool IsDebug()

@@ -65,7 +65,6 @@ namespace Magus.Bot.Modules
             [Autocomplete(typeof(HeroAutocompleteHandler))] int id,
             [Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null)
         {
-
             IEnumerable<HeroPatchNote> patchNotes;
             if (patch == null)
             {
