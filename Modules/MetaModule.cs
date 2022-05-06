@@ -175,7 +175,7 @@ namespace Magus.Bot.Modules
             var id = _db.InsertRecord(feedback);
             if (id != 0xFFFFFFFFFFFFFFFF)
             {
-                var success = await _webhook.SendMessage(CreateFeedbackMessage(feedback), _config["FeedbackFeed"]);
+                var success = await _webhook.SendMessage(CreateFeedbackMessage(feedback), _config["FeedbackWebhook"]);
                 if (!success) Console.WriteLine("Failed to send webhook");
             }
             return id;
