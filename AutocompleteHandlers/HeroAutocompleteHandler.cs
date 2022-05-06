@@ -36,7 +36,7 @@ namespace Magus.Bot.AutocompleteHandlers
                 }
 
                 List<AutocompleteResult> results = new();
-                heroes.ForEach(hero => results.Add(new AutocompleteResult(hero.LocalName, hero.Id.ToString())));
+                heroes.ForEach(hero => results.Add(new AutocompleteResult(hero.LocalName, (int)hero.Id)));
 
                 return Task.FromResult(AutocompletionResult.FromSuccess(results));
             }

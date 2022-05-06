@@ -30,31 +30,18 @@ namespace Magus.Bot.Modules
 
         [SlashCommand("item", "NullReferenceException Talisman")]
         public async Task PatchItem(
-            [Autocomplete(typeof(ItemAutocompleteHandler))] string id,
+            [Autocomplete(typeof(ItemAutocompleteHandler))] int id,
             [Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null)
         {
-            if (!int.TryParse(id, System.Globalization.NumberStyles.Integer, null, out int itemId))
-            {
-                try
-                {
-                    itemId = (int)_db.GetEntityInfo<ItemInfo>(id, limit: 1).First().Id;
-                }
-                catch
-                {
-                    await RespondAsync("Error parsing id.", ephemeral: true);
-                    return;
-                }
-            }
-
             IEnumerable<ItemPatchNote> patchNotes;
             if (patch == null)
             {
-                patchNotes = _db.GetPatchNotes<ItemPatchNote>(itemId, limit: 1, orderByDesc: true);
+                patchNotes = _db.GetPatchNotes<ItemPatchNote>(id, limit: 1, orderByDesc: true);
             }
             else
             {
                 var patchNote = new List<ItemPatchNote>();
-                patchNote.Add(_db.GetPatchNote<ItemPatchNote>(patch, itemId));
+                patchNote.Add(_db.GetPatchNote<ItemPatchNote>(patch, id));
                 patchNotes = patchNote;
             }
 
@@ -75,31 +62,19 @@ namespace Magus.Bot.Modules
 
         [SlashCommand("hero", "🎶 I need a hero 🎶")]
         public async Task PatchHero(
-            [Autocomplete(typeof(HeroAutocompleteHandler))] string id,
+            [Autocomplete(typeof(HeroAutocompleteHandler))] int id,
             [Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null)
         {
-            if (!int.TryParse(id, System.Globalization.NumberStyles.Integer, null, out int heroId))
-            {
-                try
-                {
-                    heroId = (int)_db.GetEntityInfo<HeroInfo>(id, limit: 1).First().Id;
-                }
-                catch
-                {
-                    await RespondAsync("Error parsing id.", ephemeral: true);
-                    return;
-                }
-            }
 
             IEnumerable<HeroPatchNote> patchNotes;
             if (patch == null)
             {
-                patchNotes = _db.GetPatchNotes<HeroPatchNote>(heroId, limit: 1, orderByDesc: true);
+                patchNotes = _db.GetPatchNotes<HeroPatchNote>(id, limit: 1, orderByDesc: true);
             }
             else
             {
                 var patchNote = new List<HeroPatchNote>();
-                patchNote.Add(_db.GetPatchNote<HeroPatchNote>(patch, heroId));
+                patchNote.Add(_db.GetPatchNote<HeroPatchNote>(patch, id));
                 patchNotes = patchNote;
             }
 
