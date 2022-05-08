@@ -5,6 +5,7 @@ using InteractionsIResult = Discord.Interactions.IResult;
 using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 
 namespace Magus.Bot
 {
@@ -14,12 +15,14 @@ namespace Magus.Bot
         private readonly CommandService _textCommands;
         private readonly InteractionService _intCommands;
         private readonly IServiceProvider _services;
+        private readonly ILogger<CommandHandler> _logger;
 
-        public CommandHandler(DiscordSocketClient client, CommandService textCommands, InteractionService intCommands, IServiceProvider services)
+        public CommandHandler(DiscordSocketClient client, CommandService textCommands, InteractionService intCommands, ILogger<CommandHandler> logger, IServiceProvider services)
         {
             _client = client;
             _textCommands = textCommands;
             _intCommands = intCommands;
+            _logger = logger;
             _services = services;
         }
 
@@ -178,7 +181,7 @@ namespace Magus.Bot
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                _logger.LogError(ex, ex.Message);
 
                 // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
                 // response, or at least let the user know that something went wrong during the command execution.
@@ -195,19 +198,14 @@ namespace Magus.Bot
             if (message.Source != MessageSource.User)
                 return;
 
-            // This value holds the offset where the prefix ends
             var argPos = 0;
 
             if (!message.HasCharPrefix('!', ref argPos))
                 return;
 
             var context = new SocketCommandContext(_client, message);
-            // Perform the execution of the command. In this method,
-            // the command service will perform precondition and parsing check
-            // then execute the command if one is matched.
+
             await _textCommands.ExecuteAsync(context, argPos, _services);
-            // Note that normally a result will be returned by this format, but here
-            // we will handle the result in CommandExecutedAsync,
         }
 
         public async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, CommandIResult result)

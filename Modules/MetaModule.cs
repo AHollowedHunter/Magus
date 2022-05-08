@@ -4,6 +4,7 @@ using Magus.Bot.Modal;
 using Magus.Data;
 using Magus.Data.Models.Magus;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Magus.Bot.Modules
 {
@@ -12,16 +13,17 @@ namespace Magus.Bot.Modules
     {
         private readonly IDatabaseService _db;
         private readonly IConfiguration _config;
+        private readonly ILogger<MetaModule> _logger;
         private readonly Services.IWebhook _webhook;
 
         string inviteLink => _config["BotInvite"];
 
-        public MetaModule(IDatabaseService db, IConfiguration config, Services.IWebhook webhook)
+        public MetaModule(IDatabaseService db, IConfiguration config, ILogger<MetaModule> logger, Services.IWebhook webhook)
         {
             _db = db;
             _config = config;
+            _logger = logger;
             _webhook = webhook;
-
         }
 
         string version = "v1.0.0";
@@ -176,7 +178,7 @@ namespace Magus.Bot.Modules
             if (id != 0xFFFFFFFFFFFFFFFF)
             {
                 var success = await _webhook.SendMessage(CreateFeedbackMessage(feedback), _config["FeedbackWebhook"]);
-                if (!success) Console.WriteLine("Failed to send webhook");
+                if (!success) _logger.LogWarning("Failed to send webhook for feedback #{}", id);
             }
             return id;
         }

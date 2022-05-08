@@ -6,6 +6,8 @@ using Magus.Bot.Services;
 using Magus.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Magus.Bot
 {
@@ -17,6 +19,8 @@ namespace Magus.Bot
                 .AddUserSecrets<Bot>()
                 .Build();
 
+        private static ILogger<Bot> _logger;
+
         static void Main(string[] args)
         {
             RunAsync().GetAwaiter().GetResult();
@@ -25,6 +29,7 @@ namespace Magus.Bot
         static async Task RunAsync()
         {
             using var services = ConfigureServices();
+            _logger = services.GetRequiredService<ILogger<Bot>>();
 
             var client = services.GetRequiredService<DiscordSocketClient>();
             var commands = services.GetRequiredService<InteractionService>();
@@ -56,12 +61,23 @@ namespace Magus.Bot
 
         static Task LogAsync(LogMessage message)
         {
-            Console.WriteLine(message.ToString());
+            var severity = message.Severity switch
+            {
+                LogSeverity.Critical => LogLevel.Critical,
+                LogSeverity.Error => LogLevel.Error,
+                LogSeverity.Warning => LogLevel.Warning,
+                LogSeverity.Info => LogLevel.Information,
+                LogSeverity.Verbose => LogLevel.Debug,
+                LogSeverity.Debug => LogLevel.Trace,
+                _ => LogLevel.Information
+            };
+            _logger.Log(LogLevel.Information, message.Message);
             return Task.CompletedTask;
         }
 
         static ServiceProvider ConfigureServices()
             => new ServiceCollection()
+                .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
                 .AddSingleton(configuration)
                 .AddSingleton<IDatabaseService>(x => new LiteDBService(configuration.GetSection("DatabaseService")))
                 .AddSingleton<DiscordSocketClient>()
