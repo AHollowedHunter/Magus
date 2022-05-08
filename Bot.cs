@@ -71,7 +71,7 @@ namespace Magus.Bot
                 LogSeverity.Debug => LogLevel.Trace,
                 _ => LogLevel.Information
             };
-            _logger.Log(LogLevel.Information, message.Message);
+            _logger.Log(severity, message.Message);
             return Task.CompletedTask;
         }
 
