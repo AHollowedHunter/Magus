@@ -41,7 +41,7 @@ namespace Magus.Bot.Modules
             {
                 Title = "MagusBot",
                 Description = "A DotA 2 Discord bot",
-                Author = new EmbedAuthorBuilder() { Name = "AHollowedHunter", Url = $"https://github.com/AHollowedHunter", IconUrl = author.GetAvatarUrl() },
+                Author = new EmbedAuthorBuilder() { Name = "AHollowedHunter", Url = $"https://github.com/AHollowedHunter", IconUrl = "https://avatars.githubusercontent.com/u/45659989?v=4&s=48" },
                 Color = Color.Purple,
                 Timestamp = versionDate,
                 Footer = new() { Text = "Hot Damn!", IconUrl = Context.Client.CurrentUser.GetAvatarUrl() },
@@ -49,8 +49,8 @@ namespace Magus.Bot.Modules
             response.AddField(new EmbedFieldBuilder() { Name = "Version", Value = version, IsInline = true });
             response.AddField(new EmbedFieldBuilder() { Name = "Latest Patch", Value = latestPatch, IsInline = true });
             response.AddField(new EmbedFieldBuilder() { Name = "Total Guilds", Value = Context.Client.Guilds.Count(), IsInline = false });
-            response.AddField(new EmbedFieldBuilder() { Name = "Latency", Value = Context.Client.Latency + "ms", IsInline = true });
-            response.AddField(new EmbedFieldBuilder() { Name = "ShardId", Value = Context.Client.ShardId, IsInline = true });
+            //response.AddField(new EmbedFieldBuilder() { Name = "Latency", Value = Context.Client.Latency + "ms", IsInline = true });
+            //response.AddField(new EmbedFieldBuilder() { Name = "ShardId", Value = Context.Client.ShardId, IsInline = true });
 
             var links = $"[Invite Link]({inviteLink})\n[MagusBot.xyz](https://magusbot.xyz)\n";
             response.AddField(new EmbedFieldBuilder() { Name = "Links", Value = links, IsInline = false });
