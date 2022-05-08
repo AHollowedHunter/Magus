@@ -5,6 +5,7 @@ using Magus.Data;
 using Magus.Data.Models.Magus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace Magus.Bot.Modules
 {
@@ -26,7 +27,8 @@ namespace Magus.Bot.Modules
             _webhook = webhook;
         }
 
-        string version = "v1.0.0";
+        string version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+
         DateTimeOffset versionDate = DateTimeOffset.Now;
 
         [SlashCommand("about", "About this bot ℹ")]
