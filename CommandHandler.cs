@@ -1,7 +1,4 @@
 ﻿using Discord;
-using Discord.Commands;
-using CommandIResult = Discord.Commands.IResult;
-using InteractionsIResult = Discord.Interactions.IResult;
 using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
@@ -12,47 +9,38 @@ namespace Magus.Bot
     public class CommandHandler
     {
         private readonly DiscordSocketClient _client;
-        private readonly CommandService _textCommands;
-        private readonly InteractionService _intCommands;
+        private readonly InteractionService _interactions;
         private readonly IServiceProvider _services;
         private readonly ILogger<CommandHandler> _logger;
 
-        public CommandHandler(DiscordSocketClient client, CommandService textCommands, InteractionService intCommands, ILogger<CommandHandler> logger, IServiceProvider services)
+        public CommandHandler(DiscordSocketClient client, InteractionService interactions, ILogger<CommandHandler> logger, IServiceProvider services)
         {
             _client = client;
-            _textCommands = textCommands;
-            _intCommands = intCommands;
+            _interactions = interactions;
             _logger = logger;
             _services = services;
         }
 
         public async Task InitializeAsync()
         {
-            // Add the public modules that inherit InteractionModuleBase<T> to the InteractionService
-            await _intCommands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-            await _textCommands.AddModulesAsync(Assembly.GetExecutingAssembly(), _services);
-            // Another approach to get the assembly of a specific type is:
-            // typeof(CommandHandler).Assembly
+            await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
-
-            // Process the InteractionCreated payloads to execute Interactions commands
             _client.InteractionCreated += HandleInteraction;
 
-            // Process the command execution results 
-            _intCommands.SlashCommandExecuted += SlashCommandExecuted;
-            _intCommands.ContextCommandExecuted += ContextCommandExecuted;
-            _intCommands.ComponentCommandExecuted += ComponentCommandExecuted;
-            _intCommands.ModalCommandExecuted += ModalCommandExecuted;
-
-            _textCommands.CommandExecuted += CommandExecutedAsync;
-
             _client.MessageReceived += MessageReceivedAsync;
+
+            // Process the command execution results 
+            _interactions.SlashCommandExecuted += SlashCommandExecuted;
+            _interactions.ContextCommandExecuted += ContextCommandExecuted;
+            _interactions.ComponentCommandExecuted += ComponentCommandExecuted;
+            _interactions.ModalCommandExecuted += ModalCommandExecuted;
+
 
         }
 
         # region Error Handling
 
-        private Task ComponentCommandExecuted(ComponentCommandInfo arg1, IInteractionContext arg2, InteractionsIResult arg3)
+        private Task ComponentCommandExecuted(ComponentCommandInfo arg1, IInteractionContext arg2, IResult arg3)
         {
             if (!arg3.IsSuccess)
             {
@@ -81,7 +69,7 @@ namespace Magus.Bot
             return Task.CompletedTask;
         }
 
-        private Task ContextCommandExecuted(ContextCommandInfo arg1, IInteractionContext arg2, InteractionsIResult arg3)
+        private Task ContextCommandExecuted(ContextCommandInfo arg1, IInteractionContext arg2, IResult arg3)
         {
             if (!arg3.IsSuccess)
             {
@@ -110,7 +98,7 @@ namespace Magus.Bot
             return Task.CompletedTask;
         }
 
-        private Task SlashCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, InteractionsIResult arg3)
+        private Task SlashCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, IResult arg3)
         {
             if (!arg3.IsSuccess)
             {
@@ -139,7 +127,7 @@ namespace Magus.Bot
             return Task.CompletedTask;
         }
 
-        private Task ModalCommandExecuted(ModalCommandInfo arg1, IInteractionContext arg2, InteractionsIResult arg3)
+        private Task ModalCommandExecuted(ModalCommandInfo arg1, IInteractionContext arg2, IResult arg3)
         {
             if (!arg3.IsSuccess)
             {
@@ -177,7 +165,7 @@ namespace Magus.Bot
             {
                 var ctx = new SocketInteractionContext(_client, arg);
 
-                await _intCommands.ExecuteCommandAsync(ctx, _services);
+                await _interactions.ExecuteCommandAsync(ctx, _services);
             }
             catch (Exception ex)
             {
@@ -198,28 +186,6 @@ namespace Magus.Bot
             if (message.Source != MessageSource.User)
                 return;
 
-            var argPos = 0;
-
-            if (!message.HasCharPrefix('!', ref argPos))
-                return;
-
-            var context = new SocketCommandContext(_client, message);
-
-            await _textCommands.ExecuteAsync(context, argPos, _services);
-        }
-
-        public async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, CommandIResult result)
-        {
-            // command is unspecified when there was a search failure (command not found); we don't care about these errors
-            if (!command.IsSpecified)
-                return;
-
-            // the command was successful, we don't care about this result, unless we want to log that a command succeeded.
-            if (result.IsSuccess)
-                return;
-
-            // the command failed, let's notify the user that something happened.
-            await context.Channel.SendMessageAsync($"error: {result}");
         }
 
         # endregion
