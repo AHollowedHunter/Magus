@@ -27,8 +27,6 @@ namespace Magus.Bot
 
             _client.InteractionCreated += HandleInteraction;
 
-            _client.MessageReceived += MessageReceivedAsync;
-
             // Process the command execution results 
             _interactions.SlashCommandExecuted += SlashCommandExecuted;
             _interactions.ContextCommandExecuted += ContextCommandExecuted;
@@ -176,16 +174,6 @@ namespace Magus.Bot
                 if (arg.Type == InteractionType.ApplicationCommand)
                     await arg.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
             }
-        }
-
-        public async Task MessageReceivedAsync(SocketMessage rawMessage)
-        {
-            // Ignore system messages, or messages from other bots
-            if (!(rawMessage is SocketUserMessage message))
-                return;
-            if (message.Source != MessageSource.User)
-                return;
-
         }
 
         # endregion
