@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Extensions;
 using Magus.Data;
@@ -21,11 +22,13 @@ namespace Magus.Bot.Modules
         [SlashCommand("notes", "Knowledge 📚")]
         public async Task PatchNotes([Autocomplete(typeof(PatchAutocompleteHandler))] string number)
         {
-            var patchNote = _db.GetGeneralPatchNote(number).Embed;
-
-            var response = patchNote.CreateDiscordEmbed();
-
-            await RespondAsync(embed: response);
+            var patchNote = _db.GetGeneralPatchNote(number);
+            if (patchNote == null)
+            {
+                await RespondAsync($"Could not find a patch note numbered {number}");
+                return;
+            }
+            await RespondAsync(embed: patchNote.Embed.CreateDiscordEmbed());
         }
 
         [SlashCommand("item", "NullReferenceException Talisman")]
@@ -33,31 +36,44 @@ namespace Magus.Bot.Modules
             [Autocomplete(typeof(ItemAutocompleteHandler))] int id,
             [Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null)
         {
+            Discord.Embed embed;
             IEnumerable<ItemPatchNote> patchNotes;
             if (patch == null)
             {
-                patchNotes = _db.GetPatchNotes<ItemPatchNote>(id, limit: 1, orderByDesc: true);
+                patchNotes = _db.GetPatchNotes<ItemPatchNote>(id, limit: 3, orderByDesc: true);
             }
             else
             {
-                var patchNote = new List<ItemPatchNote>();
-                patchNote.Add(_db.GetPatchNote<ItemPatchNote>(patch, id));
-                patchNotes = patchNote;
+                patchNotes = new List<ItemPatchNote> { _db.GetPatchNote<ItemPatchNote>(patch, id) };
             }
 
-            if (patchNotes.Count() == 0)
+            if (patchNotes == null || patchNotes.Any(x => x == null) || patchNotes.Count() == 0)
             {
-                await RespondAsync("Could not find any changes for this item.", ephemeral: true);
+                await RespondAsync($"No changes for this item in patch {patch}", ephemeral: true);
                 return;
             }
-
-            var embeds = new List<Discord.Embed>();
-            foreach (var patchNote in patchNotes)
+            else if (patchNotes.Count() == 1)
             {
-                embeds.Add(patchNote.Embed.CreateDiscordEmbed());
+                embed = patchNotes.First().Embed.CreateDiscordEmbed();
             }
-
-            await RespondAsync(embeds: embeds.ToArray());
+            else
+            {
+                var firstEmbed = patchNotes.First().Embed;
+                var embedBuilder = new EmbedBuilder
+                {
+                    Title = $"{patchNotes.First().LocalName} recent changes",
+                    ThumbnailUrl = firstEmbed.ThumbnailUrl,
+                    Color = firstEmbed.ColorRaw,
+                    Timestamp = firstEmbed.Timestamp,
+                    Footer = new() { Text = firstEmbed.Footer?.Text, IconUrl = firstEmbed.Footer?.IconUrl }
+                };
+                foreach (var patchNote in patchNotes)
+                {
+                    embedBuilder.AddField(new EmbedFieldBuilder() { Name = $"Patch {patchNote.PatchNumber}", Value = patchNote.Embed.Description });
+                }
+                embed = embedBuilder.Build();
+            }
+            await RespondAsync(embed: embed);
         }
 
         [SlashCommand("hero", "🎶 I need a hero 🎶")]
@@ -77,7 +93,7 @@ namespace Magus.Bot.Modules
                 patchNotes = patchNote;
             }
 
-            if (patchNotes.Count() == 0)
+            if (patchNotes == null || patchNotes.Any(x => x == null) || patchNotes.Count() == 0)
             {
                 await RespondAsync("Could not find any changes for this hero.", ephemeral: true);
                 return;
