@@ -6,6 +6,8 @@ namespace Magus.Data
     public static class Emotes
     {
         // public static Emote Icon => Emote.Parse($"<:icon_:00000000>");
+        public static Emote Spacer => Emote.Parse($"<:spacer:973678534637813760>");
+
         public static Emote StrengthIcon => Emote.Parse($"<:hero_strength:945826749118291998>");
         public static Emote AgilityIcon => Emote.Parse($"<:hero_agility:945826748539478027>");
         public static Emote IntelligenceIcon => Emote.Parse($"<:hero_intelligence:945826748845678592>");

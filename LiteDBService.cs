@@ -63,6 +63,18 @@ namespace Magus.Data
             return collecton.Update(records);
         }
 
+        public bool UpsertRecord<T>(T record) where T : ISnowflakeRecord
+        {
+            var collecton = _liteDB.GetCollection<T>();
+            return collecton.Upsert(record);
+        }
+
+        public int UpsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord
+        {
+            var collecton = _liteDB.GetCollection<T>();
+            return collecton.Upsert(records);
+        }
+
         public bool DeleteRecord<T>(ulong id) where T : ISnowflakeRecord
         {
             var liteId = (long)id;

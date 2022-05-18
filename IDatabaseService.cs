@@ -33,6 +33,16 @@ namespace Magus.Data
         /// Update a collection of records, and return an int
         /// </summary>
         int UpdateRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord;
+
+        /// <summary>
+        /// Update or insert a given record, and return true is successful
+        /// </summary>
+        bool UpsertRecord<T>(T record) where T : ISnowflakeRecord;
+
+        /// <summary>
+        /// Update or insert a collection of records, and return an int
+        /// </summary>
+        int UpsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord;
                 
         /// <summary>
         /// Attempts to deletes the given record type via the Id
