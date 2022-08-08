@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace Magus.Bot.Modules
 {
-    [Group("magus", "meta commands")]
+    [Group("magus", "all things MagusBot")]
     public class MetaModule : InteractionModuleBase<SocketInteractionContext>
     {
         private readonly IDatabaseService _db;
@@ -64,52 +64,63 @@ namespace Magus.Bot.Modules
             await RespondAsync(text: "Share me with your friends (or server admin) with my invite link!\n" + inviteLink);
         }
 
-        [SlashCommand("help", "NUJV")]
+        [SlashCommand("help", "Get help using MagusBot")]
         public async Task Help()
         {
-            var response = new EmbedBuilder()
-            {
-                Title = "MagusBot Commands",
-                Description = "A list of commands for MagusBot.\n" +
-                "This bot uses '/' slash commands, please type a slash '/' and use the menu that appears to select a command.\n" +
-                "Alternatively, a list of all commands are provided below.\n" +
-                "Required parameters are surrounded with '< >' and optional with '[ ]'",
-                Color = Color.DarkGreen,
-                Timestamp = versionDate,
-                Footer = new() { Text = $"MagusBot version {version}"}
-            };
-
             List<IApplicationCommand> commands = new List<IApplicationCommand>();
             commands.AddRange(await Context.Guild.GetApplicationCommandsAsync());
             commands.AddRange(await Context.Client.Rest.GetGlobalApplicationCommands());
 
+            var embeds = new List<Embed>();
+
             foreach (IApplicationCommand command in commands)
             {
-                var field = new EmbedFieldBuilder()
+                if (command.Type != ApplicationCommandType.Slash) continue;
+
+                var embed = new EmbedBuilder()
                 {
-                    Name = command.Name,
+                    Title = command.Name,
+                    Description = command.Description,
+                    Color = Color.DarkGreen,
+                    Timestamp = versionDate,
+                    Footer = new() { Text = $"MagusBot version {version}" }
                 };
-                var value = "";
-                foreach (var option in command.Options)
+
+                if (!command.Options.Any(x => x.Type == ApplicationCommandOptionType.SubCommand))
                 {
-                    value += $"```md\n/{command.Name} {option.Name} ";
-                    foreach (var param in option.Options)
+                    embed.Description += $"\nTry it: </{command.Name}:{command.Id}>\n";
+                }
+                else
+                {
+                    foreach (var option in command.Options)
                     {
-                        if (param.IsRequired != null && param.IsRequired == true)
+                        var field = new EmbedFieldBuilder()
                         {
-                            value += $"<{param.Name}:> ";
+                            Name = $"/{command.Name} {option.Name}",
+                        };
+                        var value = $"{option.Description}\n";
+                        if (option.Type == ApplicationCommandOptionType.SubCommand)
+                        {
+                            value += $"Try it: </{command.Name} {option.Name}:{command.Id}>\n";
                         }
                         else
                         {
-                            value += $"[{param.Name}:] ";
+                            foreach (var optionLevelTwo in option.Options)
+                            {
+                                if (optionLevelTwo.Type == ApplicationCommandOptionType.SubCommand)
+                                {
+                                    var fullCommand = $"{command.Name} {option.Name} {optionLevelTwo.Name}";
+                                    value += $"**/{fullCommand}**\n*{optionLevelTwo.Description}*\nTry it: </{fullCommand}:{command.Id}>\n";
+                                }
+                            }
                         }
+                        field.WithValue(value);
+                        embed.AddField(field);
                     }
-                    value += "```";
                 }
-                field.WithValue(value);
-                response.AddField(field);
+                embeds.Add(embed.Build());
             }
-            await RespondAsync(embed: response.Build(), ephemeral: true);
+            await RespondAsync(embeds: embeds.ToArray(), ephemeral: true);
         }
 
         [SlashCommand("feedback", "Got a bug or suggestion? Give it here!")]
@@ -173,6 +184,14 @@ namespace Magus.Bot.Modules
         private async Task<ulong> SaveFeedback<T>(T feedbackModal) where T : FeedbackModalBase
         {
             var feedback = feedbackModal.ToFeedback();
+            if (Context.Interaction.IsDMInteraction)
+            {
+                feedback.IsDMSubmitted = true;
+            }
+            else
+            {
+                feedback.GuildSubmitted = Context.Guild.Id;
+            }
             feedback.Author = Context.Interaction.User.Id;
             feedback.Id = MakeFeedbackId(feedback.Author);
             
