@@ -32,8 +32,8 @@ namespace Magus.DataBuilder
 
         public static void Main()
         {
-            //UpdatePatchNotes();
-            //UpdateHeroes();
+            UpdatePatchNotes();
+            UpdateHeroes();
             UpdateItems();
 
             db.Dispose();
@@ -152,7 +152,7 @@ namespace Magus.DataBuilder
                     ColorRaw = 0X00A84300,
                     Timestamp = DateTimeOffset.FromUnixTimeSeconds(latestPatch.PatchTimestamp),
                     ThumbnailUrl = $"{DotaUrls.Hero}{heroData.InternalName.Substring(14)}.png",
-                    Footer = new() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
+                    Footer = new() { Text = $"Patch {latestPatch.PatchNumber}" },
                 };
 
                 List<Field> heroInfoFields = new();
@@ -280,7 +280,7 @@ namespace Magus.DataBuilder
                         Description = ability.LocalDesc + "\n",
                         ColorRaw = Color.Orange,
                         Timestamp = DateTimeOffset.FromUnixTimeSeconds(latestPatch.PatchTimestamp),
-                        Footer = new() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
+                        Footer = new() { Text = $"Patch {latestPatch.PatchNumber}" },
                         ThumbnailUrl = $"{DotaUrls.Ability}{ability.InternalName}.png",
                     };
                 }
@@ -353,11 +353,11 @@ namespace Magus.DataBuilder
                 var costs = "";
                 if (itemData.ManaCosts[0] != 0)
                 {
-                    costs += $"{Emotes.ManaIcon} {itemData.ManaCosts[0]}\u1CBC";
+                    costs += $"{Emotes.ManaIcon} {itemData.ManaCosts[0]}{Emotes.Spacer}";
                 }
                 if (itemData.Cooldowns[0] != 0)
                 {
-                    costs += $"{Emotes.CooldownIcon} {itemData.Cooldowns[0]}\u1CBC";
+                    costs += $"{Emotes.CooldownIcon} {itemData.Cooldowns[0]}{Emotes.Spacer}";
                 }
                 if (itemData.ItemCost != 0)
                 {
@@ -378,7 +378,7 @@ namespace Magus.DataBuilder
                     Description = bonuses + localDesc + spellValues,
                     ColorRaw = Color.DarkBlue,
                     Timestamp = DateTimeOffset.FromUnixTimeSeconds(latestPatch.PatchTimestamp),
-                    Footer = new() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
+                    Footer = new() { Text = $"Patch {latestPatch.PatchNumber}" },
                     ThumbnailUrl = $"{DotaUrls.Item}{itemData.InternalName.Substring(5)}.png",
                 };
                 // Notes
