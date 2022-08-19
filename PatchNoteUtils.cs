@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Magus.DataBuild.Models;
@@ -26,7 +27,7 @@ namespace Magus.DataBuilder
                 var tab = "• ";
                 if (note.IndentLevel > 1)
                 {
-                    tab = String.Concat(Enumerable.Repeat("\u1CBC", note.IndentLevel)) + "◦ ";
+                    tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
                 }
                 description += tab + note.Content + "\n";
             }
@@ -107,7 +108,7 @@ namespace Magus.DataBuilder
                         var tab = "• ";
                         if (note.IndentLevel > 1)
                         {
-                            tab = String.Concat(Enumerable.Repeat("\u1CBC", note.IndentLevel)) + "◦ ";
+                            tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
                         }
                         value += tab + note.Content + "\n";
                     }
@@ -123,7 +124,7 @@ namespace Magus.DataBuilder
                         var tab = "• ";
                         if (note.IndentLevel > 1)
                         {
-                            tab = String.Concat(Enumerable.Repeat("\u1CBC", note.IndentLevel)) + "◦ ";
+                            tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
                         }
                         value += tab + note.Content + "\n";
                     }
@@ -138,7 +139,7 @@ namespace Magus.DataBuilder
                         var tab = "• ";
                         if (note.IndentLevel > 1)
                         {
-                            tab = String.Concat(Enumerable.Repeat("\u1CBC", note.IndentLevel)) + "◦ ";
+                            tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
                         }
                         talentValue += tab + note.Content + "\n";
                     }
@@ -204,7 +205,7 @@ namespace Magus.DataBuilder
                     var tab = "• ";
                     if (note.IndentLevel > 1)
                     {
-                        tab = String.Concat(Enumerable.Repeat("\u1CBC", note.IndentLevel)) + "◦ ";
+                        tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
                     }
                     description += tab + note.Content + "\n";
                 }
