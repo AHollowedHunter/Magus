@@ -21,17 +21,8 @@ namespace Magus.DataBuilder
             }
 
             var patchUrl = $"https://www.dota2.com/patches/{patchData.PatchNumber}";
-            var description = "";
-            foreach (var note in notes)
-            {
-                var tab = "• ";
-                if (note.IndentLevel > 1)
-                {
-                    tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
-                }
-                description += tab + note.Content + "\n";
-            }
-            description.ReplaceLocalFormatting();
+            var description = CreateFormattedDescription(notes);
+
             var generalPatchEmbed = new Data.Models.Embeds.Embed()
             {
                 Title = $"Patch {patchData.PatchNumber} - General changes",
@@ -70,7 +61,7 @@ namespace Magus.DataBuilder
 
                 foreach (var heroNote in hero.hero_notes ?? new List<RawPatchNote.Hero_notes>())
                 {
-                    if (heroNote.note == "<br>") continue;
+                    if (heroNote.note == "<br>") continue; //still needed?
                     var talentString = "Talent: ";
                     if (heroNote.note.StartsWith(talentString))
                     {
@@ -87,7 +78,7 @@ namespace Magus.DataBuilder
                     var abilityNotes = new List<Note>();
                     foreach (var abilityNote in ability.ability_notes ?? new List<RawPatchNote.Ability_notes>())
                     {
-                        if (abilityNote.note == "<br>") continue;
+                        if (abilityNote.note == "<br>") continue; //still needed?
                         abilityNotes.Add(new Note() { Content = abilityNote.note, IndentLevel = abilityNote.indent_level });
                     }
                     abilityList.Add(new AbilityNote() { AbilityId = ability.ability_id, Notes = abilityNotes });
@@ -102,48 +93,18 @@ namespace Magus.DataBuilder
                 var fields = new List<Field>();
                 if (heroNotes.Count > 0)
                 {
-                    var value = "";
-                    foreach (var note in heroNotes)
-                    {
-                        var tab = "• ";
-                        if (note.IndentLevel > 1)
-                        {
-                            tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
-                        }
-                        value += tab + note.Content + "\n";
-                    }
-                    value.ReplaceLocalFormatting();
+                    var value = CreateFormattedDescription(heroNotes);
                     fields.Add(new() { Name = "General:", Value = value });
                 }
                 foreach (var abilityNote in abilityList)
                 {
                     var abilityInfo = abilityData.Where(x => x.Id == abilityNote.AbilityId).First();
-                    var value = "";
-                    foreach (var note in abilityNote.Notes)
-                    {
-                        var tab = "• ";
-                        if (note.IndentLevel > 1)
-                        {
-                            tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
-                        }
-                        value += tab + note.Content + "\n";
-                    }
-                    value.ReplaceLocalFormatting();
+                    var value = CreateFormattedDescription(abilityNote.Notes);
                     fields.Add(new() { Name = $"{abilityInfo.LocalName}:", Value = value });
                 }
                 if (talents.Count > 0)
                 {
-                    var talentValue = "";
-                    foreach (var note in talents)
-                    {
-                        var tab = "• ";
-                        if (note.IndentLevel > 1)
-                        {
-                            tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
-                        }
-                        talentValue += tab + note.Content + "\n";
-                    }
-                    talentValue.ReplaceLocalFormatting();
+                    var talentValue = CreateFormattedDescription(talents);
                     fields.Add(new() { Name = "Talents:", Value = talentValue });
                 }
 
@@ -186,7 +147,7 @@ namespace Magus.DataBuilder
                 items.AddRange(patchNoteData.neutral_items);
             }
 
-            var increment = 1;
+
             foreach (var item in items)
             {
                 var abilityList = new List<Note>();
@@ -194,27 +155,19 @@ namespace Magus.DataBuilder
 
                 foreach (var abilityNote in item.ability_notes ?? new List<RawPatchNote.Ability_notes>())
                 {
-                    if (abilityNote.note == "<br>") continue;
+                    if (abilityNote.note == "<br>") continue; //still needed?
                     abilityList.Add(new Note() { Content = abilityNote.note, IndentLevel = abilityNote.indent_level });
                 }
 
                 var patchUrl = $"https://www.dota2.com/patches/{patchData.PatchNumber}";
-                var description = "";
-                foreach (var note in abilityList)
-                {
-                    var tab = "• ";
-                    if (note.IndentLevel > 1)
-                    {
-                        tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
-                    }
-                    description += tab + note.Content + "\n";
-                }
-                description.ReplaceLocalFormatting();
+
+                var description = CreateFormattedDescription(abilityList);
 
                 var existingNoteIndex = itemPatchNotesList.FindIndex(x => x.EntityId == item.ability_id);
-                if (existingNoteIndex != -1){
+                if (existingNoteIndex != -1)
+                {
                     itemPatchNotesList[existingNoteIndex].Embed.Description += description;
-                    continue;
+                    continue; // Done this for duplicate entries in web feed, but is it needed when getting patchnotes from gamefiles???
                 }
 
                 var itemPatchNoteEmbed = new Data.Models.Embeds.Embed()
@@ -225,7 +178,7 @@ namespace Magus.DataBuilder
                     ColorRaw = Color.DarkBlue,
                     Timestamp = DateTimeOffset.FromUnixTimeSeconds(patchData.PatchTimestamp),
                     ThumbnailUrl = $"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/{itemInfo.InternalName.Substring(5)}.png",
-                    Footer = new() { Text = "Patch " + patchData.PatchNumber}
+                    Footer = new() { Text = "Patch " + patchData.PatchNumber }
                 };
                 itemPatchNotesList.Add(new()
                 {
@@ -238,6 +191,21 @@ namespace Magus.DataBuilder
                 });
             }
             return itemPatchNotesList;
+        }
+
+        private static string CreateFormattedDescription(IEnumerable<Note> notes)
+        {
+            var description = string.Empty;
+            foreach (var note in notes)
+            {
+                var tab = "• ";
+                if (note.IndentLevel > 0)
+                {
+                    tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.IndentLevel)) + "◦ ";
+                }
+                description += tab + note.Content + "\n";
+            }
+            return description.ReplaceLocalFormatting();
         }
 
         private static ulong MakeId(string timestamp, string type, string id)
