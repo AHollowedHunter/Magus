@@ -18,6 +18,7 @@ namespace Magus.DataBuilder
 
         private readonly Dictionary<string, string[]> _sourceLocaleMappings;
         private readonly Dictionary<(string Locale, string Key), string> _patchNoteValues;
+        private readonly List<Patch> _patches;
         private readonly List<PatchNote> _patchNotes;
 
         public PatchNoteUpdater(IDatabaseService db, IConfiguration config, HttpClient httpClient)
@@ -29,6 +30,7 @@ namespace Magus.DataBuilder
             _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
             _sourceLocaleMappings = _config.GetSection("Localisation").GetSection("SourceLocaleMappings").Get<Dictionary<string, string[]>>();
             _patchNoteValues = new();
+            _patches = new();
             _patchNotes = new();
         }
 
@@ -56,16 +58,25 @@ namespace Magus.DataBuilder
         {
             var patchManifest = await GetKVObjectFromUri(Dota2GameFiles.PatchNotes);
 
+            _patches.Clear();
             _patchNotes.Clear();
 
-            foreach (var language in _sourceLocaleMappings.Keys)
+            foreach (var patch in patchManifest.Children)
             {
-                foreach (var patch in patchManifest.Children)
+                _patches.Add(CreatePatchInfo(patch));
+                foreach (var language in _sourceLocaleMappings.Keys)
                 {
                     _patchNotes.Add(CreatePatchNote(language, patch));
                 }
             }
         }
+
+        private Patch CreatePatchInfo(KVObject patch)
+            => new()
+            {
+                PatchNumber = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", ""),
+                PatchTimestamp = GetPatchTimestamp(patch),
+            };
 
         private PatchNote CreatePatchNote(string language, KVObject patch)
         {
@@ -78,9 +89,7 @@ namespace Magus.DataBuilder
             // End Checks
 
             patchNote.PatchName = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", "");
-            var timestampString = patch.Children.First(x => x.Name == "patch_date").Value.ToString()!;
-            ulong timestamp = (ulong)DateTimeOffset.Parse(timestampString).ToUnixTimeSeconds();
-            patchNote.Timestamp = timestamp;
+            patchNote.Timestamp = GetPatchTimestamp(patch);
             patchNote.Language = language;
 
             foreach (var genericNote in patch.Children.First(x => x.Name == "generic"))
@@ -178,11 +187,17 @@ namespace Magus.DataBuilder
             return patchNote;
         }
 
+        private ulong GetPatchTimestamp(KVObject patch) 
+            => (ulong)DateTimeOffset.Parse(patch.Children.First(x => x.Name == "patch_date").Value.ToString()!).ToUnixTimeSeconds();
+
+
         private async Task CreatePatchNoteEmbeds()
         {
             var generalPatchNotes = new List<Data.Models.Embeds.GeneralPatchNote>();
             var heroPatchNotes = new List<Data.Models.Embeds.HeroPatchNote>();
             var itemPatchNotes = new List<Data.Models.Embeds.ItemPatchNote>();
+
+
         }
 
         private PatchNote.Note MakeNote(KVObject kvObject, string language)
