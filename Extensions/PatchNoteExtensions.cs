@@ -168,7 +168,7 @@ namespace Magus.DataBuilder.Extensions
                 }
                 description += valueToAdd;
             }
-            return description.ReplaceLocalFormatting();
+            return description;
         }
 
         private static ulong MakeId(string timestamp, int type, int id, string locale)
