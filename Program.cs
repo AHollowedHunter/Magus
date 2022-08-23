@@ -1,13 +1,13 @@
-﻿using Magus.Data;
+﻿using Discord;
+using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
-using Discord;
+using Magus.DataBuild.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Magus.DataBuild.Models;
 
 namespace Magus.DataBuilder
 {
@@ -30,11 +30,14 @@ namespace Magus.DataBuilder
         private static string language = "english";
         private static Regex xmlTag = new Regex(@"<[^>]*>");
 
-        public static void Main()
+        public static async Task Main()
         {
-            UpdatePatchNotes();
-            UpdateHeroes();
-            UpdateItems();
+            var patchNoteUpdater = services.GetRequiredService<PatchNoteUpdater>();
+            await patchNoteUpdater.Update();
+            //UpdatePatchNotes();
+
+            //UpdateHeroes();
+            //UpdateItems();
 
             db.Dispose();
         }
@@ -43,24 +46,26 @@ namespace Magus.DataBuilder
             => new ServiceCollection()
                 .AddSingleton(configuration)
                 .AddSingleton<IDatabaseService>(x => new LiteDBService(configuration.GetSection("DatabaseService")))
+                .AddSingleton(x => new HttpClient())
+                .AddSingleton(x => new PatchNoteUpdater(x.GetRequiredService<IDatabaseService>(), x.GetRequiredService<IConfiguration>(), x.GetRequiredService<HttpClient>()))
                 .BuildServiceProvider();
 
         public static void UpdatePatchNotes()
         {
 
             db.DeleteCollection<Patch>();
-            db.DeleteCollection<Data.Models.Embeds.GeneralPatchNote>();
-            db.DeleteCollection<Data.Models.Embeds.HeroPatchNote>();
-            db.DeleteCollection<Data.Models.Embeds.ItemPatchNote>();
+            db.DeleteCollection<Data.Models.Embeds.GeneralPatchNoteEmbed>();
+            db.DeleteCollection<Data.Models.Embeds.HeroPatchNoteEmbed>();
+            db.DeleteCollection<Data.Models.Embeds.ItemPatchNoteEmbed>();
 
             var patchList = client
                 .GetFromJsonAsync<JsonElement>($"patchnoteslist?language={language}")
                 .Result
                 .GetProperty("patches");
 
-            var generalPatchNotes = new List<Data.Models.Embeds.GeneralPatchNote>();
-            var heroPatchNotes = new List<Data.Models.Embeds.HeroPatchNote>();
-            var itemPatchNotes = new List<Data.Models.Embeds.ItemPatchNote>();
+            var generalPatchNotes = new List<Data.Models.Embeds.GeneralPatchNoteEmbed>();
+            var heroPatchNotes = new List<Data.Models.Embeds.HeroPatchNoteEmbed>();
+            var itemPatchNotes = new List<Data.Models.Embeds.ItemPatchNoteEmbed>();
 
 
             var heroList = client.GetFromJsonAsync<JsonElement>($"herolist?language={language}").Result;
@@ -100,12 +105,12 @@ namespace Magus.DataBuilder
             db.InsertRecords(heroPatchNotes);
             db.InsertRecords(itemPatchNotes);
 
-            db.AddIndex<Patch>("PatchNumber");
-            db.AddIndex<Data.Models.Embeds.GeneralPatchNote>("PatchNumber");
-            db.AddIndex<Data.Models.Embeds.HeroPatchNote>("EntityId");
-            db.AddIndex<Data.Models.Embeds.HeroPatchNote>("PatchNumber");
-            db.AddIndex<Data.Models.Embeds.ItemPatchNote>("EntityId");
-            db.AddIndex<Data.Models.Embeds.ItemPatchNote>("PatchNumber");
+            db.EnsureIndex<Patch>("PatchNumber");
+            db.EnsureIndex<Data.Models.Embeds.GeneralPatchNoteEmbed>("PatchNumber");
+            db.EnsureIndex<Data.Models.Embeds.HeroPatchNoteEmbed>("EntityId");
+            db.EnsureIndex<Data.Models.Embeds.HeroPatchNoteEmbed>("PatchNumber");
+            db.EnsureIndex<Data.Models.Embeds.ItemPatchNoteEmbed>("EntityId");
+            db.EnsureIndex<Data.Models.Embeds.ItemPatchNoteEmbed>("PatchNumber");
 
             Console.WriteLine("\nFinished Patches");
         }
@@ -142,7 +147,7 @@ namespace Magus.DataBuilder
                 var latestPatch = db.GetLatestPatch();
 
                 var urlRegex = new Regex(@"[^a-zA-Z0-9-']");
-                var heroUrl = $"https://www.dota2.com/hero/{ urlRegex.Replace(heroData.LocalName.ToLower(), "")}";
+                var heroUrl = $"https://www.dota2.com/hero/{urlRegex.Replace(heroData.LocalName.ToLower(), "")}";
 
                 var heroInfoEmbed = new Data.Models.Embeds.Embed()
                 {
@@ -150,7 +155,7 @@ namespace Magus.DataBuilder
                     Description = heroData.LocalNpeDesc,
                     Url = heroUrl,
                     ColorRaw = 0X00A84300,
-                    Timestamp = DateTimeOffset.FromUnixTimeSeconds(latestPatch.PatchTimestamp),
+                    Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.PatchTimestamp),
                     ThumbnailUrl = $"{DotaUrls.Hero}{heroData.InternalName.Substring(14)}.png",
                     Footer = new() { Text = $"Patch {latestPatch.PatchNumber}" },
                 };
@@ -182,7 +187,7 @@ namespace Magus.DataBuilder
                 heroInfoFields.Add(new()
                 {
                     Name = "Attack",
-                    Value = $"{Emotes.DamageIcon} {heroData.DamageMin}-{heroData.DamageMax}\n{Emotes.AttackTimeIcon} {heroData.AttackRate}\n{Emotes.AttackRangeIcon} {heroData.AttackRange}\n{heroData.GetAttackType().GetAttackTypeIcon() } { heroData.GetAttackType() }",
+                    Value = $"{Emotes.DamageIcon} {heroData.DamageMin}-{heroData.DamageMax}\n{Emotes.AttackTimeIcon} {heroData.AttackRate}\n{Emotes.AttackRangeIcon} {heroData.AttackRange}\n{heroData.GetAttackType().GetAttackTypeIcon()} {heroData.GetAttackType()}",
                     IsInline = true
                 });
                 heroInfoFields.Add(new()
@@ -279,10 +284,18 @@ namespace Magus.DataBuilder
                         Title = $"{ability.LocalName}",
                         Description = ability.LocalDesc + "\n",
                         ColorRaw = Color.Orange,
-                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(latestPatch.PatchTimestamp),
+                        Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.PatchTimestamp),
                         Footer = new() { Text = $"Patch {latestPatch.PatchNumber}" },
                         ThumbnailUrl = $"{DotaUrls.Ability}{ability.InternalName}.png",
                     };
+                    var abilityInfo = new AbilityInfo()
+                    {
+                        Id = (ulong)ability.Id,
+                        InternalName = ability.InternalName,
+                        LocalName = ability.LocalName,
+                        Embed = embed,
+                    };
+                    abilities.Add(abilityInfo);
                 }
 
                 // TODO Make talent embed?
@@ -297,12 +310,12 @@ namespace Magus.DataBuilder
             db.InsertRecords(abilities);
             db.InsertRecords(talents);
 
-            db.AddIndex<HeroInfo>("LocalName");
-            db.AddIndex<HeroInfo>("InternalName");
-            db.AddIndex<HeroInfo>("RealName");
-            db.AddIndex<HeroInfo>("Aliases");
-            db.AddIndex<AbilityInfo>("LocalName");
-            db.AddIndex<AbilityInfo>("InternalName");
+            db.EnsureIndex<HeroInfo>("LocalName");
+            db.EnsureIndex<HeroInfo>("InternalName");
+            db.EnsureIndex<HeroInfo>("RealName");
+            db.EnsureIndex<HeroInfo>("Aliases");
+            db.EnsureIndex<AbilityInfo>("LocalName");
+            db.EnsureIndex<AbilityInfo>("InternalName");
 
             Console.WriteLine("\nFinished Heroes");
         }
@@ -377,7 +390,7 @@ namespace Magus.DataBuilder
                     Title = itemData.LocalName,
                     Description = bonuses + localDesc + spellValues,
                     ColorRaw = Color.DarkBlue,
-                    Timestamp = DateTimeOffset.FromUnixTimeSeconds(latestPatch.PatchTimestamp),
+                    Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.PatchTimestamp),
                     Footer = new() { Text = $"Patch {latestPatch.PatchNumber}" },
                     ThumbnailUrl = $"{DotaUrls.Item}{itemData.InternalName.Substring(5)}.png",
                 };
@@ -411,8 +424,8 @@ namespace Magus.DataBuilder
 
             db.InsertRecords(items);
 
-            db.AddIndex<ItemInfo>("LocalName");
-            db.AddIndex<ItemInfo>("InternalName");
+            db.EnsureIndex<ItemInfo>("LocalName");
+            db.EnsureIndex<ItemInfo>("InternalName");
             Console.WriteLine("\nFinished Items");
         }
     }

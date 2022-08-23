@@ -8,7 +8,7 @@ namespace Magus.DataBuilder
 {
     public class PatchNoteUtils
     {
-        public static Data.Models.Embeds.GeneralPatchNote GetGeneralPatchNote(Patch patchData, RawPatchNote patchNoteData)
+        public static Data.Models.Embeds.GeneralPatchNoteEmbed GetGeneralPatchNote(Patch patchData, RawPatchNote patchNoteData)
         {
             var notes = new List<Note>();
             foreach (var generic in patchNoteData.generic ?? new List<RawPatchNote.Generic>())
@@ -29,7 +29,7 @@ namespace Magus.DataBuilder
                 Description = description,
                 Url = patchUrl,
                 ColorRaw = Color.DarkRed,
-                Timestamp = DateTimeOffset.FromUnixTimeSeconds(patchData.PatchTimestamp),
+                Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)patchData.PatchTimestamp),
                 ThumbnailUrl = $"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/footer_logo.png",
                 Footer = new() { Text = "Patch " + patchData.PatchNumber },
             };
@@ -46,11 +46,11 @@ namespace Magus.DataBuilder
             };
         }
 
-        public static IEnumerable<Data.Models.Embeds.HeroPatchNote> GetHeroPatchNotes(Patch patchData, RawPatchNote patchNoteData, IEnumerable<Hero> heroInfoList, IEnumerable<Ability> abilityData)
+        public static IEnumerable<Data.Models.Embeds.HeroPatchNoteEmbed> GetHeroPatchNotes(Patch patchData, RawPatchNote patchNoteData, IEnumerable<Hero> heroInfoList, IEnumerable<Ability> abilityData)
         {
             ArgumentNullException.ThrowIfNull(heroInfoList);
 
-            var heroPatchNotesList = new List<Data.Models.Embeds.HeroPatchNote>();
+            var heroPatchNotesList = new List<Data.Models.Embeds.HeroPatchNoteEmbed>();
             foreach (var hero in patchNoteData.heroes ?? new List<RawPatchNote.Heroes>())
             {
                 var heroInfo = heroInfoList.Where(x => x.Id == hero.hero_id).First();
@@ -114,7 +114,7 @@ namespace Magus.DataBuilder
                     Title = $"{heroInfo.LocalName} - changes {patchData.PatchNumber}",
                     Url = patchUrl,
                     ColorRaw = Color.DarkOrange,
-                    Timestamp = DateTimeOffset.FromUnixTimeSeconds(patchData.PatchTimestamp),
+                    Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)patchData.PatchTimestamp),
                     ThumbnailUrl = $"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/{heroInfo.InternalName.Substring(14)}.png",
                     Footer = new() { Text = "Patch " + patchData.PatchNumber },
                     Fields = fields,
@@ -132,11 +132,11 @@ namespace Magus.DataBuilder
             return heroPatchNotesList;
         }
 
-        public static IEnumerable<Data.Models.Embeds.ItemPatchNote> GetItemPatchNotes(Patch patchData, RawPatchNote patchNoteData, IEnumerable<Item> itemInfoList)
+        public static IEnumerable<Data.Models.Embeds.ItemPatchNoteEmbed> GetItemPatchNotes(Patch patchData, RawPatchNote patchNoteData, IEnumerable<Item> itemInfoList)
         {
             ArgumentNullException.ThrowIfNull(itemInfoList);
 
-            var itemPatchNotesList = new List<Data.Models.Embeds.ItemPatchNote>();
+            var itemPatchNotesList = new List<Data.Models.Embeds.ItemPatchNoteEmbed>();
             var items = new List<RawPatchNote.Items>();
             if (patchNoteData.items != null)
             {
@@ -176,7 +176,7 @@ namespace Magus.DataBuilder
                     Description = description,
                     Url = patchUrl,
                     ColorRaw = Color.DarkBlue,
-                    Timestamp = DateTimeOffset.FromUnixTimeSeconds(patchData.PatchTimestamp),
+                    Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)patchData.PatchTimestamp),
                     ThumbnailUrl = $"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/{itemInfo.InternalName.Substring(5)}.png",
                     Footer = new() { Text = "Patch " + patchData.PatchNumber }
                 };

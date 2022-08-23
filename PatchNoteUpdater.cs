@@ -1,5 +1,7 @@
 ﻿using Magus.Data;
 using Magus.Data.Models.Dota;
+using Magus.Data.Models.Embeds;
+using Magus.DataBuilder.Extensions;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http.Json;
 using System.Text;
@@ -16,22 +18,24 @@ namespace Magus.DataBuilder
         private readonly HttpClient _httpClient;
         private readonly KVSerializer _kvSerializer;
 
-        private readonly Dictionary<string, string[]> _sourceLocaleMappings;
-        private readonly Dictionary<(string Locale, string Key), string> _patchNoteValues;
+        private readonly string _sourceDefaultLanguage;
+        private readonly Dictionary<string, string[]> _sourceLocaleMappings; // Switch to cnfig class
+        private readonly Dictionary<(string Language, string Key), string> _patchNoteValues; // this should be its own class with methods
         private readonly List<Patch> _patches;
         private readonly List<PatchNote> _patchNotes;
 
         public PatchNoteUpdater(IDatabaseService db, IConfiguration config, HttpClient httpClient)
         {
-            _db = db;
-            _config = config;
+            _db         = db;
+            _config     = config;
             _httpClient = httpClient;
 
-            _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
-            _sourceLocaleMappings = _config.GetSection("Localisation").GetSection("SourceLocaleMappings").Get<Dictionary<string, string[]>>();
-            _patchNoteValues = new();
-            _patches = new();
-            _patchNotes = new();
+            _kvSerializer          = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+            _sourceDefaultLanguage = _config.GetSection("Localisation").GetValue("DefaultLanguage", "english");
+            _sourceLocaleMappings  = _config.GetSection("Localisation").GetSection("SourceLocaleMappings").Get<Dictionary<string, string[]>>();
+            _patchNoteValues       = new();
+            _patches               = new();
+            _patchNotes            = new();
         }
 
         public async Task Update()
@@ -39,7 +43,7 @@ namespace Magus.DataBuilder
             await SetPatchNoteValues();
             await SetPatchNotes();
 
-
+            StorePatchNoteEmbeds();
         }
 
         private async Task SetPatchNoteValues()
@@ -49,8 +53,7 @@ namespace Magus.DataBuilder
             {
                 var localePatchNotes = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetPatchNotes(language.Key));
                 foreach (var note in localePatchNotes)
-                    foreach (var langCode in language.Value)
-                        _patchNoteValues.Add((langCode, note.Name), CleanLocaleValue(note.Value.ToString() ?? ""));
+                    _patchNoteValues.Add((language.Key, note.Name), CleanLocaleValue(note.Value.ToString() ?? ""));
             }
         }
 
@@ -74,7 +77,8 @@ namespace Magus.DataBuilder
         private Patch CreatePatchInfo(KVObject patch)
             => new()
             {
-                PatchNumber = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", ""),
+                Id             = GetPatchTimestamp(patch),
+                PatchNumber    = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", ""),
                 PatchTimestamp = GetPatchTimestamp(patch),
             };
 
@@ -104,12 +108,26 @@ namespace Magus.DataBuilder
                 {
                     notes.Add(MakeNote(note, language));
                 }
-                patchNote.ItemNotes.Add(new()
+
+                var existingNote = patchNote.ItemNotes.FirstOrDefault(x => x.InternalName == item.Name);
+                if (existingNote != null)
                 {
-                    Name = item.Name,
-                    Title = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
-                    Notes = notes,
-                });
+                    patchNote.ItemNotes.Remove(existingNote);
+                    var combinedNotes = new List<PatchNote.Note>();
+                    combinedNotes.AddRange(existingNote.Notes);
+                    combinedNotes.AddRange(notes);
+                    existingNote.Notes = combinedNotes;
+                    patchNote.ItemNotes.Add(existingNote); //todo does this combine separate items? 
+                }
+                else
+                {
+                    patchNote.ItemNotes.Add(new()
+                    {
+                        InternalName = item.Name,
+                        Title = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
+                        Notes = notes,
+                    });
+                }
             }
 
             foreach (var item in patch.Children.First(x => x.Name == "items_neutral").Children)
@@ -121,7 +139,7 @@ namespace Magus.DataBuilder
                 }
                 patchNote.NeutralItemNotes.Add(new()
                 {
-                    Name = item.Name,
+                    InternalName = item.Name,
                     Title = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
                     Notes = notes,
                 });
@@ -148,7 +166,7 @@ namespace Magus.DataBuilder
                     }
                     abilityNotes.Add(new()
                     {
-                        Name = ability.Name,
+                        InternalName = ability.Name,
                         Notes = notes,
                         Title = ability.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString()
                     });
@@ -163,7 +181,7 @@ namespace Magus.DataBuilder
 
                 patchNote.HeroesNotes.Add(new()
                 {
-                    Name = hero.Name,
+                    InternalName = hero.Name,
                     GeneralNotes = generalNotes,
                     AbilityNotes = abilityNotes,
                     TalentNotes = talentNotes,
@@ -179,7 +197,7 @@ namespace Magus.DataBuilder
                 }
                 patchNote.NeutralCreepNotes.Add(new()
                 {
-                    Name = creep.Name,
+                    InternalName = creep.Name,
                     Title = creep.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
                     Notes = notes,
                 });
@@ -190,14 +208,41 @@ namespace Magus.DataBuilder
         private ulong GetPatchTimestamp(KVObject patch) 
             => (ulong)DateTimeOffset.Parse(patch.Children.First(x => x.Name == "patch_date").Value.ToString()!).ToUnixTimeSeconds();
 
-
-        private async Task CreatePatchNoteEmbeds()
+        private void StorePatchNoteEmbeds()
         {
-            var generalPatchNotes = new List<Data.Models.Embeds.GeneralPatchNote>();
-            var heroPatchNotes = new List<Data.Models.Embeds.HeroPatchNote>();
-            var itemPatchNotes = new List<Data.Models.Embeds.ItemPatchNote>();
+            var generalPatchNotes = new List<GeneralPatchNoteEmbed>();
+            var heroPatchNotes    = new List<HeroPatchNoteEmbed>();
+            var itemPatchNotes    = new List<ItemPatchNoteEmbed>();
 
+            // Following will need tweaking to use collections representing localised entity data from Magus.Data.Models.Dota
+            // For now, while hero, ability, item etc. data is not procesed, use existing ...Info stored
+            var heroInfo    = _db.GetRecords<HeroInfo>();
+            var abilityInfo = _db.GetRecords<AbilityInfo>();
+            var itemInfo    = _db.GetRecords<ItemInfo>();
 
+            foreach (var patch in _patchNotes)
+            {
+                generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_sourceLocaleMappings));
+                heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, abilityInfo, _sourceLocaleMappings));
+                itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, _sourceLocaleMappings));
+            }
+
+            _db.DeleteCollection<Patch>(); //Patch uses random ID, so wipe collection and re-add. TODO: change this to use fixed id
+            _db.InsertRecords(_patches);
+            _db.UpsertRecords(generalPatchNotes);
+            _db.UpsertRecords(heroPatchNotes);
+            _db.UpsertRecords(itemPatchNotes);
+            EnsureIndexes();
+        }
+
+        private void EnsureIndexes()
+        {
+            _db.EnsureIndex<Patch>("PatchNumber");
+            _db.EnsureIndex<GeneralPatchNoteEmbed>("PatchNumber");
+            _db.EnsureIndex<HeroPatchNoteEmbed>("EntityId");
+            _db.EnsureIndex<HeroPatchNoteEmbed>("PatchNumber");
+            _db.EnsureIndex<ItemPatchNoteEmbed>("EntityId");
+            _db.EnsureIndex<ItemPatchNoteEmbed>("PatchNumber");
         }
 
         private PatchNote.Note MakeNote(KVObject kvObject, string language)
@@ -209,12 +254,31 @@ namespace Magus.DataBuilder
             else
             {
                 var info = kvObject.Children.FirstOrDefault(x => x.Name == "info")?.Value.ToString();
+                if (info != null)
+                {
+                    var valueKey = (language, info.Substring(1));
+                    info = GetLanguageValueOrDefault(valueKey);
+                }
+                var noteKey = (language, kvObject.Children.First(x => x.Name == "note").Value.ToString()!.Substring(1));
                 return new()
                 {
-                    Value = _patchNoteValues[(language, kvObject.Children.First(x => x.Name == "note").Value.ToString()!.Substring(1))],
+                    Value  = GetLanguageValueOrDefault(noteKey)!,
                     Indent = Math.Abs(int.Parse(kvObject.Children.FirstOrDefault(x => x.Name == "indent")?.Value.ToString() ?? "0")),
-                    Info = info != null ? _patchNoteValues[(language, info.Substring(1))] : info,
+                    Info   = info ,
                 };
+            }
+        }
+
+        private string? GetLanguageValueOrDefault((string language, string key) key)
+        {
+            if (_patchNoteValues.ContainsKey(key))
+            {
+                return _patchNoteValues[key];
+            }
+            else
+            {
+                _patchNoteValues.TryGetValue((_sourceDefaultLanguage, key.key), out var value);
+                return value;
             }
         }
 
