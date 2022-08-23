@@ -2,13 +2,8 @@
 using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
-using Magus.DataBuild.Models;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace Magus.DataBuilder.Extensions
 {
@@ -21,18 +16,31 @@ namespace Magus.DataBuilder.Extensions
             var generalPatchEmbed = new Data.Models.Embeds.Embed()
             {
                 Title        = $"Patch {patch.PatchName} - General changes",
-                Description  = CreateFormattedDescription(patch.GenericNotes),
+                Description  = CreateFormattedDescription(patch.GenericNotes), // LIMIT IT
                 Url          = _patchUrlBase + patch.PatchName,
                 ColorRaw     = Color.DarkRed,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
                 ThumbnailUrl = $"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/footer_logo.png",
                 Footer       = new() { Text = "Patch " + patch.PatchName },
             };
-            generalPatchEmbed.Fields = new List<Field>() { new() {
-                    Name             = "Full patch notes",
-                    Value            = $"[Click here for full patch notes]({generalPatchEmbed.Url})" +
-                    $"\nAdditionally, use the command `/patch <hero|item> <name>` to view the most recent changes for a specifc hero or item "
-                }};
+            var fields = new List<Field>();
+
+            if (patch.Website != null || patch.Website != string.Empty)
+            {
+                fields.Add(new()
+                {
+                    Name  = "Patch Website",
+                    Value = $"[{patch.Website}](https://www.dota2.com/{patch.Website})",
+                });
+            }
+            fields.Add(new()
+            {
+                Name  = "Full patch notes",
+                Value = $"[Click here for full patch notes]({generalPatchEmbed.Url})" +
+                $"\nAdditionally, use the command `/patch <hero|item> <name>` to view the most recent changes for a specifc hero or item ",
+            });
+
+            generalPatchEmbed.Fields = fields;
 
             var generalPatchNotesList = new List<GeneralPatchNoteEmbed>();
             foreach (var locale in languageMap[patch.Language])
@@ -136,17 +144,29 @@ namespace Magus.DataBuilder.Extensions
             return itemPatchNotesList;
         }
 
-        private static string CreateFormattedDescription(IList<PatchNote.Note> notes)
+        private static string CreateFormattedDescription(IList<PatchNote.Note> notes, int maxLength = 4096)
         {
             var description = string.Empty;
+            string truncatedMessage = "***See website for full patchnote***";
             foreach (var note in notes)
             {
+                var indent = notes.Any(x=> x.Indent == 0) ? note.Indent : note.Indent - 1; // Some set of notes are all indedented, so remove a level
                 var tab = "• ";
-                if (note.Indent > 0)
+                if (indent > 0)
                 {
-                    tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), note.Indent)) + "◦ ";
+                    tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), indent)) + "◦ ";
                 }
-                description += tab + note.Value + "\n";
+                if (Regex.Match(note.Value, @"^\s+$").Success)
+                {
+                    tab = string.Empty;
+                }
+                var valueToAdd = tab + note.Value + "\n";
+                if (description.Length + valueToAdd.Length + truncatedMessage.Length > maxLength)
+                {
+                    description += truncatedMessage;
+                    break;
+                }
+                description += valueToAdd;
             }
             return description.ReplaceLocalFormatting();
         }

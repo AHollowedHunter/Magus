@@ -33,12 +33,12 @@ namespace Magus.DataBuilder
         public static async Task Main()
         {
             var patchNoteUpdater = services.GetRequiredService<PatchNoteUpdater>();
-            await patchNoteUpdater.Update();
             //UpdatePatchNotes();
 
             //UpdateHeroes();
             //UpdateItems();
 
+            await patchNoteUpdater.Update();
             db.Dispose();
         }
 

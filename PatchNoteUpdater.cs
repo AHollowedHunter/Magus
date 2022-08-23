@@ -95,6 +95,7 @@ namespace Magus.DataBuilder
             patchNote.PatchName = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", "");
             patchNote.Timestamp = GetPatchTimestamp(patch);
             patchNote.Language = language;
+            patchNote.Website = patch.Children.FirstOrDefault(x => x.Name == "website")?.Value.ToString();
 
             foreach (var genericNote in patch.Children.First(x => x.Name == "generic"))
             {
@@ -284,13 +285,16 @@ namespace Magus.DataBuilder
 
         private static string CleanLocaleValue(string patchNote)
         {
+            var onlyBreak = new Regex(@"^\s*<br>\s*$");
             var tableRegex = new Regex(@"<table>(.|\n)*<\/table>");
             var boldRegex = new Regex(@"(?i)<[/]?\s*b\s*/?>");
             var infoRegex = new Regex(@"(?i)<[/]?\s*info\s*/?>");
             var highlightRegex = new Regex(@"(?i)<[/]?[\s.]*(class=""(New|Reworked)"")?[^>]*>");
             var htmlTagRegex = new Regex(@"(?i)<[/]?\s*[^>]*>");
-            patchNote = patchNote.Replace("<br>", "\n");
+            patchNote = onlyBreak.Replace(patchNote, "\n");
+            patchNote = patchNote.Replace("<br>", "");
             patchNote = patchNote.Replace("&nbsp;", "");
+            patchNote = patchNote.Replace("*", "\\*");
             patchNote = tableRegex.Replace(patchNote, "");
             patchNote = boldRegex.Replace(patchNote, "**");
             patchNote = infoRegex.Replace(patchNote, "*");
