@@ -34,16 +34,14 @@ namespace Magus.Bot
             var client = services.GetRequiredService<DiscordSocketClient>();
             var commands = services.GetRequiredService<InteractionService>();
 
+
             client.Log += LogAsync;
             commands.Log += LogAsync;
 
-            // Slash Commands and Context Commands are can be automatically registered, but this process needs to happen after the client enters the READY state.
-            // Since Global Commands take around 1 hour to register, we should use a test guild to instantly update and test our commands. To determine the method we should
-            // register the commands with, we can check whether we are in a DEBUG environment and if we are, we can register the commands to a predetermined test guild.
             client.Ready += async () =>
             {
                 if (IsDebug())
-                    await commands.RegisterCommandsToGuildAsync(configuration.GetValue<ulong>("testGuild"), true);
+                    await commands.RegisterCommandsToGuildAsync(configuration.GetValue<ulong>("TestGuild"), true);
                 else
                     await commands.RegisterCommandsGloballyAsync(true);
             };
@@ -71,7 +69,7 @@ namespace Magus.Bot
                 LogSeverity.Debug => LogLevel.Trace,
                 _ => LogLevel.Information
             };
-            _logger.Log(severity, message.Message);
+            _logger.Log(severity, message.Exception, $"[{message.Source}] {message.Message ?? message.Exception.Message}");
             return Task.CompletedTask;
         }
 
@@ -80,7 +78,7 @@ namespace Magus.Bot
                 .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
                 .AddSingleton(configuration)
                 .AddSingleton<IDatabaseService>(x => new LiteDBService(configuration.GetSection("DatabaseService")))
-                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton(new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GatewayIntents.AllUnprivileged }))
                 .AddSingleton<CommandService>()
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .AddSingleton<CommandHandler>()

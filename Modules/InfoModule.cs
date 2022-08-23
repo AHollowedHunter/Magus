@@ -39,7 +39,7 @@ namespace Magus.Bot.Modules
         public async Task InfoItem([Autocomplete(typeof(ItemAutocompleteHandler))] int id)
         {
             var itemInfo = _db.GetEntityInfo<ItemInfo>(id);
-            
+
             await RespondAsync(embed: itemInfo.Embed.CreateDiscordEmbed());
         }
     }

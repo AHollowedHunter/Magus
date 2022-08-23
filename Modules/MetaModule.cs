@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace Magus.Bot.Modules
 {
-    [Group("magus", "all things MagusBot")]
+    [Group("magus", "All things MagusBot")]
     public class MetaModule : InteractionModuleBase<SocketInteractionContext>
     {
         private readonly IDatabaseService _db;
@@ -31,12 +31,12 @@ namespace Magus.Bot.Modules
 
         DateTimeOffset versionDate = DateTimeOffset.Now;
 
-        [SlashCommand("about", "About this bot ℹ")]
+        [SlashCommand("about", "About Me!")]
         public async Task About()
         {
             var author = await Context.Client.GetUserAsync(240463688627126278);
             var latestPatchNote = _db.GetLatestPatch();
-            var latestPatch = $"[{ latestPatchNote.PatchNumber }](https://www.dota2.com/patches/{latestPatchNote.PatchNumber}) - <t:{latestPatchNote.PatchTimestamp}:R>";
+            var latestPatch = $"[{latestPatchNote.PatchNumber}](https://www.dota2.com/patches/{latestPatchNote.PatchNumber}) - <t:{latestPatchNote.PatchTimestamp}:R>";
             var response = new EmbedBuilder()
             {
                 Title = "MagusBot",
@@ -79,7 +79,7 @@ namespace Magus.Bot.Modules
 
                 var embed = new EmbedBuilder()
                 {
-                    Title = command.Name,
+                    Title = "/" + command.Name,
                     Description = command.Description,
                     Color = Color.DarkGreen,
                     Timestamp = versionDate,
@@ -194,12 +194,12 @@ namespace Magus.Bot.Modules
             }
             feedback.Author = Context.Interaction.User.Id;
             feedback.Id = MakeFeedbackId(feedback.Author);
-            
+
             var id = _db.InsertRecord(feedback);
             if (id != 0xFFFFFFFFFFFFFFFF)
             {
                 var success = await _webhook.SendMessage(CreateFeedbackMessage(feedback), _config["FeedbackWebhook"]);
-                if (!success) _logger.LogWarning("Failed to send webhook for feedback #{}", id);
+                if (!success) _logger.LogWarning("Failed to send webhook for feedback #{id}", id);
             }
             return id;
         }

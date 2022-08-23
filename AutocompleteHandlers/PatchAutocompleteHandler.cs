@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Data;
-using Magus.Data.Models;
 using Magus.Data.Models.Dota;
 
 namespace Magus.Bot.AutocompleteHandlers

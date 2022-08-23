@@ -4,7 +4,7 @@ using Magus.Data.Models.Magus;
 
 namespace Magus.Bot.Modal
 {
-    public abstract class FeedbackModalBase :IModal
+    public abstract class FeedbackModalBase : IModal
     {
         public abstract FeedbackType Type { get; }
 

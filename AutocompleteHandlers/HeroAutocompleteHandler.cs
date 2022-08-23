@@ -32,7 +32,7 @@ namespace Magus.Bot.AutocompleteHandlers
                 }
                 else
                 {
-                   heroes = _db.GetEntityInfo<HeroInfo>(value, limit: 25).ToList();
+                    heroes = _db.GetEntityInfo<HeroInfo>(value, limit: 25).ToList();
                 }
 
                 List<AutocompleteResult> results = new();

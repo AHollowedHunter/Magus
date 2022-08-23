@@ -1,8 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using System.Reflection;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace Magus.Bot
 {
@@ -33,7 +33,7 @@ namespace Magus.Bot
             _interactions.ComponentCommandExecuted += ComponentCommandExecuted;
             _interactions.ModalCommandExecuted += ModalCommandExecuted;
 
-
+            _logger.LogInformation("CommandHandler Initialised");
         }
 
         # region Error Handling
@@ -167,7 +167,8 @@ namespace Magus.Bot
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                _logger.LogError(ex, "Error handling interaction");
+                _logger.LogInformation("Test in HanldeInte");
 
                 // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
                 // response, or at least let the user know that something went wrong during the command execution.
