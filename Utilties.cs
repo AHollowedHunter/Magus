@@ -59,6 +59,7 @@ namespace Magus.DataBuilder
 
         public static string ReplaceLocalFormatting(this string local)
         {
+            var init = local;
             //  Replace percentage signs. Dirty code
             local = local.Replace("**%%", "****%**");
             local = local.Replace("%%", "%");
@@ -75,6 +76,7 @@ namespace Magus.DataBuilder
             local = h1StartTag.Replace(local, "**__");
             var h1EndTag = new Regex(@"(?i)</\s*h1[^>]*>");
             local = h1EndTag.Replace(local, "__**\n");
+            if (local != init) Console.WriteLine($"Changed: \"{init}\" to \"{local}\"");
             return local;
         }
 
