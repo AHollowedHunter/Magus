@@ -3,9 +3,8 @@ using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Magus.DataBuilder.Extensions;
 using Microsoft.Extensions.Configuration;
-using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using ValveKeyValue;
 
@@ -15,19 +14,21 @@ namespace Magus.DataBuilder
     {
         private readonly IDatabaseService _db;
         private readonly IConfiguration _config;
+        private readonly ILogger<PatchNoteUpdater> _logger;
         private readonly HttpClient _httpClient;
         private readonly KVSerializer _kvSerializer;
 
         private readonly string _sourceDefaultLanguage;
-        private readonly Dictionary<string, string[]> _sourceLocaleMappings; // Switch to cnfig class
+        private readonly Dictionary<string, string[]> _sourceLocaleMappings; // Switch to config class
         private readonly Dictionary<(string Language, string Key), string> _patchNoteValues; // this should be its own class with methods
         private readonly List<Patch> _patches;
         private readonly List<PatchNote> _patchNotes;
 
-        public PatchNoteUpdater(IDatabaseService db, IConfiguration config, HttpClient httpClient)
+        public PatchNoteUpdater(IDatabaseService db, IConfiguration config, ILogger<PatchNoteUpdater> logger, HttpClient httpClient)
         {
             _db         = db;
             _config     = config;
+            _logger     = logger;
             _httpClient = httpClient;
 
             _kvSerializer          = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
@@ -40,25 +41,35 @@ namespace Magus.DataBuilder
 
         public async Task Update()
         {
+            _logger.LogInformation("Starting Update");
+            var startTime = DateTimeOffset.Now;
             await SetPatchNoteValues();
             await SetPatchNotes();
 
             StorePatchNoteEmbeds();
+            var endTime   = DateTimeOffset.Now;
+            var timeTaken = endTime-startTime;
+            _logger.LogInformation("Finished Update");
+            _logger.LogInformation("Time Taken: {0:0.#}s", timeTaken.TotalSeconds);
         }
 
         private async Task SetPatchNoteValues()
         {
+            _logger.LogInformation("Setting Patch Note values");
             _patchNoteValues.Clear();
             foreach (var language in _sourceLocaleMappings)
             {
+                _logger.LogDebug("Processing {0} values", language.Key);
                 var localePatchNotes = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetPatchNotes(language.Key));
                 foreach (var note in localePatchNotes)
                     _patchNoteValues.Add((language.Key, note.Name), CleanLocaleValue(note.Value.ToString() ?? ""));
             }
+            _logger.LogInformation("Finished setting Patch Note values");
         }
 
         private async Task SetPatchNotes()
         {
+            _logger.LogInformation("Setting Patch Notes");
             var patchManifest = await GetKVObjectFromUri(Dota2GameFiles.PatchNotes);
 
             _patches.Clear();
@@ -72,6 +83,7 @@ namespace Magus.DataBuilder
                     _patchNotes.Add(CreatePatchNote(language, patch));
                 }
             }
+            _logger.LogInformation("Finished setting Patch Notes");
         }
 
         private Patch CreatePatchInfo(KVObject patch)
@@ -203,6 +215,8 @@ namespace Magus.DataBuilder
                     Notes = notes,
                 });
             }
+
+            _logger.LogDebug("Processed patch note for {0} in {1}", patchNote.PatchName, language);
             return patchNote;
         }
 
@@ -211,6 +225,7 @@ namespace Magus.DataBuilder
 
         private void StorePatchNoteEmbeds()
         {
+            _logger.LogInformation("Converting Patch Notes to Embed records");
             var generalPatchNotes = new List<GeneralPatchNoteEmbed>();
             var heroPatchNotes    = new List<HeroPatchNoteEmbed>();
             var itemPatchNotes    = new List<ItemPatchNoteEmbed>();
@@ -223,11 +238,12 @@ namespace Magus.DataBuilder
 
             foreach (var patch in _patchNotes)
             {
+                _logger.LogDebug("Processing patch {0} in {1}", patch.PatchName, patch.Language);
                 generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_sourceLocaleMappings));
                 heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, abilityInfo, _sourceLocaleMappings));
                 itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, _sourceLocaleMappings));
             }
-
+            _logger.LogInformation("Updating Patch Notes in Database");
             _db.DeleteCollection<Patch>(); //Patch uses random ID, so wipe collection and re-add. TODO: change this to use fixed id
             _db.InsertRecords(_patches);
             _db.UpsertRecords(generalPatchNotes);

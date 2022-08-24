@@ -2,9 +2,9 @@
 using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
-using Magus.DataBuild.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -44,76 +44,12 @@ namespace Magus.DataBuilder
 
         static ServiceProvider ConfigureServices()
             => new ServiceCollection()
+                .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
                 .AddSingleton(configuration)
                 .AddSingleton<IDatabaseService>(x => new LiteDBService(configuration.GetSection("DatabaseService")))
                 .AddSingleton(x => new HttpClient())
-                .AddSingleton(x => new PatchNoteUpdater(x.GetRequiredService<IDatabaseService>(), x.GetRequiredService<IConfiguration>(), x.GetRequiredService<HttpClient>()))
+                .AddSingleton<PatchNoteUpdater>()
                 .BuildServiceProvider();
-
-        public static void UpdatePatchNotes()
-        {
-
-            db.DeleteCollection<Patch>();
-            db.DeleteCollection<Data.Models.Embeds.GeneralPatchNoteEmbed>();
-            db.DeleteCollection<Data.Models.Embeds.HeroPatchNoteEmbed>();
-            db.DeleteCollection<Data.Models.Embeds.ItemPatchNoteEmbed>();
-
-            var patchList = client
-                .GetFromJsonAsync<JsonElement>($"patchnoteslist?language={language}")
-                .Result
-                .GetProperty("patches");
-
-            var generalPatchNotes = new List<Data.Models.Embeds.GeneralPatchNoteEmbed>();
-            var heroPatchNotes = new List<Data.Models.Embeds.HeroPatchNoteEmbed>();
-            var itemPatchNotes = new List<Data.Models.Embeds.ItemPatchNoteEmbed>();
-
-
-            var heroList = client.GetFromJsonAsync<JsonElement>($"herolist?language={language}").Result;
-            var heroData = heroList.GetProperty("result").GetProperty("data").GetProperty("heroes").Deserialize<IEnumerable<Hero>>();
-            var abilityList = client.GetFromJsonAsync<JsonElement>($"abilitylist?language={language}").Result;
-            var abilityData = abilityList.GetProperty("result").GetProperty("data").GetProperty("itemabilities").Deserialize<IEnumerable<Ability>>();
-            var itemList = client.GetFromJsonAsync<JsonElement>($"itemlist?language={language}").Result;
-            var itemData = itemList.GetProperty("result").GetProperty("data").GetProperty("itemabilities").Deserialize<IEnumerable<Item>>();
-
-            foreach (var patch in patchList.EnumerateArray())
-            {
-                var patchData = patch.Deserialize<Patch>();
-                if (patchData == null)
-                {
-                    Console.WriteLine("Error deserializing patch: {}", patch);
-                    return;
-                }
-                patchData.Id = (ulong)patchData.PatchTimestamp;
-                db.InsertRecord(patchData);
-
-                var patchNoteData = client
-                    .GetFromJsonAsync<RawPatchNote>($"patchnotes?language={language}&version={patchData.PatchNumber}")
-                    .Result;
-                if (patchNoteData == null || patchNoteData.success == false)
-                {
-                    Console.WriteLine("Error retrieving RawPatchNote: {}", patchData.PatchNumber);
-                    return;
-                }
-
-                generalPatchNotes.Add(PatchNoteUtils.GetGeneralPatchNote(patchData, patchNoteData));
-                heroPatchNotes.AddRange(PatchNoteUtils.GetHeroPatchNotes(patchData, patchNoteData, heroData, abilityData));
-                itemPatchNotes.AddRange(PatchNoteUtils.GetItemPatchNotes(patchData, patchNoteData, itemData));
-
-                Console.Write("#");
-            }
-            db.InsertRecords(generalPatchNotes);
-            db.InsertRecords(heroPatchNotes);
-            db.InsertRecords(itemPatchNotes);
-
-            db.EnsureIndex<Patch>("PatchNumber");
-            db.EnsureIndex<Data.Models.Embeds.GeneralPatchNoteEmbed>("PatchNumber");
-            db.EnsureIndex<Data.Models.Embeds.HeroPatchNoteEmbed>("EntityId");
-            db.EnsureIndex<Data.Models.Embeds.HeroPatchNoteEmbed>("PatchNumber");
-            db.EnsureIndex<Data.Models.Embeds.ItemPatchNoteEmbed>("EntityId");
-            db.EnsureIndex<Data.Models.Embeds.ItemPatchNoteEmbed>("PatchNumber");
-
-            Console.WriteLine("\nFinished Patches");
-        }
 
         public static void UpdateHeroes()
         {
