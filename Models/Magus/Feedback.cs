@@ -4,6 +4,8 @@
     {
         public ulong Id { get; set; }
         public ulong Author { get; set; }
+        public ulong GuildSubmitted { get; set; }
+        public bool IsDMSubmitted { get; set; }
         public string Message { get; set; }
         public FeedbackType Type { get; set; }
         public string Resolution { get; set; }
