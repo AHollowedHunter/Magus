@@ -59,7 +59,7 @@ namespace Magus.DataBuilder
             _patchNoteValues.Clear();
             foreach (var language in _sourceLocaleMappings)
             {
-                _logger.LogDebug("Processing {0} values", language.Key);
+                _logger.LogDebug("Processing values for {0}", language.Key);
                 var localePatchNotes = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetPatchNotes(language.Key));
                 foreach (var note in localePatchNotes)
                     _patchNoteValues.Add((language.Key, note.Name), CleanLocaleValue(note.Value.ToString() ?? ""));
@@ -91,7 +91,7 @@ namespace Magus.DataBuilder
             {
                 Id             = GetPatchTimestamp(patch),
                 PatchNumber    = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", ""),
-                PatchTimestamp = GetPatchTimestamp(patch),
+                Timestamp      = GetPatchTimestamp(patch),
             };
 
         private PatchNote CreatePatchNote(string language, KVObject patch)
@@ -106,8 +106,8 @@ namespace Magus.DataBuilder
 
             patchNote.PatchName = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", "");
             patchNote.Timestamp = GetPatchTimestamp(patch);
-            patchNote.Language = language;
-            patchNote.Website = patch.Children.FirstOrDefault(x => x.Name == "website")?.Value.ToString();
+            patchNote.Language  = language;
+            patchNote.Website   = patch.Children.FirstOrDefault(x => x.Name == "website")?.Value.ToString();
 
             foreach (var genericNote in patch.Children.First(x => x.Name == "generic"))
             {
@@ -137,8 +137,8 @@ namespace Magus.DataBuilder
                     patchNote.ItemNotes.Add(new()
                     {
                         InternalName = item.Name,
-                        Title = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
-                        Notes = notes,
+                        Title        = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
+                        Notes        = notes,
                     });
                 }
             }
@@ -153,8 +153,8 @@ namespace Magus.DataBuilder
                 patchNote.NeutralItemNotes.Add(new()
                 {
                     InternalName = item.Name,
-                    Title = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
-                    Notes = notes,
+                    Title        = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
+                    Notes        = notes,
                 });
             }
 
@@ -162,7 +162,7 @@ namespace Magus.DataBuilder
             {
                 var generalNotes = new List<PatchNote.Note>();
                 var abilityNotes = new List<PatchNote.AbilityNotes>();
-                var talentNotes = new List<PatchNote.Note>();
+                var talentNotes  = new List<PatchNote.Note>();
                 foreach (var general in hero.Children.Where(x => x.Name == "default"))
                 {
                     foreach (var note in general.Children)
@@ -180,8 +180,8 @@ namespace Magus.DataBuilder
                     abilityNotes.Add(new()
                     {
                         InternalName = ability.Name,
-                        Notes = notes,
-                        Title = ability.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString()
+                        Notes        = notes,
+                        Title        = ability.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString()
                     });
                 }
                 foreach (var talent in hero.Children.Where(x => x.Name == "talent"))
@@ -197,7 +197,7 @@ namespace Magus.DataBuilder
                     InternalName = hero.Name,
                     GeneralNotes = generalNotes,
                     AbilityNotes = abilityNotes,
-                    TalentNotes = talentNotes,
+                    TalentNotes  = talentNotes,
                 });
             }
 
@@ -216,11 +216,11 @@ namespace Magus.DataBuilder
                 });
             }
 
-            _logger.LogDebug("Processed patch note for {0} in {1}", patchNote.PatchName, language);
+            _logger.LogDebug("Processed patch note for {0,-5} in {1}", patchNote.PatchName, language);
             return patchNote;
         }
 
-        private ulong GetPatchTimestamp(KVObject patch) 
+        private ulong GetPatchTimestamp(KVObject patch)
             => (ulong)DateTimeOffset.Parse(patch.Children.First(x => x.Name == "patch_date").Value.ToString()!).ToUnixTimeSeconds();
 
         private void StorePatchNoteEmbeds()
@@ -238,7 +238,7 @@ namespace Magus.DataBuilder
 
             foreach (var patch in _patchNotes)
             {
-                _logger.LogDebug("Processing patch {0} in {1}", patch.PatchName, patch.Language);
+                _logger.LogDebug("Processing patch embeds {0,-5} in {1}", patch.PatchName, patch.Language);
                 generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_sourceLocaleMappings));
                 heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, abilityInfo, _sourceLocaleMappings));
                 itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, _sourceLocaleMappings));
@@ -281,7 +281,7 @@ namespace Magus.DataBuilder
                 {
                     Value  = GetLanguageValueOrDefault(noteKey)!,
                     Indent = Math.Abs(int.Parse(kvObject.Children.FirstOrDefault(x => x.Name == "indent")?.Value.ToString() ?? "0")),
-                    Info   = info ,
+                    Info   = info,
                 };
             }
         }
@@ -301,21 +301,21 @@ namespace Magus.DataBuilder
 
         private static string CleanLocaleValue(string patchNote)
         {
-            var onlyBreak = new Regex(@"^\s*<br>\s*$");
-            var tableRegex = new Regex(@"<table>(.|\n)*<\/table>");
-            var boldRegex = new Regex(@"(?i)<[/]?\s*b\s*/?>");
-            var infoRegex = new Regex(@"(?i)<[/]?\s*info\s*/?>");
+            var onlyBreak      = new Regex(@"^\s*<br>\s*$");
+            var tableRegex     = new Regex(@"<table>(.|\n)*<\/table>");
+            var boldRegex      = new Regex(@"(?i)<[/]?\s*b\s*/?>");
+            var infoRegex      = new Regex(@"(?i)<[/]?\s*info\s*/?>");
             var highlightRegex = new Regex(@"(?i)<[/]?[\s.]*(class=""(New|Reworked)"")?[^>]*>");
-            var htmlTagRegex = new Regex(@"(?i)<[/]?\s*[^>]*>");
-            patchNote = onlyBreak.Replace(patchNote, "\n");
-            patchNote = patchNote.Replace("<br>", "");
-            patchNote = patchNote.Replace("&nbsp;", "");
-            patchNote = patchNote.Replace("*", "\\*");
-            patchNote = tableRegex.Replace(patchNote, "");
-            patchNote = boldRegex.Replace(patchNote, "**");
-            patchNote = infoRegex.Replace(patchNote, "*");
-            patchNote = highlightRegex.Replace(patchNote, "__");
-            patchNote = htmlTagRegex.Replace(patchNote, "");
+            var htmlTagRegex   = new Regex(@"(?i)<[/]?\s*[^>]*>");
+            patchNote          = onlyBreak.Replace(patchNote, "\n");
+            patchNote          = patchNote.Replace("<br>", "\n");
+            patchNote          = patchNote.Replace("&nbsp;", "");
+            patchNote          = patchNote.Replace("*", "\\*");
+            patchNote          = tableRegex.Replace(patchNote, "");
+            patchNote          = boldRegex.Replace(patchNote, "**");
+            patchNote          = infoRegex.Replace(patchNote, "*");
+            patchNote          = highlightRegex.Replace(patchNote, "__");
+            patchNote          = htmlTagRegex.Replace(patchNote, "");
 
             return patchNote;
         }

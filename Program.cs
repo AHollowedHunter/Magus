@@ -91,7 +91,7 @@ namespace Magus.DataBuilder
                     Description = heroData.LocalNpeDesc,
                     Url = heroUrl,
                     ColorRaw = 0X00A84300,
-                    Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.PatchTimestamp),
+                    Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
                     ThumbnailUrl = $"{DotaUrls.Hero}{heroData.InternalName.Substring(14)}.png",
                     Footer = new() { Text = $"Patch {latestPatch.PatchNumber}" },
                 };
@@ -220,7 +220,7 @@ namespace Magus.DataBuilder
                         Title = $"{ability.LocalName}",
                         Description = ability.LocalDesc + "\n",
                         ColorRaw = Color.Orange,
-                        Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.PatchTimestamp),
+                        Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
                         Footer = new() { Text = $"Patch {latestPatch.PatchNumber}" },
                         ThumbnailUrl = $"{DotaUrls.Ability}{ability.InternalName}.png",
                     };
@@ -326,7 +326,7 @@ namespace Magus.DataBuilder
                     Title = itemData.LocalName,
                     Description = bonuses + localDesc + spellValues,
                     ColorRaw = Color.DarkBlue,
-                    Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.PatchTimestamp),
+                    Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
                     Footer = new() { Text = $"Patch {latestPatch.PatchNumber}" },
                     ThumbnailUrl = $"{DotaUrls.Item}{itemData.InternalName.Substring(5)}.png",
                 };

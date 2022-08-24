@@ -2,8 +2,10 @@
 using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
-using System.Globalization;
+using System;
+using System.Text;
 using System.Text.RegularExpressions;
+using static Magus.Data.Models.Dota.PatchNote;
 
 namespace Magus.DataBuilder.Extensions
 {
@@ -25,7 +27,7 @@ namespace Magus.DataBuilder.Extensions
             };
             var fields = new List<Field>();
 
-            if (patch.Website != null || patch.Website != string.Empty)
+            if (!string.IsNullOrEmpty(patch.Website))
             {
                 fields.Add(new()
                 {
@@ -47,7 +49,7 @@ namespace Magus.DataBuilder.Extensions
             {
                 generalPatchNotesList.Add(new()
                 {
-                    Id          = MakeId(patch.Timestamp.ToString(), 0, 0, locale), //Temp custom id
+                    Id          = GetPatchNoteId(patch.PatchName,"General", locale), //Temp custom id
                     Locale      = locale,
                     Embed       = generalPatchEmbed,
                     PatchNumber = patch.PatchName,
@@ -96,7 +98,7 @@ namespace Magus.DataBuilder.Extensions
                 {
                     heroPatchNotesList.Add(new()
                     {
-                        Id           = MakeId(patch.Timestamp.ToString(), 1, (int)heroInfo.Id, locale), //Temp custom id
+                        Id           = GetPatchNoteId(patch.PatchName, hero.InternalName, locale), //Temp custom id
                         Locale       = locale,
                         EntityId     = (int)heroInfo.Id,
                         LocalName    = heroInfo.LocalName,
@@ -131,7 +133,7 @@ namespace Magus.DataBuilder.Extensions
                 {
                     itemPatchNotesList.Add(new()
                     {
-                        Id           = MakeId(patch.Timestamp.ToString(), 2, (int)itemInfo.Id, locale), //Temp custom id
+                        Id           = GetPatchNoteId(patch.PatchName, item.InternalName, locale), //Temp custom id
                         Locale       = locale,
                         EntityId     = (int)itemInfo.Id,
                         LocalName    = itemInfo.LocalName,
@@ -151,16 +153,19 @@ namespace Magus.DataBuilder.Extensions
             foreach (var note in notes)
             {
                 var indent = notes.Any(x=> x.Indent == 0) ? note.Indent : note.Indent - 1; // Some set of notes are all indedented, so remove a level
-                var tab = "• ";
-                if (indent > 0)
+                var tab = string.Empty;
+
+                if (!Regex.Match(note.Value, @"^\s+$").Success)
                 {
-                    tab = String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), indent)) + "◦ ";
+                    tab = GetTab(indent);
                 }
-                if (Regex.Match(note.Value, @"^\s+$").Success)
-                {
-                    tab = string.Empty;
-                }
+
                 var valueToAdd = tab + note.Value + "\n";
+                if (!string.IsNullOrEmpty(note.Info))
+                {
+                    valueToAdd += $"{GetTab(indent + 1)}{note.Info}\n";
+                }
+
                 if (description.Length + valueToAdd.Length + truncatedMessage.Length > maxLength)
                 {
                     description += truncatedMessage;
@@ -171,10 +176,22 @@ namespace Magus.DataBuilder.Extensions
             return description;
         }
 
-        private static ulong MakeId(string timestamp, int type, int id, string locale)
+        private static string GetTab(int indent)
         {
-            var localeInt = CultureInfo.GetCultures(CultureTypes.AllCultures).Where(x=>x.Name == locale).First().LCID;
-            return Convert.ToUInt64(String.Format("{0}{1}{2}{3}", timestamp, type, id.ToString().PadLeft(5, '0'), localeInt));
+            if (indent > 0)
+            {
+                return String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), indent)) + "◦ ";
+            }
+            return "• ";
+        }
+
+        private static ulong GetPatchNoteId(string patchname, string entityName, string locale)
+        {
+            var str = $"{patchname}_{entityName}_{locale}";
+            var md5 = System.Security.Cryptography.MD5.Create();
+            var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(str));
+            var id = BitConverter.ToUInt64(hash);
+            return id;
         }
     }
 }
