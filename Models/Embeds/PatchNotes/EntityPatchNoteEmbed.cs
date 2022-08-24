@@ -1,6 +1,6 @@
 ﻿namespace Magus.Data.Models.Embeds
 {
-    public abstract record EntityPatchNote : BasePatchNote
+    public abstract record EntityPatchNoteEmbed : BasePatchNoteEmbed
     {
         public int EntityId { get; init; }
         public string? InternalName { get; init; }

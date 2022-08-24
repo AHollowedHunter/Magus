@@ -3,7 +3,6 @@ using Magus.Data.Models;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Microsoft.Extensions.Configuration;
-using System.Linq.Expressions;
 
 namespace Magus.Data
 {
@@ -115,7 +114,7 @@ namespace Magus.Data
         public Patch GetLatestPatch()
         {
             var collection = _liteDB.GetCollection<Patch>();
-            var results = collection.FindAll().OrderByDescending(x => x.PatchTimestamp).First();
+            var results = collection.FindAll().OrderByDescending(x => x.Timestamp).First();
             return results;
         }
 
@@ -132,26 +131,26 @@ namespace Magus.Data
             var results = collection.Find(Query.StartsWith("PatchNumber", patchNumber));
             if (!orderByDesc)
             {
-                results = results.OrderBy(x => x.PatchTimestamp);
+                results = results.OrderBy(x => x.Timestamp);
             }
             else
             {
-                results = results.OrderByDescending(x => x.PatchTimestamp);
+                results = results.OrderByDescending(x => x.Timestamp);
             }
             return results.Take(limit);
         }
 
-        public Models.Embeds.GeneralPatchNote GetGeneralPatchNote(string patchNumber)
+        public GeneralPatchNoteEmbed GetGeneralPatchNote(string patchNumber, string locale = IDatabaseService.DEFAULT_LOCALE)
         {
-            var collection = _liteDB.GetCollection<Models.Embeds.GeneralPatchNote>();
-            var results = collection.FindOne(Query.EQ("PatchNumber", patchNumber));
+            var collection = _liteDB.GetCollection<GeneralPatchNoteEmbed>();
+            var results = collection.FindOne(Query.And(Query.EQ("PatchNumber", patchNumber), Query.EQ("Locale", locale)));
             return results;
         }
 
-        public IEnumerable<T> GetPatchNotes<T>(int entityId, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNote
+        public IEnumerable<T> GetPatchNotes<T>(int entityId, string locale = IDatabaseService.DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
         {
             var collection = _liteDB.GetCollection<T>();
-            var results = collection.Find(Query.EQ("EntityId", entityId));
+            var results = collection.Find(Query.And(Query.EQ("EntityId", entityId), Query.EQ("Locale", locale)));
             if (!orderByDesc)
             {
                 results = results.OrderBy(x => x.PatchNumber);
@@ -163,7 +162,7 @@ namespace Magus.Data
             return results.Take(limit);
         }
 
-        public IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNote
+        public IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
         {
             var collection = _liteDB.GetCollection<T>();
             IEnumerable<T> results;
@@ -174,14 +173,14 @@ namespace Magus.Data
             return results.Take(limit);
         }
 
-        public T GetPatchNote<T>(string patchNumber, int entityId) where T : EntityPatchNote
+        public T GetPatchNote<T>(string patchNumber, int entityId) where T : EntityPatchNoteEmbed
         {
             var collection = _liteDB.GetCollection<T>();
             var result = collection.FindOne(Query.And(Query.EQ("PatchNumber", patchNumber), Query.EQ("EntityId", entityId)));
             return result;
         }
 
-        public IEnumerable<T> GetPatchNote<T>(string patchNumber, string entityName, int limit = int.MaxValue) where T : EntityPatchNote
+        public IEnumerable<T> GetPatchNote<T>(string patchNumber, string entityName, int limit = int.MaxValue) where T : EntityPatchNoteEmbed
         {
             var collection = _liteDB.GetCollection<T>();
             IEnumerable<T> results;
@@ -210,7 +209,7 @@ namespace Magus.Data
             return results.Take(limit);
         }
 
-        public bool AddIndex<T>(string fieldName, bool unique = false) where T : ISnowflakeRecord
+        public bool EnsureIndex<T>(string fieldName, bool unique = false) where T : ISnowflakeRecord
         {
             var collection = _liteDB.GetCollection<T>();
             if (collection == null)

@@ -6,6 +6,8 @@ namespace Magus.Data
 {
     public interface IDatabaseService : IDisposable
     {
+        public const string DEFAULT_LOCALE = "en-GB";
+
         void CreateCollection<T>() where T : ISnowflakeRecord;
 
         /// <summary>
@@ -43,7 +45,7 @@ namespace Magus.Data
         /// Update or insert a collection of records, and return an int
         /// </summary>
         int UpsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord;
-                
+
         /// <summary>
         /// Attempts to deletes the given record type via the Id
         /// </summary>
@@ -91,25 +93,25 @@ namespace Magus.Data
         /// <summary>
         /// Get the General notes for the specified patch
         /// </summary>
-        Models.Embeds.GeneralPatchNote GetGeneralPatchNote(string patchNumber);
+        GeneralPatchNoteEmbed GetGeneralPatchNote(string patchNumber, string locale = DEFAULT_LOCALE);
         /// <summary>
         /// Get the specified types patch note(s) for the specified entityId
         /// </summary>
-        IEnumerable<T> GetPatchNotes<T>(int entityId, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNote;
+        IEnumerable<T> GetPatchNotes<T>(int entityId, string locale = DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed;
 
         /// <summary>
         /// Get the specified types patch note(s) for the specified entityName
         /// </summary>
-        IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNote;
+        IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed;
         /// <summary>
         /// Get the specified types patch note for the specified patch and entityId
         /// </summary>
-        T GetPatchNote<T>(string patchNumber, int entityId) where T : EntityPatchNote;
+        T GetPatchNote<T>(string patchNumber, int entityId) where T : EntityPatchNoteEmbed;
         /// <summary>
         /// Get the specified types patch note for the specified patch and entity name
         /// </summary>
         //T GetPatchNote<T>(string patchNumber, string entityName) where T : EntityPatchNote;
-        
+
         /// <summary>
         /// Get the specified types info via an entityId
         /// </summary>
@@ -124,7 +126,7 @@ namespace Magus.Data
         /// </summary>
         /// <param name="fieldName">Field to add as an index</param>
         /// <param name="unique">Whether the index should be enforced unique</param>
-        /// <returns>True if the index was successfully created</returns>
-        bool AddIndex<T>(string fieldName, bool unique = false) where T : ISnowflakeRecord;
+        /// <returns>True if the index was created, false if already exists</returns>
+        bool EnsureIndex<T>(string fieldName, bool unique = false) where T : ISnowflakeRecord;
     }
 }
