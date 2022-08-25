@@ -24,15 +24,15 @@ namespace Magus.Data
         public static string TurnRateIcon => BaseUrl + "images/dota_react/heroes/stats/icon_turn_rate.png";
         public static string VisionIcon => BaseUrl + "images/dota_react/heroes/stats/icon_vision.png";
 
-        public static string GetAttributeIcon(this PrimaryAttribute attribute)
+        public static string GetAttributeIcon(this AttributePrimary attribute)
         {
             switch (attribute)
             {
-                case PrimaryAttribute.Strength:
+                case AttributePrimary.DOTA_ATTRIBUTE_STRENGTH:
                     return StrengthIcon;
-                case PrimaryAttribute.Agility:
+                case AttributePrimary.DOTA_ATTRIBUTE_AGILITY:
                     return AgilityIcon;
-                case PrimaryAttribute.Intelligence:
+                case AttributePrimary.DOTA_ATTRIBUTE_INTELLECT:
                     return IntelligenceIcon;
                 default:
                     return null;

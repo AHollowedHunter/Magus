@@ -2,9 +2,9 @@
 {
     public record Ability : BaseSpell
     {
-        public Ability()
-        {
-
-        }
+        public bool AbilityHasScepter { get; set; }
+        public bool AbilityHasShard { get; set; }
+        public bool AbilityIsGrantedByScepter { get; set; }
+        public bool AbilityIsGrantedByShard { get; set; }
     }
 }

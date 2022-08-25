@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Magus.Data.Models.Dota
+﻿namespace Magus.Data.Models.Dota
 {
     public record PatchNote
     {

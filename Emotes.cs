@@ -38,22 +38,22 @@ namespace Magus.Data
         public static Emote MeleeIcon => Emote.Parse($"<:icon_melee:946541322188238938>");
         public static Emote CooldownIcon => Emote.Parse($"<:icon_cooldown:945836553756880967>");
 
-        public static Emote GetAttributeEmote(this PrimaryAttribute attribute)
+        public static Emote GetAttributeEmote(this AttributePrimary attribute)
         {
             switch (attribute)
             {
-                case PrimaryAttribute.Strength:
+                case AttributePrimary.DOTA_ATTRIBUTE_STRENGTH:
                     return StrengthIcon;
-                case PrimaryAttribute.Agility:
+                case AttributePrimary.DOTA_ATTRIBUTE_AGILITY:
                     return AgilityIcon;
-                case PrimaryAttribute.Intelligence:
+                case AttributePrimary.DOTA_ATTRIBUTE_INTELLECT:
                     return IntelligenceIcon;
                 default:
                     return null;
             }
         }
 
-        public static Emote GetAttackTypeIcon(this AttackType attackType)
-            => attackType == AttackType.Melee ? MeleeIcon : RangedIcon;
+        public static Emote GetAttackTypeIcon(this AttackCapabilities attackType)
+            => attackType == AttackCapabilities.DOTA_UNIT_CAP_MELEE_ATTACK ? MeleeIcon : RangedIcon; //todo adjust this
     }
 }

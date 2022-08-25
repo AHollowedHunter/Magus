@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
+﻿using System.ComponentModel.DataAnnotations;
 namespace Magus.Data.Models.Dota
 {
     /// <summary>
@@ -9,150 +8,80 @@ namespace Magus.Data.Models.Dota
     public abstract record BaseSpell
     {
         // Info
-        [JsonPropertyName("id")]
         public int Id { get; set; }
-        [JsonPropertyName("name_loc")]
+        public string Language { get; set; }
         public string LocalName { get; set; }
-        [JsonPropertyName("name")]
         public string InternalName { get; set; }
-        [JsonPropertyName("desc_loc")]
-        public string LocalDesc { get; set; }
-        [JsonPropertyName("lore_loc")]
+        public string LocalDesc { get; set; } // Move to ability, and change for Items, which have multiple actives, so List<string> split via <h1> tags
         public string LocalLore { get; set; }
-        [JsonPropertyName("notes_loc")]
-        public string[] LocalNotes { get; set; }
-        [JsonPropertyName("shard_loc")]
-        public string LocalShard { get; set; }
-        [JsonPropertyName("scepter_loc")]
-        public string LocalScepter { get; set; }
-        [JsonPropertyName("type")]
-        public byte Type { get; set; }
-        [JsonPropertyName("behavior")]
-        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-        public long Behaviour { get; set; }
-        [JsonPropertyName("target_team")]
-        public UnitTargetTeam TargetTeam { get; set; }
-        [JsonPropertyName("target_type")]
-        public UnitTargetType TargetType { get; set; }
-        [JsonPropertyName("flags")]
-        public int Flags { get; set; }
-        [JsonPropertyName("damage")]
-        public DamageType Damage { get; set; }
-        [JsonPropertyName("immunity")]
-        public SpellImmunityType Immunity { get; set; }
-        [JsonPropertyName("dispellable")]
-        public Dispellable Dispellable { get; set; }
-        [JsonPropertyName("max_level")]
-        public byte LevelMax { get; set; }
+        public IEnumerable<string>? LocalNotes { get; set; }
+
+        public string LocalShard { get; set; } // needed?
+        public string LocalScepter { get; set; } // needed?
+
+        public byte MaxLevel { get; set; }
+        public AbilityType AbilityType { get; set; }
+        public AbilityBehavior AbilityBehavior { get; set; }
+        public AbilityUnitTargetTeam AbilityUnitTargetTeam { get; set; }
+        public AbilityUnitTargetType AbilityUnitTargetType { get; set; }
+        public AbilityUnitDamageType AbilityUnitDamageType { get; set; }
+        public SpellImmunityType SpellImmunityType { get; set; }
+        public SpellDispellableType SpellDispellableType { get; set; }
+
+        public int Flags { get; set; } // What is this?
 
         // Stats
-        [JsonPropertyName("cast_ranges")]
-        public int[] CastRanges { get; set; }
-        [JsonPropertyName("cast_points")]
-        public float[] CastPoints { get; set; }
-        [JsonPropertyName("channel_times")]
-        public float[] ChannelTimes { get; set; }
-        [JsonPropertyName("cooldowns")]
-        public float[] Cooldowns { get; set; }
-        [JsonPropertyName("durations")]
-        public float[] Durations { get; set; }
-        [JsonPropertyName("damages")]
-        public float[] Damages { get; set; }
-        [JsonPropertyName("mana_costs")]
-        public short[] ManaCosts { get; set; }
-        [JsonPropertyName("gold_costs")]
-        public short[] GoldCosts { get; set; }
+        public IEnumerable<float>? AbilityCastRange { get; set; }
+        public IEnumerable<float>? AbilityCastPoint { get; set; }
+        public IEnumerable<float>? AbilityChannelTime { get; set; }
+        public IEnumerable<float>? AbilityCooldown { get; set; }
+        public IEnumerable<float>? AbilityDuration { get; set; }
+        public IEnumerable<float>? AbilityDamage { get; set; }
+        public IEnumerable<float>? AbilityManaCost { get; set; }
 
-        [JsonPropertyName("special_values")]
-        public SpecialValues[] SpecialValues { get; set; }
-
-        // Item Properties
-        [JsonPropertyName("is_item")]
-        public bool IsItem { get; set; }
-        [JsonPropertyName("item_cost")]
-        public short ItemCost { get; set; }
-        [JsonPropertyName("item_initial_charges")]
-        public byte ItemInitialCharges { get; set; }
-        [JsonPropertyName("item_neutral_tier")]
-        public uint ItemNeutralTier { get; set; }
-        [JsonPropertyName("item_stock_max")]
-        public byte ItemStockMax { get; set; }
-        [JsonPropertyName("item_stock_time")]
-        public int ItemStockTime { get; set; }
-        [JsonPropertyName("item_quality")]
-        public byte ItemQuality { get; set; }
-
-
-        // Ability properties
-        [JsonPropertyName("ability_has_scepter")]
-        public bool AbilityHasScepter { get; set; }
-        [JsonPropertyName("ability_has_shard")]
-        public bool AbilityHasShard { get; set; }
-        [JsonPropertyName("ability_is_granted_by_scepter")]
-        public bool AbilityIsGrantedByScepter { get; set; }
-        [JsonPropertyName("ability_is_granted_by_shard")]
-        public bool AbilityIsGrantedByShard { get; set; }
+        public IEnumerable<AbilityValues> AbilityValues { get; set; }
 
         // Is there anything we don't know?
-        [JsonExtensionData]
         public Dictionary<string, object>? ExtensionData { get; set; }
 
-        public bool HasBehaviour(BehaviorFlags behavior)
-            => ((BehaviorFlags)Behaviour).HasFlag(behavior);
+        public bool HasBehaviour(AbilityBehavior behavior)
+            => ((AbilityBehavior)AbilityBehavior).HasFlag(behavior);
 
-        public List<BehaviorFlags> GetBehaviors()
+        public List<AbilityBehavior> GetBehaviors()
         {
-            var behaviors = new List<BehaviorFlags>();
-            foreach (BehaviorFlags b in Enum.GetValues(typeof(BehaviorFlags)))
+            var behaviors = new List<AbilityBehavior>();
+            foreach (AbilityBehavior b in Enum.GetValues(typeof(AbilityBehavior)))
             {
                 if (HasBehaviour(b)) behaviors.Add(b);
             }
             return behaviors;
         }
 
-        public List<BehaviorFlags> GetTargetType()
+        public List<AbilityBehavior> GetTargetType()
         {
-            var targetTypes = new List<BehaviorFlags>();
-            if (HasBehaviour(BehaviorFlags.PASSIVE)) targetTypes.Add(BehaviorFlags.PASSIVE);
-            if (HasBehaviour(BehaviorFlags.NO_TARGET)) targetTypes.Add(BehaviorFlags.NO_TARGET);
-            if (HasBehaviour(BehaviorFlags.UNIT_TARGET)) targetTypes.Add(BehaviorFlags.UNIT_TARGET);
-            if (HasBehaviour(BehaviorFlags.POINT)) targetTypes.Add(BehaviorFlags.POINT);
+            var targetTypes = new List<AbilityBehavior>();
+            if (HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_PASSIVE)) targetTypes.Add(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_PASSIVE);
+            if (HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_NO_TARGET)) targetTypes.Add(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_NO_TARGET);
+            if (HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_UNIT_TARGET)) targetTypes.Add(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_UNIT_TARGET);
+            if (HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_POINT)) targetTypes.Add(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_POINT);
             return targetTypes;
         }
 
         public List<string> GetTargetTypeNames()
         {
             var targetNames = new List<string>();
-            if (HasBehaviour(BehaviorFlags.PASSIVE)) targetNames.Add("Passive");
-            if (HasBehaviour(BehaviorFlags.NO_TARGET)) targetNames.Add("No Target");
-            if (HasBehaviour(BehaviorFlags.UNIT_TARGET)) targetNames.Add("Unit Target");
-            if (HasBehaviour(BehaviorFlags.POINT)) targetNames.Add("Point Target");
+            if (HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_PASSIVE)) targetNames.Add("Passive");
+            if (HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_NO_TARGET)) targetNames.Add("No Target");
+            if (HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_UNIT_TARGET)) targetNames.Add("Unit Target");
+            if (HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_POINT)) targetNames.Add("Point Target");
             return targetNames;
         }
 
-        public UnitTargetTeam GetTargetTeam()
-            => (UnitTargetTeam)TargetTeam;
-
-        public UnitTargetType GetUnitTargetType()
-            => (UnitTargetType)TargetType;
-
-        public DamageType GetDamageType()
-            => (DamageType)Damage;
-
-        public AbilityType GetAbilityType()
-            => (AbilityType)Type;
-
-        public SpellImmunityType GetSpellImmunityType()
-            => (SpellImmunityType)Immunity;
-
-        public Dispellable GetDispellable()
-            => (Dispellable)Dispellable;
-
-        public List<SpecialValues> GetItemBonusValues()
+        public List<AbilityValues> GetItemBonusValues()
         {
-            var bonusValues = new List<SpecialValues>();
+            var bonusValues = new List<AbilityValues>();
 
-            foreach (var value in SpecialValues)
+            foreach (var value in AbilityValues)
             {
                 if (!string.IsNullOrEmpty(value.LocalHeading) && (value.LocalHeading.StartsWith('+') || value.LocalHeading.StartsWith('-')))
                 {
@@ -162,11 +91,11 @@ namespace Magus.Data.Models.Dota
             return bonusValues;
         }
 
-        public List<SpecialValues> GetSpellValues()
+        public List<AbilityValues> GetSpellValues()
         {
-            var spellValues = new List<SpecialValues>();
+            var spellValues = new List<AbilityValues>();
 
-            foreach (var value in SpecialValues)
+            foreach (var value in AbilityValues)
             {
                 if (!string.IsNullOrEmpty(value.LocalHeading) && !(value.LocalHeading.StartsWith('+') || value.LocalHeading.StartsWith('-')))
                 {
@@ -178,168 +107,178 @@ namespace Magus.Data.Models.Dota
         }
     }
 
-    public record SpecialValues
+    public record AbilityValues
     {
-        [JsonPropertyName("name")]
         public string Name { get; set; }
-        [JsonPropertyName("values_float")]
         public float[] ValuesFloat { get; set; }
-        [JsonPropertyName("values_int")]
         public int[] ValuesInt { get; set; }
-        [JsonPropertyName("is_percentage")]
         public bool IsPercentage { get; set; }
-        [JsonPropertyName("heading_loc")]
         public string LocalHeading { get; set; }
     }
 
     [Flags]
-    public enum BehaviorFlags : long
+    public enum AbilityBehavior : ulong
     {
-        HIDDEN = 1,
-        PASSIVE = 2,
-        NO_TARGET = 4,
-        UNIT_TARGET = 8,
-        POINT = 16,
-        AOE = 32,
-        NOT_LEARNABLE = 64,
-        CHANNELLED = 128,
-        ITEM = 256,
-        TOGGLE = 512,
-        DIRECTIONAL = 1024,
-        IMMEDIATE = 2048,
-        AUTOCAST = 4096,
-        OPTIONAL_UNIT_TARGET = 8192,
-        OPTIONAL_POINT = 16384,
-        OPTIONAL_NO_TARGET = 32768,
-        AURA = 65536,
-        ATTACK = 131072,
-        DONT_RESUME_MOVEMENT = 262144,
-        ROOT_DISABLES = 524288,
-        UNRESTRICTED = 1048576,
-        IGNORE_PSEUDO_QUEUE = 2097152,
-        IGNORE_CHANNEL = 4194304,
-        DONT_CANCEL_MOVEMENT = 8388608,
-        DONT_ALERT_TARGET = 16777216,
-        DONT_RESUME_ATTACK = 33554432,
-        NORMAL_WHEN_STOLEN = 67108864,
-        IGNORE_BACKSWING = 134217728,
-        RUNE_TARGET = 268435456,
-        DONT_CANCEL_CHANNEL = 536870912,
-        VECTOR_TARGETING = 1073741824,
-        LAST_RESORT_POINT = 2147483648,
-        CAN_SELF_CAST = 4294967296,
-        SHOW_IN_GUIDES = 8589934592,
-        UNLOCKED_BY_EFFECT_INDEX = 17179869184,
-        SUPPRESS_ASSOCIATED_CONSUMABLE = 34359738368,
-        FREE_DRAW_TARGETING = 68719476736,
+        DOTA_ABILITY_BEHAVIOR_HIDDEN                         = 1,
+        [Display(Name = "Passive")]
+        DOTA_ABILITY_BEHAVIOR_PASSIVE                        = 2,
+        [Display(Name = "No Target")]
+        DOTA_ABILITY_BEHAVIOR_NO_TARGET                      = 4,
+        [Display(Name = "Unit Target")]
+        DOTA_ABILITY_BEHAVIOR_UNIT_TARGET                    = 8,
+        [Display(Name = "Point target")]
+        DOTA_ABILITY_BEHAVIOR_POINT                          = 16,
+        DOTA_ABILITY_BEHAVIOR_AOE                            = 32,
+        DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE                  = 64,
+        DOTA_ABILITY_BEHAVIOR_CHANNELLED                     = 128,
+        DOTA_ABILITY_BEHAVIOR_ITEM                           = 256,
+        DOTA_ABILITY_BEHAVIOR_TOGGLE                         = 512,
+        DOTA_ABILITY_BEHAVIOR_DIRECTIONAL                    = 1024,
+        DOTA_ABILITY_BEHAVIOR_IMMEDIATE                      = 2048,
+        DOTA_ABILITY_BEHAVIOR_AUTOCAST                       = 4096,
+        DOTA_ABILITY_BEHAVIOR_OPTIONAL_UNIT_TARGET           = 8192,
+        DOTA_ABILITY_BEHAVIOR_OPTIONAL_POINT                 = 16384,
+        DOTA_ABILITY_BEHAVIOR_OPTIONAL_NO_TARGET             = 32768,
+        DOTA_ABILITY_BEHAVIOR_AURA                           = 65536,
+        DOTA_ABILITY_BEHAVIOR_ATTACK                         = 131072,
+        DOTA_ABILITY_BEHAVIOR_DONT_RESUME_MOVEMENT           = 262144,
+        DOTA_ABILITY_BEHAVIOR_ROOT_DISABLES                  = 524288,
+        DOTA_ABILITY_BEHAVIOR_UNRESTRICTED                   = 1048576,
+        DOTA_ABILITY_BEHAVIOR_IGNORE_PSEUDO_QUEUE            = 2097152,
+        DOTA_ABILITY_BEHAVIOR_IGNORE_CHANNEL                 = 4194304,
+        DOTA_ABILITY_BEHAVIOR_DONT_CANCEL_MOVEMENT           = 8388608,
+        DOTA_ABILITY_BEHAVIOR_DONT_ALERT_TARGET              = 16777216,
+        DOTA_ABILITY_BEHAVIOR_DONT_RESUME_ATTACK             = 33554432,
+        DOTA_ABILITY_BEHAVIOR_NORMAL_WHEN_STOLEN             = 67108864,
+        DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING               = 134217728,
+        DOTA_ABILITY_BEHAVIOR_RUNE_TARGET                    = 268435456,
+        DOTA_ABILITY_BEHAVIOR_DONT_CANCEL_CHANNEL            = 536870912,
+        DOTA_ABILITY_BEHAVIOR_VECTOR_TARGETING               = 1073741824,
+        DOTA_ABILITY_BEHAVIOR_LAST_RESORT_POINT              = 2147483648,
+        DOTA_ABILITY_BEHAVIOR_CAN_SELF_CAST                  = 4294967296,
+        DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES                 = 8589934592,
+        DOTA_ABILITY_BEHAVIOR_UNLOCKED_BY_EFFECT_INDEX       = 17179869184,
+        DOTA_ABILITY_BEHAVIOR_SUPPRESS_ASSOCIATED_CONSUMABLE = 34359738368,
+        DOTA_ABILITY_BEHAVIOR_FREE_DRAW_TARGETING            = 68719476736,
     }
 
     [Flags]
-    public enum DamageType
+    public enum AbilityUnitDamageType : byte
     {
-        NONE = 0,
-        PHYSICAL = 1,
-        MAGICAL = 2,
-        PURE = 4,
-        HP_REMOVAL = 8,
-        ALL = 7,
+        DAMAGE_TYPE_NONE       = 0,
+        [Display(Name = "Physical")]
+        DAMAGE_TYPE_PHYSICAL   = 1,
+        [Display(Name = "Magical")]
+        DAMAGE_TYPE_MAGICAL    = 2,
+        [Display(Name = "Pure")]
+        DAMAGE_TYPE_PURE       = 4,
+        [Display(Name = "HP Removal")]
+        DAMAGE_TYPE_HP_REMOVAL = 8,
+        DAMAGE_TYPE_ALL        = 7,
     }
-    public enum AbilityType
+    public enum AbilityType : byte
     {
-        BASIC = 0,
-        ULTIMATE = 1,
-        ATTRIBUTES = 2,
-        HIDDEN = 3,
-    }
-
-    public enum SpellImmunityType
-    {
-        NONE = 0,
-        ALLIES_YES = 1,
-        ALLIES_NO = 2,
-        ENEMIES_YES = 3,
-        ENEMIES_NO = 4,
-        ALLIES_YES_ENEMIES_NO = 5,
+        DOTA_ABILITY_TYPE_BASIC      = 0,
+        DOTA_ABILITY_TYPE_ULTIMATE   = 1,
+        DOTA_ABILITY_TYPE_ATTRIBUTES = 2,
+        HIDDEN                       = 3, // needed?
     }
 
-    public enum Dispellable
+    public enum SpellImmunityType : byte
     {
-        NONE = 0,
-        STRONG = 1,
-        BASIC = 2,
-        NO = 3,
+        SPELL_IMMUNITY_NONE                  = 0,
+        SPELL_IMMUNITY_ALLIES_YES            = 1,
+        SPELL_IMMUNITY_ALLIES_NO             = 2,
+        SPELL_IMMUNITY_ENEMIES_YES           = 3,
+        SPELL_IMMUNITY_ENEMIES_NO            = 4,
+        SPELL_IMMUNITY_ALLIES_YES_ENEMIES_NO = 5,
+    }
+
+    public enum SpellDispellableType : byte
+    {
+        SPELL_DISPELLABLE_NONE       = 0,
+        [Display(Name = "Strong Dispels")]
+        SPELL_DISPELLABLE_YES_STRONG = 1,
+        [Display(Name = "Basic Dispel")]
+        SPELL_DISPELLABLE_YES        = 2,
+        [Display(Name = "No")]
+        SPELL_DISPELLABLE_NO         = 3,
     }
 
     [Flags]
     public enum DamageFlag
     {
-        NONE = 0,
-        IGNORES_MAGIC_ARMOR = 1,
-        IGNORES_PHYSICAL_ARMOR = 2,
-        BYPASSES_INVULNERABILITY = 4,
-        BYPASSES_BLOCK = 8,
-        REFLECTION = 16,
-        HPLOSS = 32,
-        NO_DIRECTOR_EVENT = 64,
-        NON_LETHAL = 128,
-        USE_COMBAT_PROFICIENCY = 256,
-        NO_DAMAGE_MULTIPLIERS = 512,
-        NO_SPELL_AMPLIFICATION = 1024,
+        NONE                                 = 0,
+        IGNORES_MAGIC_ARMOR                  = 1,
+        IGNORES_PHYSICAL_ARMOR               = 2,
+        BYPASSES_INVULNERABILITY             = 4,
+        BYPASSES_BLOCK                       = 8,
+        REFLECTION                           = 16,
+        HPLOSS                               = 32,
+        NO_DIRECTOR_EVENT                    = 64,
+        NON_LETHAL                           = 128,
+        USE_COMBAT_PROFICIENCY               = 256,
+        NO_DAMAGE_MULTIPLIERS                = 512,
+        NO_SPELL_AMPLIFICATION               = 1024,
         DONT_DISPLAY_DAMAGE_IF_SOURCE_HIDDEN = 2048,
-        NO_SPELL_LIFESTEAL = 4096,
-        PROPERTY_FIRE = 8192,
-        IGNORES_BASE_PHYSICAL_ARMOR = 16384,
+        NO_SPELL_LIFESTEAL                   = 4096,
+        PROPERTY_FIRE                        = 8192,
+        IGNORES_BASE_PHYSICAL_ARMOR          = 16384,
     }
 
     [Flags]
-    public enum UnitTargetTeam
+    public enum AbilityUnitTargetTeam : byte
     {
-        NONE = 0,
-        FRIENDLY = 1,
-        ENEMY = 2,
-        BOTH = 3,
-        CUSTOM = 4,
-        FORCEABILITY = 7, //wtf valve  "Force Staff" "Hurricane Pike" "Force Boots"
+        DOTA_UNIT_TARGET_TEAM_NONE     = 0,
+        [Display(Name = "Allies")]
+        DOTA_UNIT_TARGET_TEAM_FRIENDLY = 1,
+        [Display(Name = "Enemy")]
+        DOTA_UNIT_TARGET_TEAM_ENEMY    = 2,
+        [Display(Name = "Both")]
+        DOTA_UNIT_TARGET_TEAM_BOTH     = 3,
+        DOTA_UNIT_TARGET_TEAM_CUSTOM   = 4,
+        FORCEABILITY                   = 7, // Friendly, enemy, and custom
     }
 
-    public enum UnitTargetType
+    [Flags]
+    public enum AbilityUnitTargetType : byte
     {
-        NONE = 0,
-        HERO = 1,
-        CREEP = 2,
-        BUILDING = 4,
-        COURIER = 16,
-        OTHER = 32,
-        TREE = 64,
-        CUSTOM = 128,
-        BASIC = 18,
-        ALL = 55,
+        DOTA_UNIT_TARGET_NONE     = 0,
+        DOTA_UNIT_TARGET_HERO     = 1,
+        DOTA_UNIT_TARGET_CREEP    = 2,
+        DOTA_UNIT_TARGET_BUILDING = 4,
+        DOTA_UNIT_TARGET_COURIER  = 16,
+        DOTA_UNIT_TARGET_BASIC    = 18,
+        DOTA_UNIT_TARGET_OTHER    = 32,
+        DOTA_UNIT_TARGET_ALL      = 55,
+        DOTA_UNIT_TARGET_TREE     = 64,
+        DOTA_UNIT_TARGET_CUSTOM   = 128,
     }
 
     [Flags]
     public enum UnitTargetFlags
     {
-        NONE = 0,
-        RANGED_ONLY = 2,
-        MELEE_ONLY = 4,
-        DEAD = 8,
-        MAGIC_IMMUNE_ENEMIES = 16,
+        NONE                    = 0,
+        RANGED_ONLY             = 2,
+        MELEE_ONLY              = 4,
+        DEAD                    = 8,
+        MAGIC_IMMUNE_ENEMIES    = 16,
         NOT_MAGIC_IMMUNE_ALLIES = 32,
-        INVULNERABLE = 64,
-        FOW_VISIBLE = 128,
-        NO_INVIS = 256,
-        NOT_ANCIENTS = 512,
-        PLAYER_CONTROLLED = 1024,
-        NOT_DOMINATED = 2048,
-        NOT_SUMMONED = 4096,
-        NOT_ILLUSIONS = 8192,
-        NOT_ATTACK_IMMUNE = 16384,
-        MANA_ONLY = 32768,
-        CHECK_DISABLE_HELP = 65536,
-        NOT_CREEP_HERO = 131072,
-        OUT_OF_WORLD = 262144,
-        NOT_NIGHTMARED = 524288,
-        PREFER_ENEMIES = 1048576,
-        RESPECT_OBSTRUCTIONS = 2097152,
+        INVULNERABLE            = 64,
+        FOW_VISIBLE             = 128,
+        NO_INVIS                = 256,
+        NOT_ANCIENTS            = 512,
+        PLAYER_CONTROLLED       = 1024,
+        NOT_DOMINATED           = 2048,
+        NOT_SUMMONED            = 4096,
+        NOT_ILLUSIONS           = 8192,
+        NOT_ATTACK_IMMUNE       = 16384,
+        MANA_ONLY               = 32768,
+        CHECK_DISABLE_HELP      = 65536,
+        NOT_CREEP_HERO          = 131072,
+        OUT_OF_WORLD            = 262144,
+        NOT_NIGHTMARED          = 524288,
+        PREFER_ENEMIES          = 1048576,
+        RESPECT_OBSTRUCTIONS    = 2097152,
     }
 }
