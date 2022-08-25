@@ -41,7 +41,7 @@ namespace Magus.DataBuilder
 
         public async Task Update()
         {
-            _logger.LogInformation("Starting Update");
+            _logger.LogInformation("Starting Patch Note Update");
             var startTime = DateTimeOffset.Now;
             await SetPatchNoteValues();
             await SetPatchNotes();
@@ -49,7 +49,7 @@ namespace Magus.DataBuilder
             StorePatchNoteEmbeds();
             var endTime   = DateTimeOffset.Now;
             var timeTaken = endTime-startTime;
-            _logger.LogInformation("Finished Update");
+            _logger.LogInformation("Finished Patch Note Update");
             _logger.LogInformation("Time Taken: {0:0.#}s", timeTaken.TotalSeconds);
         }
 
@@ -100,7 +100,7 @@ namespace Magus.DataBuilder
             // Checks
             if (patch.Children.Where(x => x.Name == "items").First().Any(x => !x.Name.Contains("item_")))
             {
-                Console.WriteLine(patch["patch_name"] + "Contains items issue");
+                _logger.LogWarning(patch["patch_name"] + "Contains items issue");
             }
             // End Checks
 

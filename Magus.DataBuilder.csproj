@@ -26,7 +26,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Magus.Common\Magus.Common.csproj" />
 		<ProjectReference Include="..\Magus.Data\Magus.Data.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Models\" />
 	</ItemGroup>
 
 </Project>

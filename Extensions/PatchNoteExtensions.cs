@@ -2,10 +2,8 @@
 using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
-using System;
 using System.Text;
 using System.Text.RegularExpressions;
-using static Magus.Data.Models.Dota.PatchNote;
 
 namespace Magus.DataBuilder.Extensions
 {
