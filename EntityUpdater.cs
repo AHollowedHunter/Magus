@@ -102,29 +102,29 @@ namespace Magus.DataBuilder
             foreach (var ability in abilities.Children.Where(x => x.Name != "Version"))
             {
                 if (ability.Children.Count() == 0) continue;
+                _logger.LogDebug("Processing ability {0}", ability.Name);
                 foreach (var language in _sourceLocaleMappings.Keys)
                 {
                     //_abilities.Add(CreateAbility(language, ability));
                 }
-                _logger.LogDebug("Processed ability {0}", ability.Name);
             }
 
-            foreach (var hero in heroes.Children.Where(x => x.Name != "Version" && x.Name != "npc_dota_hero_base"))
+            foreach (var hero in heroes.Children.Where(x => x.Name != "Version" && x.Name != "npc_dota_hero_base" && x.Name != "npc_dota_hero_target_dummy"))
             {
+                _logger.LogDebug("Processing hero {0}", hero.Name);
                 foreach (var language in _sourceLocaleMappings.Keys)
                 {
                     _heroes.Add(CreateHero(language, hero));
                 }
-                _logger.LogDebug("Processed hero {0}", hero.Name);
             }
 
             foreach (var item in items.Children.Where(x => x.Name != "Version"))
             {
+                _logger.LogDebug("Processing item {0}", item.Name);
                 foreach (var language in _sourceLocaleMappings.Keys)
                 {
                     //_items.Add(CreateAbility(language, item));
                 }
-                _logger.LogDebug("Processed item {0}", item.Name);
             }
 
             _logger.LogInformation("Finished setting entities");
@@ -169,39 +169,57 @@ namespace Magus.DataBuilder
         {
             var hero = new Hero();
 
-            hero.Id           = (int)kvhero.Children.First(x => x.Name == "HeroID").Value!;
             hero.InternalName = kvhero.Name;
             hero.Language     = language;
-            hero.Name         = GetAbilityValue(language, hero.InternalName);
-            hero.NameAliases  = kvhero.Children.FirstOrDefault(x => x.Name == "NameAliases").ParseList<string>();
-            //hero.LocalDesc  = GetAbilityValue(language, hero.InternalName, "Description");
-            //hero.LocalLore  = GetAbilityValue(language, hero.InternalName, "Lore");
-            //hero.LocalNotes = GetAbilityNoteValues(language, hero.InternalName);
+            hero.Id           = kvhero.ParseChildValue<int>("HeroID");
+            hero.Name         = GetHeroValue(language, hero.InternalName);
+            hero.NameAliases  = kvhero.ParseChildList<string>("NameAliases");
+            hero.Bio          = GetHeroValue(language, hero.InternalName, "bio");
+            hero.Hype         = GetHeroValue(language, hero.InternalName, "hype");
+            hero.NpeDesc      = GetHeroValue(language, hero.InternalName, "npedesc1");
+            hero.HeroOrderID  = kvhero.ParseChildValue<short>("HeroOrderID");
 
-            hero.AttributeBaseAgility      = kvhero.Children.First(x => x.Name == "AttributeBaseAgility").ParseValue<byte>();
-            hero.AttributeBaseStrength     = kvhero.Children.First(x => x.Name == "AttributeBaseStrength").ParseValue<byte>();
-            hero.AttributeBaseIntelligence = kvhero.Children.First(x => x.Name == "AttributeBaseIntelligence").ParseValue<byte>();
-            hero.AttributeAgilityGain      = kvhero.Children.First(x => x.Name == "AttributeAgilityGain").ParseValue<float>();
-            hero.AttributeStrengthGain     = kvhero.Children.First(x => x.Name == "AttributeStrengthGain").ParseValue<float>();
-            hero.AttributeIntelligenceGain = kvhero.Children.First(x => x.Name == "AttributeIntelligenceGain").ParseValue<float>();
-            hero.AttributePrimary          = kvhero.Children.First(x => x.Name == "AttributePrimary").ParseEnum<AttributePrimary>();
+            hero.AttributeBaseAgility      = kvhero.ParseChildValue<byte>("AttributeBaseAgility");
+            hero.AttributeBaseStrength     = kvhero.ParseChildValue<byte>("AttributeBaseStrength");
+            hero.AttributeBaseIntelligence = kvhero.ParseChildValue<byte>("AttributeBaseIntelligence");
+            hero.AttributeAgilityGain      = kvhero.ParseChildValue<float>("AttributeAgilityGain");
+            hero.AttributeStrengthGain     = kvhero.ParseChildValue<float>("AttributeStrengthGain");
+            hero.AttributeIntelligenceGain = kvhero.ParseChildValue<float>("AttributeIntelligenceGain");
+            hero.AttributePrimary          = kvhero.ParseChildValue<AttributePrimary>("AttributePrimary");
 
-            hero.AttackCapabilities = kvhero.Children.First(x => x.Name == "AttackCapabilities").ParseEnum<AttackCapabilities>();
+            hero.Complexity = kvhero.ParseChildValue<byte>("Complexity");
+            hero.Role       = kvhero.ParseChildList<Role>("Role").ToArray();
+            hero.Rolelevels = kvhero.ParseChildList<byte>("Rolelevels").ToArray();
 
-            //hero.AbilityCastRange   = kvhero.Children.FirstOrDefault(x => x.Name == "AbilityCastRange").ParseList<float>();
-            //hero.AbilityCastPoint   = kvhero.Children.FirstOrDefault(x => x.Name == "AbilityCastPoint").ParseList<float>();
-            //hero.AbilityChannelTime = kvhero.Children.FirstOrDefault(x => x.Name == "AbilityChannelTime").ParseList<float>();
-            //hero.AbilityCooldown    = kvhero.Children.FirstOrDefault(x => x.Name == "AbilityCooldown").ParseList<float>();
-            //hero.AbilityDuration    = kvhero.Children.FirstOrDefault(x => x.Name == "AbilityDuration").ParseList<float>();
-            //hero.AbilityDamage      = kvhero.Children.FirstOrDefault(x => x.Name == "AbilityDamage").ParseList<float>();
-            //hero.AbilityManaCost    = kvhero.Children.FirstOrDefault(x => x.Name == "AbilityManaCost").ParseList<float>();
+            hero.AttackCapabilities   = kvhero.ParseChildValue<AttackCapabilities>("AttackCapabilities");
+            hero.AttackDamageMin      = kvhero.ParseChildValue<short>("AttackDamageMin");
+            hero.AttackDamageMax      = kvhero.ParseChildValue<short>("AttackDamageMax");
+            hero.AttackRate           = kvhero.ParseChildValue<float>("AttackRate", 1.7F);
+            hero.BaseAttackSpeed      = kvhero.ParseChildValue<short>("BaseAttackSpeed", 100);
+            hero.AttackAnimationPoint = kvhero.ParseChildValue<float>("AttackAnimationPoint");
+            hero.AttackRange          = kvhero.ParseChildValue<float>("AttackRange");
+            hero.ProjectileSpeed      = kvhero.ParseChildValue<float>("ProjectileSpeed", 900);
+            hero.ArmorPhysical        = kvhero.ParseChildValue<short>("ArmorPhysical", -1);
+            hero.MagicalResistance    = kvhero.ParseChildValue<short>("MagicalResistance", 25);
+            hero.MovementSpeed        = kvhero.ParseChildValue<short>("MovementSpeed");
+            hero.MovementTurnRate     = kvhero.ParseChildValue<float>("MovementTurnRate", 0.6F);
+            hero.VisionDaytimeRange   = kvhero.ParseChildValue<short>("VisionDaytimeRange", 1800);
+            hero.VisionNighttimeRange = kvhero.ParseChildValue<short>("VisionNighttimeRange", 800);
+            hero.StatusHealth         = kvhero.ParseChildValue<short>("StatusHealth", 200);
+            hero.StatusHealthRegen    = kvhero.ParseChildValue<float>("StatusHealthRegen", 0.25F);
+            hero.StatusMana           = kvhero.ParseChildValue<short>("StatusMana", 75);
+            hero.StatusManaRegen      = kvhero.ParseChildValue<float>("StatusManaRegen", 0);
 
-            //ability.AbilityValues = DO THIS
-
-            _logger.LogTrace("Processed ability {0,-64} in {1}", hero.InternalName, language);
+            _logger.LogTrace("Processed hero {0,-40} in {1}", hero.InternalName, language);
             return hero;
         }
 
+        /// <summary>
+        /// Replaces some simple tags, without any special formatting/replacements
+        /// Useful for hero descriptions etc. but not Ability/Item values 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>Cleaned value</returns>
         private static string CleanSimple(string value)
         {
             var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*>");
@@ -271,18 +289,24 @@ namespace Magus.DataBuilder
             return notes;
         }
 
-
         private string GetHeroValue(string language, string internalName, string? postfix = null)
         {
-            var key = (language, Key: $"DOTA_Tooltip_ability_{internalName}{(postfix != null ? $"_{postfix}" : "")}");
-            if (_abilityValues.ContainsKey(key))
+            var key = (language, Key: $"{internalName}{(postfix != null ? $"_{postfix}" : "")}");
+            if (_dotaValues.ContainsKey(key))
             {
-                return _abilityValues[key];
+                return _dotaValues[key];
+            }
+            else if (_heroLoreValues.ContainsKey(key))
+            {
+                return _heroLoreValues[key];
             }
             else
             {
-                _abilityValues.TryGetValue((_sourceDefaultLanguage, key.Key), out var value);
-                return value;
+                if (!_dotaValues.TryGetValue((_sourceDefaultLanguage, key.Key), out var value))
+                {
+                    _heroLoreValues.TryGetValue((_sourceDefaultLanguage, key.Key), out value);
+                }
+                return value ?? "";
             }
         }
     }
