@@ -22,7 +22,7 @@
 		<PackageReference Include="Serilog.Settings.Configuration" Version="3.3.0" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-		<PackageReference Include="ValveKeyValue" Version="0.8.0.139" />
+		<PackageReference Include="ValveKeyValue" Version="0.8.2.162" />
 	</ItemGroup>
 
 	<ItemGroup>
