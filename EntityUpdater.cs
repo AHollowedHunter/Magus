@@ -24,6 +24,7 @@ namespace Magus.DataBuilder
         private readonly Dictionary<(string Language, string Key), string> _dotaValues;
         private readonly Dictionary<(string Language, string Key), string> _heroLoreValues;
         private readonly List<Ability> _abilities;
+        private readonly List<Talent> _talents;
         private readonly List<Hero> _heroes;
         private readonly List<Item> _items;
         private Hero _baseHero;
@@ -42,6 +43,7 @@ namespace Magus.DataBuilder
             _dotaValues            = new();
             _heroLoreValues        = new();
             _abilities             = new();
+            _talents               = new();
             _heroes                = new();
             _items                 = new();
             _baseHero              = new();
@@ -96,8 +98,10 @@ namespace Magus.DataBuilder
             var abilities = await GetKVObjectFromUri(Dota2GameFiles.NpcAbilities);
             var heroes = await GetKVObjectFromUri(Dota2GameFiles.NpcHeroes);
             var items = await GetKVObjectFromUri(Dota2GameFiles.Items);
+            var talentRegex  = new Regex("special_bonus_\\w+");
 
             _abilities.Clear();
+            _talents.Clear();
             _heroes.Clear();
             _items.Clear();
 
@@ -107,7 +111,14 @@ namespace Magus.DataBuilder
                 _logger.LogDebug("Processing ability {0}", ability.Name);
                 foreach (var language in _sourceLocaleMappings.Keys)
                 {
-                    //_abilities.Add(CreateAbility(language, ability));
+                    if (!talentRegex.IsMatch(ability.Name))
+                    {
+                        _abilities.Add(CreateAbility(language, ability));
+                    }
+                    else
+                    {
+                        _talents.Add(CreateTalent(language, ability));
+                    }
                 }
             }
 
@@ -146,27 +157,41 @@ namespace Magus.DataBuilder
             ability.LocalLore    = GetAbilityValue(language, ability.InternalName, "Lore");
             ability.LocalNotes   = GetAbilityNoteValues(language, ability.InternalName);
 
-            ability.AbilityType           = kvAbility.ParseChildValue<AbilityType>("AbilityType");
-            ability.AbilityBehavior       = kvAbility.ParseChildValue<AbilityBehavior>("AbilityBehavior");
-            ability.AbilityUnitTargetTeam = kvAbility.ParseChildValue<AbilityUnitTargetTeam>("AbilityUnitTargetTeam");
-            ability.AbilityUnitTargetType = kvAbility.ParseChildValue<AbilityUnitTargetType>("AbilityUnitTargetType");
-            ability.AbilityUnitDamageType = kvAbility.ParseChildValue<AbilityUnitDamageType>("AbilityUnitDamageType");
-            ability.AbilityUnitTargetTeam = kvAbility.ParseChildValue<AbilityUnitTargetTeam>("AbilityType");
-            ability.SpellImmunityType     = kvAbility.ParseChildValue<SpellImmunityType>("SpellImmunityType");
-            ability.SpellDispellableType  = kvAbility.ParseChildValue<SpellDispellableType>("SpellDispellableType");
+            ability.AbilityType           = kvAbility.ParseChildEnum<AbilityType>("AbilityType");
+            ability.AbilityBehavior       = kvAbility.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
+            ability.AbilityUnitTargetTeam = kvAbility.ParseChildEnum<AbilityUnitTargetTeam>("AbilityUnitTargetTeam");
+            ability.AbilityUnitTargetType = kvAbility.ParseChildEnum<AbilityUnitTargetType>("AbilityUnitTargetType");
+            ability.AbilityUnitDamageType = kvAbility.ParseChildEnum<AbilityUnitDamageType>("AbilityUnitDamageType");
+            ability.SpellImmunityType     = kvAbility.ParseChildEnum<SpellImmunityType>("SpellImmunityType");
+            ability.SpellDispellableType  = kvAbility.ParseChildEnum<SpellDispellableType>("SpellDispellableType");
 
-            ability.AbilityCastRange   = kvAbility.ParseChildList<float>("AbilityCastRange");
-            ability.AbilityCastPoint   = kvAbility.ParseChildList<float>("AbilityCastPoint");
-            ability.AbilityChannelTime = kvAbility.ParseChildList<float>("AbilityChannelTime");
-            ability.AbilityCooldown    = kvAbility.ParseChildList<float>("AbilityCooldown");
-            ability.AbilityDuration    = kvAbility.ParseChildList<float>("AbilityDuration");
-            ability.AbilityDamage      = kvAbility.ParseChildList<float>("AbilityDamage");
-            ability.AbilityManaCost    = kvAbility.ParseChildList<float>("AbilityManaCost");
+            ability.AbilityCastRange   = kvAbility.ParseChildValueList<float>("AbilityCastRange");
+            ability.AbilityCastPoint   = kvAbility.ParseChildValueList<float>("AbilityCastPoint");
+            ability.AbilityChannelTime = kvAbility.ParseChildValueList<float>("AbilityChannelTime");
+            ability.AbilityCooldown    = kvAbility.ParseChildValueList<float>("AbilityCooldown");
+            ability.AbilityDuration    = kvAbility.ParseChildValueList<float>("AbilityDuration");
+            ability.AbilityDamage      = kvAbility.ParseChildValueList<float>("AbilityDamage");
+            ability.AbilityManaCost    = kvAbility.ParseChildValueList<float>("AbilityManaCost");
 
             //ability.AbilityValues = DO THIS
 
-            _logger.LogTrace("Processed ability {0,-64} in {1}", ability.InternalName, language);
+            _logger.LogTrace("Processed {0,7} {1,-64} in {2}\"", "ability", ability.InternalName, language);
             return ability;
+        }
+        private Talent CreateTalent(string language, KVObject kvAbility)
+        {
+            var talent = new Talent();
+
+            talent.Id              = (int)kvAbility.Children.First(x => x.Name == "ID").Value!;
+            talent.InternalName    = kvAbility.Name;
+            talent.Language        = language;
+            talent.AbilityType     = kvAbility.ParseChildEnum<AbilityType>("AbilityType");
+            talent.AbilityBehavior = kvAbility.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
+
+            //ability.AbilityValues = DO THIS
+
+            _logger.LogTrace("Processed {0,8} {1,-64} in {2}", "talent", talent.InternalName, language);
+            return talent;
         }
 
         private Hero CreateHero(string language, KVObject kvhero)
@@ -177,7 +202,7 @@ namespace Magus.DataBuilder
             hero.Language     = language;
             hero.Id           = kvhero.ParseChildValue<int>("HeroID");
             hero.Name         = GetHeroValue(language, hero.InternalName);
-            hero.NameAliases  = kvhero.ParseChildList<string>("NameAliases");
+            hero.NameAliases  = kvhero.ParseChildValueList<string>("NameAliases");
             hero.Bio          = GetHeroValue(language, hero.InternalName, "bio");
             hero.Hype         = GetHeroValue(language, hero.InternalName, "hype");
             hero.NpeDesc      = GetHeroValue(language, hero.InternalName, "npedesc1");
@@ -189,14 +214,14 @@ namespace Magus.DataBuilder
             hero.AttributeAgilityGain      = kvhero.ParseChildValue<float>("AttributeAgilityGain");
             hero.AttributeStrengthGain     = kvhero.ParseChildValue<float>("AttributeStrengthGain");
             hero.AttributeIntelligenceGain = kvhero.ParseChildValue<float>("AttributeIntelligenceGain");
-            hero.AttributePrimary          = kvhero.ParseChildValue<AttributePrimary>("AttributePrimary");
+            hero.AttributePrimary          = kvhero.ParseChildEnum<AttributePrimary>("AttributePrimary");
 
             hero.Complexity = kvhero.ParseChildValue<byte>("Complexity");
-            hero.Role       = kvhero.ParseChildList<Role>("Role").ToArray();
-            hero.Rolelevels = kvhero.ParseChildList<byte>("Rolelevels").ToArray();
+            hero.Role       = kvhero.ParseChildEnumList<Role>("Role").ToArray();
+            hero.Rolelevels = kvhero.ParseChildValueList<byte>("Rolelevels").ToArray();
 
             // Where defaults defined below, these are known to be defaults. Ignoring the rest at my own peril
-            hero.AttackCapabilities   = kvhero.ParseChildValue<AttackCapabilities>("AttackCapabilities");
+            hero.AttackCapabilities   = kvhero.ParseChildEnum<AttackCapabilities>("AttackCapabilities");
             hero.AttackDamageMin      = kvhero.ParseChildValue<short>("AttackDamageMin");
             hero.AttackDamageMax      = kvhero.ParseChildValue<short>("AttackDamageMax");
             hero.AttackRate           = kvhero.ParseChildValue<float>("AttackRate", _baseHero.AttackRate);
@@ -214,6 +239,11 @@ namespace Magus.DataBuilder
             hero.StatusHealthRegen    = kvhero.ParseChildValue<float>("StatusHealthRegen", _baseHero.StatusHealthRegen);
             hero.StatusMana           = kvhero.ParseChildValue<short>("StatusMana", _baseHero.StatusMana);
             hero.StatusManaRegen      = kvhero.ParseChildValue<float>("StatusManaRegen", _baseHero.StatusHealthRegen);
+
+            hero.Abilities = GetHeroAbilities(language, kvhero);
+            hero.Talents = GetHeroTalents(language, kvhero);
+
+            if (hero.Talents.Count() != 8) _logger.LogWarning("Hero {0} doesn't have 8 talents but {1}", hero.InternalName, hero.Talents.Count());
 
             _logger.LogTrace("Processed hero {0,-40} in {1}", hero.InternalName, language);
             return hero;
@@ -285,7 +315,7 @@ namespace Magus.DataBuilder
             var noteRegex = new Regex($"DOTA_Tooltip_ability_{internalName}_Note\\d+");
             // Distinct as the same Key will be present in different languages.
             // Watch out if another language has more notes than default language...
-            var notesCount = _abilityValues.Keys.Where(x => noteRegex.IsMatch(x.Key)).Distinct().Count(); 
+            var notesCount = _abilityValues.Keys.Where(x => x.Language == language && noteRegex.IsMatch(x.Key)).Distinct().Count(); 
             var notes = new List<string>();
             for (var i = 0; i < notesCount; i++)
             {
@@ -313,6 +343,40 @@ namespace Magus.DataBuilder
                 }
                 return value ?? "";
             }
+        }
+
+        private IEnumerable<Ability> GetHeroAbilities(string language, KVObject kvHero)
+        {
+            var abilityRegex       = new Regex("Ability\\d+");
+            var hiddenOrEmptyRegex = new Regex("([\\w]+_empty\\d*)|([\\w]+_hidden\\d*)");
+            var abilityNames       = kvHero.Children.Where(x => abilityRegex.IsMatch(x.Name)).Select(x => x.Value.ToString());
+            var abilities          = new List<Ability>();
+            foreach (var name in abilityNames)
+            {
+                if (string.IsNullOrEmpty(name)  || name == "special_bonus_attributes" || hiddenOrEmptyRegex.IsMatch(name))
+                    continue;
+                var ability = _abilities.FirstOrDefault(x => x.InternalName == name && x.Language == language);
+                if (ability != null)
+                    abilities.Add(ability);
+            }
+            return abilities;
+        }
+
+        private IEnumerable<Talent> GetHeroTalents(string language, KVObject kvHero)
+        {
+            var abilityRegex       = new Regex("Ability\\d+");
+            var hiddenOrEmptyRegex = new Regex("([\\w]+_empty\\d*)|([\\w]+_hidden\\d*)");
+            var talentNames        = kvHero.Children.Where(x => abilityRegex.IsMatch(x.Name)).Select(x => x.Value.ToString());
+            var talents            = new List<Talent>();
+            foreach (var name in talentNames)
+            {
+                if (string.IsNullOrEmpty(name) || name == "special_bonus_attributes" || hiddenOrEmptyRegex.IsMatch(name))
+                    continue;
+                var talent = _talents.FirstOrDefault(x => x.InternalName == name && x.Language == language);
+                if (talent != null)
+                    talents.Add(talent);
+            }
+            return talents;
         }
     }
 }
