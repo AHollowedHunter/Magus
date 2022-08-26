@@ -26,6 +26,7 @@ namespace Magus.DataBuilder
         private readonly List<Ability> _abilities;
         private readonly List<Hero> _heroes;
         private readonly List<Item> _items;
+        private Hero _baseHero;
 
         public EntityUpdater(IDatabaseService db, IConfiguration config, ILogger<PatchNoteUpdater> logger, HttpClient httpClient)
         {
@@ -43,6 +44,7 @@ namespace Magus.DataBuilder
             _abilities             = new();
             _heroes                = new();
             _items                 = new();
+            _baseHero              = new();
         }
 
         public async Task Update()
@@ -109,6 +111,8 @@ namespace Magus.DataBuilder
                 }
             }
 
+            _baseHero = CreateHero("", heroes.Children.First(x => x.Name == "npc_dota_hero_base"));
+
             foreach (var hero in heroes.Children.Where(x => x.Name != "Version" && x.Name != "npc_dota_hero_base" && x.Name != "npc_dota_hero_target_dummy"))
             {
                 _logger.LogDebug("Processing hero {0}", hero.Name);
@@ -142,22 +146,22 @@ namespace Magus.DataBuilder
             ability.LocalLore    = GetAbilityValue(language, ability.InternalName, "Lore");
             ability.LocalNotes   = GetAbilityNoteValues(language, ability.InternalName);
 
-            ability.AbilityType           = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityType").ParseEnum<AbilityType>();
-            ability.AbilityBehavior       = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityBehavior").ParseEnum<AbilityBehavior>();
-            ability.AbilityUnitTargetTeam = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityUnitTargetTeam").ParseEnum<AbilityUnitTargetTeam>();
-            ability.AbilityUnitTargetType = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityUnitTargetType").ParseEnum<AbilityUnitTargetType>();
-            ability.AbilityUnitDamageType = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityUnitDamageType").ParseEnum<AbilityUnitDamageType>();
-            ability.AbilityUnitTargetTeam = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityType").ParseEnum<AbilityUnitTargetTeam>();
-            ability.SpellImmunityType     = kvAbility.Children.FirstOrDefault(x => x.Name == "SpellImmunityType").ParseEnum<SpellImmunityType>();
-            ability.SpellDispellableType  = kvAbility.Children.FirstOrDefault(x => x.Name == "SpellDispellableType").ParseEnum<SpellDispellableType>();
+            ability.AbilityType           = kvAbility.ParseChildValue<AbilityType>("AbilityType");
+            ability.AbilityBehavior       = kvAbility.ParseChildValue<AbilityBehavior>("AbilityBehavior");
+            ability.AbilityUnitTargetTeam = kvAbility.ParseChildValue<AbilityUnitTargetTeam>("AbilityUnitTargetTeam");
+            ability.AbilityUnitTargetType = kvAbility.ParseChildValue<AbilityUnitTargetType>("AbilityUnitTargetType");
+            ability.AbilityUnitDamageType = kvAbility.ParseChildValue<AbilityUnitDamageType>("AbilityUnitDamageType");
+            ability.AbilityUnitTargetTeam = kvAbility.ParseChildValue<AbilityUnitTargetTeam>("AbilityType");
+            ability.SpellImmunityType     = kvAbility.ParseChildValue<SpellImmunityType>("SpellImmunityType");
+            ability.SpellDispellableType  = kvAbility.ParseChildValue<SpellDispellableType>("SpellDispellableType");
 
-            ability.AbilityCastRange   = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityCastRange").ParseList<float>();
-            ability.AbilityCastPoint   = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityCastPoint").ParseList<float>();
-            ability.AbilityChannelTime = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityChannelTime").ParseList<float>();
-            ability.AbilityCooldown    = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityCooldown").ParseList<float>();
-            ability.AbilityDuration    = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityDuration").ParseList<float>();
-            ability.AbilityDamage      = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityDamage").ParseList<float>();
-            ability.AbilityManaCost    = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityManaCost").ParseList<float>();
+            ability.AbilityCastRange   = kvAbility.ParseChildList<float>("AbilityCastRange");
+            ability.AbilityCastPoint   = kvAbility.ParseChildList<float>("AbilityCastPoint");
+            ability.AbilityChannelTime = kvAbility.ParseChildList<float>("AbilityChannelTime");
+            ability.AbilityCooldown    = kvAbility.ParseChildList<float>("AbilityCooldown");
+            ability.AbilityDuration    = kvAbility.ParseChildList<float>("AbilityDuration");
+            ability.AbilityDamage      = kvAbility.ParseChildList<float>("AbilityDamage");
+            ability.AbilityManaCost    = kvAbility.ParseChildList<float>("AbilityManaCost");
 
             //ability.AbilityValues = DO THIS
 
@@ -191,24 +195,25 @@ namespace Magus.DataBuilder
             hero.Role       = kvhero.ParseChildList<Role>("Role").ToArray();
             hero.Rolelevels = kvhero.ParseChildList<byte>("Rolelevels").ToArray();
 
+            // Where defaults defined below, these are known to be defaults. Ignoring the rest at my own peril
             hero.AttackCapabilities   = kvhero.ParseChildValue<AttackCapabilities>("AttackCapabilities");
             hero.AttackDamageMin      = kvhero.ParseChildValue<short>("AttackDamageMin");
             hero.AttackDamageMax      = kvhero.ParseChildValue<short>("AttackDamageMax");
-            hero.AttackRate           = kvhero.ParseChildValue<float>("AttackRate", 1.7F);
-            hero.BaseAttackSpeed      = kvhero.ParseChildValue<short>("BaseAttackSpeed", 100);
+            hero.AttackRate           = kvhero.ParseChildValue<float>("AttackRate", _baseHero.AttackRate);
+            hero.BaseAttackSpeed      = kvhero.ParseChildValue<short>("BaseAttackSpeed", _baseHero.BaseAttackSpeed);
             hero.AttackAnimationPoint = kvhero.ParseChildValue<float>("AttackAnimationPoint");
             hero.AttackRange          = kvhero.ParseChildValue<float>("AttackRange");
-            hero.ProjectileSpeed      = kvhero.ParseChildValue<float>("ProjectileSpeed", 900);
-            hero.ArmorPhysical        = kvhero.ParseChildValue<short>("ArmorPhysical", -1);
-            hero.MagicalResistance    = kvhero.ParseChildValue<short>("MagicalResistance", 25);
+            hero.ProjectileSpeed      = kvhero.ParseChildValue<float>("ProjectileSpeed", _baseHero.ProjectileSpeed);
+            hero.ArmorPhysical        = kvhero.ParseChildValue<short>("ArmorPhysical", _baseHero.ArmorPhysical);
+            hero.MagicalResistance    = kvhero.ParseChildValue<short>("MagicalResistance", _baseHero.MagicalResistance);
             hero.MovementSpeed        = kvhero.ParseChildValue<short>("MovementSpeed");
-            hero.MovementTurnRate     = kvhero.ParseChildValue<float>("MovementTurnRate", 0.6F);
-            hero.VisionDaytimeRange   = kvhero.ParseChildValue<short>("VisionDaytimeRange", 1800);
-            hero.VisionNighttimeRange = kvhero.ParseChildValue<short>("VisionNighttimeRange", 800);
-            hero.StatusHealth         = kvhero.ParseChildValue<short>("StatusHealth", 200);
-            hero.StatusHealthRegen    = kvhero.ParseChildValue<float>("StatusHealthRegen", 0.25F);
-            hero.StatusMana           = kvhero.ParseChildValue<short>("StatusMana", 75);
-            hero.StatusManaRegen      = kvhero.ParseChildValue<float>("StatusManaRegen", 0);
+            hero.MovementTurnRate     = kvhero.ParseChildValue<float>("MovementTurnRate", _baseHero.MovementSpeed);
+            hero.VisionDaytimeRange   = kvhero.ParseChildValue<short>("VisionDaytimeRange", _baseHero.VisionDaytimeRange);
+            hero.VisionNighttimeRange = kvhero.ParseChildValue<short>("VisionNighttimeRange", _baseHero.VisionNighttimeRange);
+            hero.StatusHealth         = kvhero.ParseChildValue<short>("StatusHealth", _baseHero.StatusHealth);
+            hero.StatusHealthRegen    = kvhero.ParseChildValue<float>("StatusHealthRegen", _baseHero.StatusHealthRegen);
+            hero.StatusMana           = kvhero.ParseChildValue<short>("StatusMana", _baseHero.StatusMana);
+            hero.StatusManaRegen      = kvhero.ParseChildValue<float>("StatusManaRegen", _baseHero.StatusHealthRegen);
 
             _logger.LogTrace("Processed hero {0,-40} in {1}", hero.InternalName, language);
             return hero;
