@@ -4,6 +4,7 @@ using Magus.Data.Models.Embeds;
 using Magus.DataBuilder.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using ValveKeyValue;
@@ -52,15 +53,16 @@ namespace Magus.DataBuilder
         public async Task Update()
         {
             _logger.LogInformation("Starting Entity Update");
-            var startTime = DateTimeOffset.Now;
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             await SetEntityValues();
             await SetEntities();
 
             //StorePatchNoteEmbeds();
-            var endTime   = DateTimeOffset.Now;
-            var timeTaken = endTime-startTime;
+            stopwatch.Stop();
+            var timeTaken = stopwatch.Elapsed.TotalSeconds;
             _logger.LogInformation("Finished Entity Update");
-            _logger.LogInformation("Time Taken: {0:0.#}s", timeTaken.TotalSeconds);
+            _logger.LogInformation("Time Taken: {0:0.#}s", timeTaken);
         }
 
         private async Task SetEntityValues()
