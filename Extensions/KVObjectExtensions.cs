@@ -6,6 +6,7 @@ namespace Magus.DataBuilder.Extensions
 {
     public static class KVObjectExtensions
     {
+
         /// <summary>
         /// Use for a single key value when expected
         /// </summary>
@@ -83,6 +84,7 @@ namespace Magus.DataBuilder.Extensions
 
             foreach (var value in values)
             {
+                if (string.IsNullOrEmpty(value)) continue;
                 result.Add(ParseValue<T>(value));
             }
             return result;
