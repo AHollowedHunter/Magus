@@ -4,6 +4,7 @@ using Magus.Data.Models.Embeds;
 using Magus.DataBuilder.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -97,30 +98,40 @@ namespace Magus.DataBuilder
         {
             _logger.LogInformation("Setting Entities");
 
-            var abilities = await GetKVObjectFromUri(Dota2GameFiles.NpcAbilities);
-            var heroes = await GetKVObjectFromUri(Dota2GameFiles.NpcHeroes);
-            var items = await GetKVObjectFromUri(Dota2GameFiles.Items);
+            var mixedAbilities    = await GetKVObjectFromUri(Dota2GameFiles.NpcAbilities);
+            var heroes       = await GetKVObjectFromUri(Dota2GameFiles.NpcHeroes);
+            var items        = await GetKVObjectFromUri(Dota2GameFiles.Items);
             var talentRegex  = new Regex("special_bonus_\\w+");
+            var mainAbilities      = new List<KVObject>();
 
             _abilities.Clear();
             _talents.Clear();
             _heroes.Clear();
             _items.Clear();
 
-            foreach (var ability in abilities.Children.Where(x => x.Name != "Version"))
+            foreach (var ability in mixedAbilities.Children.Where(x => x.Name != "Version"))
             {
-                if (ability.Children.Count() == 0) continue;
+                if (ability.Children.Count() == 0)
+                    continue;
+                if (!talentRegex.IsMatch(ability.Name))
+                {
+                    mainAbilities.Add(ability);
+                    continue;
+                }
+
+                _logger.LogDebug("Processing talent {0}", ability.Name);
+                foreach (var language in _sourceLocaleMappings.Keys)
+                {
+                    _talents.Add(CreateTalent(language, ability));
+                }
+            }
+
+            foreach (var ability in mainAbilities)
+            {
                 _logger.LogDebug("Processing ability {0}", ability.Name);
                 foreach (var language in _sourceLocaleMappings.Keys)
                 {
-                    if (!talentRegex.IsMatch(ability.Name))
-                    {
-                        _abilities.Add(CreateAbility(language, ability));
-                    }
-                    else
-                    {
-                        _talents.Add(CreateTalent(language, ability));
-                    }
+                    _abilities.Add(CreateAbility(language, ability));
                 }
             }
 
@@ -147,6 +158,93 @@ namespace Magus.DataBuilder
             _logger.LogInformation("Finished setting entities");
         }
 
+        private Talent CreateTalent(string language, KVObject kvTalent)
+        {
+            var talent = new Talent();
+
+            talent.Id              = (int)kvTalent.Children.First(x => x.Name == "ID").Value!;
+            talent.InternalName    = kvTalent.Name;
+            talent.Language        = language;
+            talent.AbilityType     = kvTalent.ParseChildEnum<AbilityType>("AbilityType");
+            talent.AbilityBehavior = kvTalent.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
+
+            //ability.AbilityValues = DO THIS
+            talent.TalentValues = GetTalentValues(kvTalent);
+            talent.Description  = GetAbilityValue(language, talent.InternalName);
+            FormatTalent(talent);
+
+            if (kvTalent.Children.Any(x => x.Name == "AbilityValues"))
+                _logger.LogWarning("{0} contains AbilityValues!", kvTalent.Name);
+            if (kvTalent.Children.FirstOrDefault(x => x.Name == "AbilitySpecial")?.Children.Count() > 1)
+                _logger.LogWarning("{0} contains more than one AbilitySpecial!", kvTalent.Name);
+
+            _logger.LogTrace("Processed {0,8} {1,-64} in {2}", "talent", talent.InternalName, language);
+            return talent;
+        }
+
+        private void FormatTalent(Talent talent)
+        {
+            var valueKeyRegex         = new Regex(@"(?<=[+-]{s:)\w+(?=})");
+            var bonusPlaceholderRegex = new Regex(@"(?<=[+-]){s:\w+}");
+
+            var valueKeys = valueKeyRegex.Matches(talent.Description);
+            foreach (var valueKey in valueKeys.AsEnumerable())
+            {
+                var value = talent.TalentValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                if (value != null)
+                    talent.Description = bonusPlaceholderRegex.Replace(talent.Description, string.Join(',', value));
+            }
+        }
+
+        private IEnumerable<Talent.TalentValue> GetTalentValues(KVObject kvTalent)
+        {
+            var talentValues = new List<Talent.TalentValue>();
+
+            var kvAbilitySpecial = kvTalent.Children.FirstOrDefault(x => x.Name == "AbilitySpecial");
+
+            // keep for now, check this isn't needed. but as the condition for AbilityValues with a collection value, covers the case of "arrays" of 01, 02 etc.
+            //
+            //if (kvAbilitySpecial != null)
+            //{
+            //    foreach (var item in kvAbilitySpecial.Children)
+            //    {
+            //        var kv = item.First(x => x.Name != "var_type" && x.Name != "ad_linked_abilities");
+            //        talentValues.Add(new()
+            //        {
+            //            Name              = kv.Name,
+            //            Values            = kv.ParseList<float>(),
+            //            AdLinkedAbilities = item.ParseChildValue<string>("ad_linked_abilities"),
+            //        });
+            //    }
+            //}
+            var kvAbilityValues = kvTalent.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial");
+            if (kvAbilityValues != null)
+            {
+                foreach (var item in kvAbilityValues.Children)
+                {
+                    if (item.Value.ValueType == KVValueType.Collection)
+                    {
+                        var value = item.First(x => x.Name != "var_type" && x.Name != "ad_linked_abilities");
+                        talentValues.Add(new()
+                        {
+                            Name              = value.Name,
+                            Values            = value.ParseList<float>(),
+                            AdLinkedAbilities = item.ParseChildValue<string>("ad_linked_abilities"),
+                        });
+                    }
+                    else
+                    {
+                        talentValues.Add(new()
+                        {
+                            Name   = item.Name,
+                            Values = item.ParseList<float>(),
+                        });
+                    }
+                }
+            }
+            return talentValues;
+        }
+
         private Ability CreateAbility(string language, KVObject kvAbility)
         {
             var ability = new Ability();
@@ -154,10 +252,10 @@ namespace Magus.DataBuilder
             ability.Id           = (int)kvAbility.Children.First(x => x.Name == "ID").Value!;
             ability.InternalName = kvAbility.Name;
             ability.Language     = language;
-            ability.LocalName    = GetAbilityValue(language, ability.InternalName);
-            ability.LocalDesc    = GetAbilityValue(language, ability.InternalName, "Description");
-            ability.LocalLore    = GetAbilityValue(language, ability.InternalName, "Lore");
-            ability.LocalNotes   = GetAbilityNoteValues(language, ability.InternalName);
+            ability.Name         = GetAbilityValue(language, ability.InternalName);
+            ability.Description  = GetAbilityValue(language, ability.InternalName, "Description");
+            ability.Lore         = GetAbilityValue(language, ability.InternalName, "Lore");
+            ability.Notes        = GetAbilityNoteValues(language, ability.InternalName);
 
             ability.AbilityType           = kvAbility.ParseChildEnum<AbilityType>("AbilityType");
             ability.AbilityBehavior       = kvAbility.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
@@ -179,21 +277,6 @@ namespace Magus.DataBuilder
 
             _logger.LogTrace("Processed {0,7} {1,-64} in {2}\"", "ability", ability.InternalName, language);
             return ability;
-        }
-        private Talent CreateTalent(string language, KVObject kvAbility)
-        {
-            var talent = new Talent();
-
-            talent.Id              = (int)kvAbility.Children.First(x => x.Name == "ID").Value!;
-            talent.InternalName    = kvAbility.Name;
-            talent.Language        = language;
-            talent.AbilityType     = kvAbility.ParseChildEnum<AbilityType>("AbilityType");
-            talent.AbilityBehavior = kvAbility.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
-
-            //ability.AbilityValues = DO THIS
-
-            _logger.LogTrace("Processed {0,8} {1,-64} in {2}", "talent", talent.InternalName, language);
-            return talent;
         }
 
         private Hero CreateHero(string language, KVObject kvhero)
@@ -295,8 +378,6 @@ namespace Magus.DataBuilder
             Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(rawString));
             return _kvSerializer.Deserialize(stream, new KVSerializerOptions() { HasEscapeSequences = true });
         }
-
-
 
         private string GetAbilityValue(string language, string internalName, string? postfix = null)
         {
