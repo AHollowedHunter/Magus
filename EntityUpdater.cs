@@ -189,6 +189,7 @@ namespace Magus.DataBuilder
 
             talent.TalentValues = GetTalentValues(kvTalent);
             talent.Description  = GetAbilityValue(language, talent.InternalName);
+            talent.Note  = GetAbilityValue(language, talent.InternalName, "Description");
             //FormatTalent(talent);
 
             if (kvTalent.Children.Any(x => x.Name == "AbilityValues"))
@@ -205,21 +206,39 @@ namespace Magus.DataBuilder
             var valueKeyRegex              = new Regex(@"(?<=[+-]?{s:)\w+(?=})");
             var bonusValueKeyRegex         = new Regex(@"(?<=[+-]?{s:bonus_)\w+(?=})");
 
-            var valueKeys = valueKeyRegex.Matches(talent.Description);
-            foreach (var valueKey in valueKeys.AsEnumerable())
+            var descriptionValueKeys = valueKeyRegex.Matches(talent.Description);
+            foreach (var valueKey in descriptionValueKeys.AsEnumerable())
             {
                 var value = talent.TalentValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
                 if (value != null)
                     talent.Description = Regex.Replace(talent.Description, @$"(?<=[+-]?){{s:{valueKey.Value}}}", string.Join(',', value));
             }
-            var bonusValueKeys = bonusValueKeyRegex.Matches(talent.Description);
-            foreach (var bonusValueKey in bonusValueKeys.AsEnumerable())
+            var descriptionBonusValueKeys = bonusValueKeyRegex.Matches(talent.Description);
+            foreach (var bonusValueKey in descriptionBonusValueKeys.AsEnumerable())
             {
                 var key = bonusValueKey.Value;
                 var ability = _abilities.FirstOrDefault(x => x.AbilityValues.Any(y => y.LinkedSpecialBonus == talent.InternalName && y.Name == key));
                 var abilityValue = ability?.AbilityValues.First(x => x.Name == key);
                 if (abilityValue != null) {
                     talent.Description = Regex.Replace(talent.Description, @$"(?<=[+-]?){{s:bonus_{key}}}", abilityValue.SpecialBonusValue?.ToString() ?? "");
+                }
+            }
+            var noteValueKeys = valueKeyRegex.Matches(talent.Note);
+            foreach (var valueKey in noteValueKeys.AsEnumerable())
+            {
+                var value = talent.TalentValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                if (value != null)
+                    talent.Note = Regex.Replace(talent.Description, @$"(?<=[+-]?){{s:{valueKey.Value}}}", string.Join(',', value));
+            }
+            var noteBonusValueKeys = bonusValueKeyRegex.Matches(talent.Note);
+            foreach (var bonusValueKey in noteBonusValueKeys.AsEnumerable())
+            {
+                var key = bonusValueKey.Value;
+                var ability = _abilities.FirstOrDefault(x => x.AbilityValues.Any(y => y.LinkedSpecialBonus == talent.InternalName && y.Name == key));
+                var abilityValue = ability?.AbilityValues.First(x => x.Name == key);
+                if (abilityValue != null)
+                {
+                    talent.Note = Regex.Replace(talent.Description, @$"(?<=[+-]?){{s:bonus_{key}}}", abilityValue.SpecialBonusValue?.ToString() ?? "");
                 }
             }
         }
