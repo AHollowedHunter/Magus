@@ -10,11 +10,11 @@ namespace Magus.Data.Models.Dota
         // Info
         public int Id { get; set; }
         public string Language { get; set; }
-        public string LocalName { get; set; }
+        public string Name { get; set; }
         public string InternalName { get; set; }
-        public string LocalDesc { get; set; } // Move to ability, and change for Items, which have multiple actives, so List<string> split via <h1> tags
-        public string LocalLore { get; set; }
-        public IEnumerable<string>? LocalNotes { get; set; }
+        public string Description { get; set; } // Move to ability, and change for Items, which have multiple actives, so List<string> split via <h1> tags
+        public string Lore { get; set; }
+        public IEnumerable<string> Notes { get; set; }
 
         public string LocalShard { get; set; } // needed?
         public string LocalScepter { get; set; } // needed?
@@ -39,7 +39,18 @@ namespace Magus.Data.Models.Dota
         public IEnumerable<float>? AbilityDamage { get; set; }
         public IEnumerable<float>? AbilityManaCost { get; set; }
 
-        public IEnumerable<AbilityValues> AbilityValues { get; set; }
+        public IEnumerable<AbilityValue> AbilityValues { get; set; }
+
+        public record AbilityValue
+        {
+            public string Name { get; set; }
+            public string? Description { get; set; }
+            public IEnumerable<float> Values { get; set; }
+            public string? LinkedSpecialBonus { get; set; }
+            public string? SpecialBonusValue { get; set; }
+            public bool RequiresScepter { get; set; }
+            public bool RequiresShard { get; set; }
+        }
 
         // Is there anything we don't know?
         public Dictionary<string, object>? ExtensionData { get; set; }
@@ -77,13 +88,13 @@ namespace Magus.Data.Models.Dota
             return targetNames;
         }
 
-        public List<AbilityValues> GetItemBonusValues()
+        public List<AbilityValue> GetItemBonusValues()
         {
-            var bonusValues = new List<AbilityValues>();
+            var bonusValues = new List<AbilityValue>();
 
             foreach (var value in AbilityValues)
             {
-                if (!string.IsNullOrEmpty(value.LocalHeading) && (value.LocalHeading.StartsWith('+') || value.LocalHeading.StartsWith('-')))
+                if (!string.IsNullOrEmpty(value.Description) && (value.Description.StartsWith('+') || value.Description.StartsWith('-')))
                 {
                     bonusValues.Add(value);
                 }
@@ -91,13 +102,13 @@ namespace Magus.Data.Models.Dota
             return bonusValues;
         }
 
-        public List<AbilityValues> GetSpellValues()
+        public List<AbilityValue> GetSpellValues()
         {
-            var spellValues = new List<AbilityValues>();
+            var spellValues = new List<AbilityValue>();
 
             foreach (var value in AbilityValues)
             {
-                if (!string.IsNullOrEmpty(value.LocalHeading) && !(value.LocalHeading.StartsWith('+') || value.LocalHeading.StartsWith('-')))
+                if (!string.IsNullOrEmpty(value.Description) && !(value.Description.StartsWith('+') || value.Description.StartsWith('-')))
                 {
                     spellValues.Add(value);
                 }
@@ -107,18 +118,10 @@ namespace Magus.Data.Models.Dota
         }
     }
 
-    public record AbilityValues
-    {
-        public string Name { get; set; }
-        public float[] ValuesFloat { get; set; }
-        public int[] ValuesInt { get; set; }
-        public bool IsPercentage { get; set; }
-        public string LocalHeading { get; set; }
-    }
-
     [Flags]
     public enum AbilityBehavior : ulong
     {
+        DOTA_ABILITY_BEHAVIOR_NONE                           = 0,
         DOTA_ABILITY_BEHAVIOR_HIDDEN                         = 1,
         [Display(Name = "Passive")]
         DOTA_ABILITY_BEHAVIOR_PASSIVE                        = 2,

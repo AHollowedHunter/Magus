@@ -9,16 +9,16 @@ namespace Magus.Data.Models.Dota
         public string Language { get; set; }
         public string InternalName { get; set; }
         public string Name { get; set; }
-        public IEnumerable<string>? NameAliases { get; set; }
+        public IEnumerable<string> NameAliases { get; set; }
         public string? RealName { get; set; } // Manually configure these
         public string Bio { get; set; } // lore
         public string Hype { get; set; }
         public string NpeDesc { get; set; }
-        public short OrderId { get; set; }
+        public short HeroOrderID { get; set; }
 
         // Spells        
-        public Ability[] Abilities { get; set; }
-        public Talent[] Talents { get; set; }
+        public IEnumerable<Ability> Abilities { get; set; }
+        public IEnumerable<Talent> Talents { get; set; }
 
         // Attributes
         public byte AttributeBaseAgility { get; set; }
@@ -31,39 +31,41 @@ namespace Magus.Data.Models.Dota
 
         // Role        
         public byte Complexity { get; set; }
-        public Role[] Roles { get; set; }
-        public int[] RoleLevels { get; set; }
+        public Role[] Role { get; set; }
+        public byte[] Rolelevels { get; set; }
 
         // Stats
         public AttackCapabilities AttackCapabilities { get; set; }
-        public byte DamageMin { get; set; }
-        public byte DamageMax { get; set; }
-        public float AttackRate { get; set; }
-        public short AttackRange { get; set; }
-        public short ProjectileSpeed { get; set; }
-        public float Armour { get; set; }
-        public byte MagicResistance { get; set; } = 25; // ALl heroes have base 25%
-        public short MoveSpeed { get; set; }
-        public float TurnRate { get; set; }
-        public short ViewRangeDay { get; set; }
-        public short ViewRangeNight { get; set; }
-        public short HealthMax { get; set; }
-        public float HealthRegen { get; set; }
-        public short ManaMax { get; set; }
-        public float ManaRegen { get; set; }
+        public short AttackDamageMin { get; set; }
+        public short AttackDamageMax { get; set; }
+        public float AttackRate { get; set; }      = 1.7F;
+        public short BaseAttackSpeed { get; set; } = 100; 
+        public float AttackAnimationPoint { get; set; }
+        public float AttackRange { get; set; }
+        public float ProjectileSpeed { get; set; }
+        public short ArmorPhysical { get; set; }
+        public short MagicalResistance { get; set; } = 25; // ALl heroes have base 25%
+        public short MovementSpeed { get; set; }
+        public float MovementTurnRate { get; set; }     = 0.6F; // Default. Maybe create the base hero and infer defaults from that in future if valve changes these
+        public short VisionDaytimeRange { get; set; }   = 1800;
+        public short VisionNighttimeRange { get; set; } = 800;
+        public short StatusHealth { get; set; }         = 200; // Default is 200, rest comes from strength
+        public float StatusHealthRegen { get; set; }    = 0.25F; // This is bonus regen, ignoring Strength based HP regen
+        public short StatusMana { get; set; }           = 75; // Default is 75, rest from intellect
+        public float StatusManaRegen { get; set; }      = 0; //Bonus mana regen, ignoring Intellect base regen
 
 
         // Is there anything we don't know?
         public Dictionary<string, object>? ExtensionData { get; set; }
 
         public int GetRoleLevel(Role role)
-            => RoleLevels[(int)role];
+            => Rolelevels[(int)role];
 
         public Role[] GetHightestRoles()
-            => RoleLevels.Select((value, index) => new { value, index }).Where(x => x.value == RoleLevels.Max()).Select(x => (Role)x.index).ToArray();
+            => Rolelevels.Select((value, index) => new { value, index }).Where(x => x.value == Rolelevels.Max()).Select(x => (Role)x.index).ToArray();
 
         public Role[] GetAllRoles()
-            => RoleLevels.Select((value, index) => new { value, index }).Where(x => x.value != 0).Select(x => (Role)x.index).ToArray();
+            => Rolelevels.Select((value, index) => new { value, index }).Where(x => x.value != 0).Select(x => (Role)x.index).ToArray();
 
         public string GetAttackType()
             => AttackCapabilities.ToString();
@@ -89,7 +91,7 @@ namespace Magus.Data.Models.Dota
         Durable,
         Escape,
         Pusher,
-        setiator
+        Initiator
     }
 
     public enum AttackCapabilities
