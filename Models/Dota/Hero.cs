@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Magus.Data.Models.Embeds;
+using System.ComponentModel.DataAnnotations;
 
 namespace Magus.Data.Models.Dota
 {
@@ -59,16 +60,45 @@ namespace Magus.Data.Models.Dota
         public Dictionary<string, object>? ExtensionData { get; set; }
 
         public int GetRoleLevel(Role role)
-            => Rolelevels[(int)role];
+            => Rolelevels[Array.IndexOf(Role, role)];
 
         public Role[] GetHightestRoles()
-            => Rolelevels.Select((value, index) => new { value, index }).Where(x => x.value == Rolelevels.Max()).Select(x => (Role)x.index).ToArray();
-
-        public Role[] GetAllRoles()
-            => Rolelevels.Select((value, index) => new { value, index }).Where(x => x.value != 0).Select(x => (Role)x.index).ToArray();
+            => Rolelevels.Select((value, index) => new { value, index })
+                         .Where(x => x.value == Rolelevels.Max())
+                         .Select(x => Role[x.index])
+                         .ToArray();
 
         public string GetAttackType()
             => AttackCapabilities.ToString();
+
+        public int GetAttackDamageMin()
+            => AttributePrimary switch
+            {
+                AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AttackDamageMin + AttributeBaseAgility,
+                AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => AttackDamageMin + AttributeBaseIntelligence,
+                AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => AttackDamageMin + AttributeBaseStrength,
+                _                                         => AttackDamageMin,
+            };
+
+        public int GetAttackDamageMax()
+            => AttributePrimary switch
+            {
+                AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AttackDamageMax + AttributeBaseAgility,
+                AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => AttackDamageMax + AttributeBaseIntelligence,
+                AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => AttackDamageMax + AttributeBaseStrength,
+                _                                         => AttackDamageMin,
+            };
+
+        public float GetAttackTime()
+            => 1 / ((BaseAttackSpeed + AttributeBaseAgility) / (100 * AttackRate));
+
+        public float GetArmor()
+            => ArmorPhysical + (AttributeBaseAgility / 6);
+
+        public IEnumerable<HeroInfoEmbed> GetHeroInfoEmbeds(Dictionary<string, string[]> sourceLocaleMappings)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public enum AttributePrimary
