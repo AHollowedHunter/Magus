@@ -51,13 +51,13 @@ namespace Magus.DataBuilder.Extensions
             heroInfoFields.Add(new()
             {
                 Name     = "Attack",
-                Value    = $"{Emotes.DamageIcon} {hero.AttackDamageMin}-{hero.AttackDamageMax}\n{Emotes.AttackTimeIcon} {hero.AttackRate}\n{Emotes.AttackRangeIcon} {hero.AttackRange}\n{hero.AttackCapabilities.GetAttackTypeIcon()} {hero.AttackCapabilities.GetDisplayName()}",
+                Value    = $"{Emotes.DamageIcon} {hero.GetAttackDamageMin()}-{hero.GetAttackDamageMax()}\n{Emotes.AttackTimeIcon} {hero.GetAttackTime().ToString("n2")}{Emotes.Spacer}({hero.AttackRate.ToString("n1")} Base)\n{Emotes.AttackRangeIcon} {hero.AttackRange}\n{hero.AttackCapabilities.GetAttackTypeIcon()} {hero.AttackCapabilities.GetDisplayName()}",
                 IsInline = true
             });
             heroInfoFields.Add(new()
             {
                 Name     = "Defence",
-                Value    = $"{Emotes.ArmourIcon} {hero.ArmorPhysical.ToString("n1")}\n{Emotes.MagicResistIcon} {hero.MagicalResistance}",
+                Value    = $"{Emotes.ArmourIcon} {hero.GetArmor().ToString("n1")}\n{Emotes.MagicResistIcon} {hero.MagicalResistance}",
                 IsInline = true
             });
             heroInfoFields.Add(new()
@@ -105,15 +105,16 @@ namespace Magus.DataBuilder.Extensions
                 Value    = $"{new string('\u25c6', hero.Complexity)}{new string('\u25c7', 3 - hero.Complexity)}",
                 IsInline = true
             });
-            var roleValue = "";
-            foreach (var role in hero.GetAllRoles())
+
+            var roleValues = new List<string>();
+            foreach (var role in hero.Role)
             {
                 if (hero.GetHightestRoles().Contains(role))
-                    roleValue += Format.Bold(role.ToString()) + " ";
+                    roleValues.Add(Format.Bold(role.ToString()));
                 else
-                    roleValue += role + " ";
+                    roleValues.Add(role.ToString());
             }
-            roleValue = roleValue.Trim().Replace(" ", " | ");
+            var roleValue = string.Join(" | ", roleValues);
             heroInfoFields.Add(new()
             {
                 Name     = "Roles",

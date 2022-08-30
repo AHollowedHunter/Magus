@@ -298,6 +298,11 @@ namespace Magus.DataBuilder
             ability.AbilityDamage      = kvAbility.ParseChildValueList<float>("AbilityDamage");
             ability.AbilityManaCost    = kvAbility.ParseChildValueList<float>("AbilityManaCost");
 
+            ability.AbilityIsGrantedByScepter = kvAbility.ParseChildValue<bool>("IsGrantedByScepter");
+            ability.AbilityIsGrantedByShard   = kvAbility.ParseChildValue<bool>("IsGrantedByShard");
+            ability.AbilityHasScepter         = kvAbility.ParseChildValue<bool>("HasScepterUpgrade");
+            ability.AbilityHasShard           = kvAbility.ParseChildValue<bool>("HasShardUpgrade");
+
             ability.AbilityValues = GetAbilityValues(kvAbility);
 
             _logger.LogTrace("Processed {0,7} {1,-64} in {2}\"", "ability", ability.InternalName, language);
