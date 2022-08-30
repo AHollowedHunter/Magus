@@ -1,6 +1,6 @@
 ﻿namespace Magus.Data.Models.Embeds
 {
-    public record ItemInfo : EntityInfo
+    public record ItemInfo : EntityInfoEmbed
     {
 
     }
