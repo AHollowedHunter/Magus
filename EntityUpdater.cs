@@ -4,7 +4,6 @@ using Magus.Data.Models.Embeds;
 using Magus.DataBuilder.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -59,7 +58,8 @@ namespace Magus.DataBuilder
             await SetEntityValues();
             await SetEntities();
 
-            //StorePatchNoteEmbeds();
+            StoreEntityEmbeds();
+
             stopwatch.Stop();
             var timeTaken = stopwatch.Elapsed.TotalSeconds;
             _logger.LogInformation("Finished Entity Update");
@@ -599,5 +599,32 @@ namespace Magus.DataBuilder
             }
             return talents;
         }
+
+
+        private void StoreEntityEmbeds()
+        {
+            _logger.LogInformation("Converting entities to Info Embed records");
+            var heroInfoEmbeds = new List<HeroInfoEmbed>();
+            var latestPatch    = _db.GetLatestPatch();
+
+            foreach (var hero in _heroes)
+            {
+                _logger.LogDebug("Processing hero info embeds for {0,-5} in {1}", hero.InternalName, hero.Language);
+                heroInfoEmbeds.AddRange(hero.GetHeroInfoEmbeds(_sourceLocaleMappings, latestPatch));
+            }
+            _logger.LogInformation("Updating entity info embeds in Database");
+
+            _db.UpsertRecords(heroInfoEmbeds);
+            EnsureIndexes();
+        }
+
+        private void EnsureIndexes()
+        {
+            _db.EnsureIndex<HeroInfoEmbed>("InternalName");
+            _db.EnsureIndex<HeroInfoEmbed>("Name");
+            _db.EnsureIndex<HeroInfoEmbed>("RealName");
+            _db.EnsureIndex<HeroInfoEmbed>("Aliases");
+        }
+
     }
 }

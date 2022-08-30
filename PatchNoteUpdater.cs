@@ -234,7 +234,7 @@ namespace Magus.DataBuilder
 
             // Following will need tweaking to use collections representing localised entity data from Magus.Data.Models.Dota
             // For now, while hero, ability, item etc. data is not procesed, use existing ...Info stored
-            var heroInfo    = _db.GetRecords<HeroInfo>();
+            var heroInfo    = _db.GetRecords<HeroInfoEmbed>();
             var abilityInfo = _db.GetRecords<AbilityInfo>();
             var itemInfo    = _db.GetRecords<ItemInfo>();
 

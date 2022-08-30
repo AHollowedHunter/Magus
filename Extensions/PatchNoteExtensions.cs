@@ -56,7 +56,7 @@ namespace Magus.DataBuilder.Extensions
             return generalPatchNotesList;
         }
 
-        public static IEnumerable<HeroPatchNoteEmbed> GetHeroPatchNoteEmbeds(this PatchNote patch, IEnumerable<HeroInfo> heroes, IEnumerable<AbilityInfo> abilities, Dictionary<string, string[]> languageMap)
+        public static IEnumerable<HeroPatchNoteEmbed> GetHeroPatchNoteEmbeds(this PatchNote patch, IEnumerable<HeroInfoEmbed> heroes, IEnumerable<AbilityInfo> abilities, Dictionary<string, string[]> languageMap)
         {
             var heroPatchNotesList = new List<HeroPatchNoteEmbed>();
             foreach (var hero in patch.HeroesNotes)
