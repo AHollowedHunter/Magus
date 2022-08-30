@@ -75,6 +75,22 @@ namespace Magus.Data
         /// <param name="orderByDesc">Order using Id ascending if false, or descending if true.</param>
         /// <returns></returns>
         IEnumerable<T> GetRecords<T>(ulong id, int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord;
+        /// <summary>
+        /// Get a collection of records
+        /// </summary>
+        /// <typeparam name="T">Type of record desired</typeparam>
+        /// <param name="limit">How many records to return</param>
+        /// <param name="orderByDesc">Order using Id ascending if false, or descending if true.</param>
+        IEnumerable<T> GetRecords<T>(string locale = DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord;
+        /// <summary>
+        /// Get a collection of records starting at the specified Id
+        /// </summary>
+        /// <typeparam name="T">Type of record desired</typeparam>
+        /// <param name="id">Starting Id position to retrieve.</param>
+        /// <param name="limit">How many records to return.</param>
+        /// <param name="orderByDesc">Order using Id ascending if false, or descending if true.</param>
+        /// <returns></returns>
+        IEnumerable<T> GetRecords<T>(ulong id, string locale = DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord;
 
         /// <summary>
         /// Get the latest patch metadata
@@ -115,11 +131,11 @@ namespace Magus.Data
         /// <summary>
         /// Get the specified types info via an entityId
         /// </summary>
-        T GetEntityInfo<T>(int entityId) where T : EntityInfo;
+        T GetEntityInfo<T>(int entityId, string locale = DEFAULT_LOCALE) where T : EntityInfoEmbed;
         /// <summary>
         /// Get the specified types info via an entityName
         /// </summary>
-        IEnumerable<T> GetEntityInfo<T>(string entityName, int limit = int.MaxValue) where T : EntityInfo;
+        IEnumerable<T> GetEntityInfo<T>(string entityName, string locale = DEFAULT_LOCALE, int limit = int.MaxValue) where T : EntityInfoEmbed;
 
         /// <summary>
         /// Create a index on the required field

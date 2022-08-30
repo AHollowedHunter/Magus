@@ -16,9 +16,6 @@ namespace Magus.Data.Models.Dota
         public string Lore { get; set; }
         public IEnumerable<string> Notes { get; set; }
 
-        public string LocalShard { get; set; } // needed?
-        public string LocalScepter { get; set; } // needed?
-
         public byte MaxLevel { get; set; }
         public AbilityType AbilityType { get; set; }
         public AbilityBehavior AbilityBehavior { get; set; }

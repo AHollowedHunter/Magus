@@ -111,6 +111,30 @@ namespace Magus.Data
             return records.Take(limit);
         }
 
+        public IEnumerable<T> GetRecords<T>(string locale = IDatabaseService.DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord
+        {
+            var order = orderByDesc ? Query.Descending : Query.Ascending;
+            var collecton = _liteDB.GetCollection<T>();
+            var results = collecton.Find(Query.EQ("Locale", locale));
+            return orderByDesc !? results.Take(limit) : results.OrderByDescending(x => x.Id).Take(limit);
+        }
+
+        public IEnumerable<T> GetRecords<T>(ulong id, string locale = IDatabaseService.DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord
+        {
+            var liteId = (long)id;
+            var collection = _liteDB.GetCollection<T>();
+            IEnumerable<T> records;
+            if (!orderByDesc)
+            {
+                records = collection.Find(Query.And(Query.EQ("locale", locale), Query.GTE("Id", liteId))).OrderBy(x => x.Id);
+            }
+            else
+            {
+                records = collection.Find(Query.And(Query.EQ("locale", locale), Query.LTE("Id", liteId))).OrderByDescending(x => x.Id);
+            }
+            return records.Take(limit);
+        }
+
         public Patch GetLatestPatch()
         {
             var collection = _liteDB.GetCollection<Patch>();
@@ -191,20 +215,20 @@ namespace Magus.Data
             return results.Take(limit);
         }
 
-        public T GetEntityInfo<T>(int entityId) where T : EntityInfo
+        public T GetEntityInfo<T>(int entityId, string locale = IDatabaseService.DEFAULT_LOCALE) where T : EntityInfoEmbed
         {
             var collection = _liteDB.GetCollection<T>();
-            var result = collection.FindById(entityId);
+            var result = collection.FindOne(Query.And(Query.EQ("EntityId", entityId), Query.EQ("Locale", locale)));
             return result;
         }
 
-        public IEnumerable<T> GetEntityInfo<T>(string entityName, int limit = int.MaxValue) where T : EntityInfo
+        public IEnumerable<T> GetEntityInfo<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE, int limit = int.MaxValue) where T : EntityInfoEmbed
         {
             var collection = _liteDB.GetCollection<T>();
             IEnumerable<T> results;
-            results = collection.Find(Query.Contains("LocalName", entityName), limit: limit); // todo startswith?
-            results.Concat(collection.Find(Query.Contains("RealName", entityName), limit: limit));
-            results.Concat(collection.Find(Query.Contains("InternalName", entityName), limit: limit));
+            results = collection.Find(Query.And(Query.Contains("LocalName", entityName), Query.EQ("Locale", locale)), limit: limit); // todo startswith?
+            results.Concat(collection.Find(Query.And(Query.Contains("InternalName", entityName), Query.EQ("Locale", locale)), limit: limit));
+            //results.Concat(collection.Find(Query.And(Query.Contains("RealName", entityName), Query.EQ("Locale", locale)), limit: limit));
             //results.Concat(collection.Find(Query.Contains("Aliases[*]", entityName), limit: limit));
             return results.Take(limit);
         }
