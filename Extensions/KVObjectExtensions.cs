@@ -46,11 +46,11 @@ namespace Magus.DataBuilder.Extensions
         /// <param name="name"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public static IEnumerable<T> ParseChildValueList<T>(this KVObject kvObject, string name, IEnumerable<T> defaultValue = null!) where T : IConvertible
+        public static IList<T> ParseChildValueList<T>(this KVObject kvObject, string name, IEnumerable<T> defaultValue = null!) where T : IConvertible
         {
             var child = kvObject.Children.FirstOrDefault(x => x.Name == name);
             if (child == null)  
-                return Enumerable.Empty<T>();
+                return Array.Empty<T>();
 
             return child.ParseList<T>();
         }
@@ -63,16 +63,16 @@ namespace Magus.DataBuilder.Extensions
         /// <param name="name"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public static IEnumerable<TEnum> ParseChildEnumList<TEnum>(this KVObject kvObject, string name) where TEnum : struct, Enum
+        public static IList<TEnum> ParseChildEnumList<TEnum>(this KVObject kvObject, string name) where TEnum : struct, Enum
         {
             var child = kvObject.Children.FirstOrDefault(x => x.Name == name);
             if (child == null)  
-                return Enumerable.Empty<TEnum>();
+                return Array.Empty<TEnum>();
 
             return child.ParseEnumList<TEnum>();
         }
 
-        public static IEnumerable<T> ParseList<T>(this KVObject? kvObject) where T : IConvertible
+        public static IList<T> ParseList<T>(this KVObject? kvObject) where T : IConvertible
         {
             List<T> result = new();
             if (kvObject == null)
@@ -96,7 +96,7 @@ namespace Magus.DataBuilder.Extensions
         /// <typeparam name="TEnum"></typeparam>
         /// <param name="kvObject"></param>
         /// <returns></returns>
-        public static IEnumerable<TEnum> ParseEnumList<TEnum>(this KVObject? kvObject) where TEnum : struct, Enum
+        public static IList<TEnum> ParseEnumList<TEnum>(this KVObject? kvObject) where TEnum : struct, Enum
         {
             List<TEnum> result = new();
             if (kvObject == null)

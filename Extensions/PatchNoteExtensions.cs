@@ -56,7 +56,7 @@ namespace Magus.DataBuilder.Extensions
             return generalPatchNotesList;
         }
 
-        public static IEnumerable<HeroPatchNoteEmbed> GetHeroPatchNoteEmbeds(this PatchNote patch, IEnumerable<HeroInfoEmbed> heroes, IEnumerable<AbilityInfo> abilities, Dictionary<string, string[]> languageMap)
+        public static IEnumerable<HeroPatchNoteEmbed> GetHeroPatchNoteEmbeds(this PatchNote patch, IEnumerable<HeroInfoEmbed> heroes, IEnumerable<AbilityInfoEmbed> abilities, Dictionary<string, string[]> languageMap)
         {
             var heroPatchNotesList = new List<HeroPatchNoteEmbed>();
             foreach (var hero in patch.HeroesNotes)
@@ -83,7 +83,7 @@ namespace Magus.DataBuilder.Extensions
 
                 var heroPatchNoteEmbed = new Data.Models.Embeds.Embed()
                 {
-                    Title        = $"{heroInfo.LocalName} - changes {patch.PatchName}",
+                    Title        = $"{heroInfo.Name} - changes {patch.PatchName}",
                     Description  = CreateFormattedDescription(hero.GeneralNotes),
                     Url          = _patchUrlBase + patch.PatchName,
                     ColorRaw     = Color.DarkOrange,
@@ -99,7 +99,7 @@ namespace Magus.DataBuilder.Extensions
                         Id           = GetPatchNoteId(patch.PatchName, hero.InternalName, locale), //Temp custom id
                         Locale       = locale,
                         EntityId     = (int)heroInfo.Id,
-                        LocalName    = heroInfo.LocalName,
+                        Name         = heroInfo.Name,
                         InternalName = hero.InternalName,
                         Embed        = heroPatchNoteEmbed,
                         PatchNumber  = patch.PatchName,
@@ -109,17 +109,18 @@ namespace Magus.DataBuilder.Extensions
             return heroPatchNotesList;
         }
 
-        public static IEnumerable<ItemPatchNoteEmbed> GetItemPatchNoteEmbeds(this PatchNote patch, IEnumerable<ItemInfo> items, Dictionary<string, string[]> languageMap)
+        public static IEnumerable<ItemPatchNoteEmbed> GetItemPatchNoteEmbeds(this PatchNote patch, IEnumerable<ItemInfoEmbed> items, Dictionary<string, string[]> languageMap)
         {
             var itemPatchNotesList = new List<ItemPatchNoteEmbed>();
 
             foreach (var item in patch.ItemNotes.Concat(patch.NeutralItemNotes))
             {
-                var itemInfo = items.Where(x => x.InternalName == item.InternalName).First();
+                var itemInfo = items.Where(x => x.InternalName == item.InternalName).FirstOrDefault();
+                if (itemInfo == null) continue;
 
                 var itemPatchNoteEmbed = new Data.Models.Embeds.Embed()
                 {
-                    Title        = $"{itemInfo.LocalName} - changes {patch.PatchName}",
+                    Title        = $"{itemInfo.Name} - changes {patch.PatchName}",
                     Description  = CreateFormattedDescription(item.Notes),
                     Url          = _patchUrlBase + patch.PatchName,
                     ColorRaw     = Color.DarkBlue,
@@ -134,7 +135,7 @@ namespace Magus.DataBuilder.Extensions
                         Id           = GetPatchNoteId(patch.PatchName, item.InternalName, locale), //Temp custom id
                         Locale       = locale,
                         EntityId     = (int)itemInfo.Id,
-                        LocalName    = itemInfo.LocalName,
+                        Name         = itemInfo.Name,
                         InternalName = itemInfo.InternalName,
                         Embed        = itemPatchNoteEmbed,
                         PatchNumber  = patch.PatchName,

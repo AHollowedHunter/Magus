@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using ValveKeyValue;
+using static Magus.Data.Models.Dota.BaseSpell;
 
 namespace Magus.DataBuilder
 {
@@ -25,6 +26,7 @@ namespace Magus.DataBuilder
         private readonly Dictionary<(string Language, string Key), string> _dotaValues;
         private readonly Dictionary<(string Language, string Key), string> _heroLoreValues;
         private readonly List<Ability> _abilities;
+        private readonly List<Ability> _heroAbilities;
         private readonly List<Talent> _talents;
         private readonly List<Hero> _heroes;
         private readonly List<Item> _items;
@@ -44,6 +46,7 @@ namespace Magus.DataBuilder
             _dotaValues            = new();
             _heroLoreValues        = new();
             _abilities             = new();
+            _heroAbilities         = new();
             _talents               = new();
             _heroes                = new();
             _items                 = new();
@@ -197,15 +200,16 @@ namespace Magus.DataBuilder
 
         private void FormatTalent(Talent talent)
         {
-            var valueKeyRegex              = new Regex(@"(?<=[+-]?{s:)\w+(?=})");
-            var bonusValueKeyRegex         = new Regex(@"(?<=[+-]?{s:bonus_)\w+(?=})");
+            var valueKeyRegex      = new Regex(@"(?<=[+-]?{s:)\w+(?=})");
+            var bonusValueKeyRegex = new Regex(@"(?<=[+-]?{s:bonus_)\w+(?=})");
+            var doubleSymbols      = new Regex(@"[%+-](?=[%+-][^%+-])");
 
             var descriptionValueKeys = valueKeyRegex.Matches(talent.Description);
             foreach (var valueKey in descriptionValueKeys.AsEnumerable())
             {
-                var value = talent.TalentValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                var value = talent.TalentValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Value;
                 if (value != null)
-                    talent.Description = Regex.Replace(talent.Description, @$"(?<=[+-]?){{s:{valueKey.Value}}}", string.Join(',', value));
+                    talent.Description = Regex.Replace(talent.Description, @$"(?<=[+-]?){{s:{valueKey.Value}}}", value);
             }
             var descriptionBonusValueKeys = bonusValueKeyRegex.Matches(talent.Description);
             foreach (var bonusValueKey in descriptionBonusValueKeys.AsEnumerable())
@@ -220,9 +224,9 @@ namespace Magus.DataBuilder
             var noteValueKeys = valueKeyRegex.Matches(talent.Note);
             foreach (var valueKey in noteValueKeys.AsEnumerable())
             {
-                var value = talent.TalentValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                var value = talent.TalentValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Value;
                 if (value != null)
-                    talent.Note = Regex.Replace(talent.Note, @$"(?<=[+-]?){{s:{valueKey.Value}}}", string.Join(',', value));
+                    talent.Note = Regex.Replace(talent.Note, @$"(?<=[+-]?){{s:{valueKey.Value}}}", value);
             }
             var noteBonusValueKeys = bonusValueKeyRegex.Matches(talent.Note);
             foreach (var bonusValueKey in noteBonusValueKeys.AsEnumerable())
@@ -235,6 +239,8 @@ namespace Magus.DataBuilder
                     talent.Note = Regex.Replace(talent.Note, @$"(?<=[+-]?){{s:bonus_{key}}}", abilityValue.SpecialBonusValue?.ToString() ?? "");
                 }
             }
+            talent.Description = doubleSymbols.Replace(talent.Description, string.Empty);
+            talent.Note        = doubleSymbols.Replace(talent.Note, string.Empty);
         }
 
         private IEnumerable<Talent.TalentValue> GetTalentValues(KVObject kvTalent)
@@ -253,7 +259,7 @@ namespace Magus.DataBuilder
                         talentValues.Add(new()
                         {
                             Name              = value.Name,
-                            Values            = value.ParseList<float>(),
+                            Value             = value.ParseValue<string>() ?? "",
                             AdLinkedAbilities = item.ParseChildValue<string>("ad_linked_abilities"),
                         });
                     }
@@ -262,7 +268,7 @@ namespace Magus.DataBuilder
                         talentValues.Add(new()
                         {
                             Name   = item.Name,
-                            Values = item.ParseList<float>(),
+                            Value  = item.ParseValue<string>() ?? "",
                         });
                     }
                 }
@@ -277,7 +283,7 @@ namespace Magus.DataBuilder
             ability.Id           = (int)kvAbility.Children.First(x => x.Name == "ID").Value!;
             ability.InternalName = kvAbility.Name;
             ability.Language     = language;
-            ability.Name         = GetAbilityValue(language, ability.InternalName);
+            ability.Name         = GetAbilityValue(language, ability.InternalName)!;
             ability.Description  = GetAbilityValue(language, ability.InternalName, "Description");
             ability.Lore         = GetAbilityValue(language, ability.InternalName, "Lore");
             ability.Notes        = GetAbilityNoteValues(language, ability.InternalName);
@@ -302,73 +308,81 @@ namespace Magus.DataBuilder
             ability.AbilityIsGrantedByShard   = kvAbility.ParseChildValue<bool>("IsGrantedByShard");
             ability.AbilityHasScepter         = kvAbility.ParseChildValue<bool>("HasScepterUpgrade");
             ability.AbilityHasShard           = kvAbility.ParseChildValue<bool>("HasShardUpgrade");
+            ability.ScepterDescription        = GetAbilityValue(language, ability.InternalName, "scepter_description");
+            ability.ShardDescription          = GetAbilityValue(language, ability.InternalName, "shard_description");
 
-            ability.AbilityValues = GetAbilityValues(kvAbility);
+            ability.AbilityValues = GetAbilityValues(language, kvAbility);
 
             _logger.LogTrace("Processed {0,7} {1,-64} in {2}\"", "ability", ability.InternalName, language);
             return ability;
         }
 
-        private IEnumerable<BaseSpell.AbilityValue> GetAbilityValues(KVObject kvAbility)
+        private IEnumerable<BaseSpell.AbilityValue> GetAbilityValues(string language, KVObject kvAbility)
         {
             var abilityValues = new List<BaseSpell.AbilityValue>();
 
             var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial");
             if (kvAbilityValues != null)
             {
-                foreach (var item in kvAbilityValues.Children)
+                foreach (var kvAbilityValue in kvAbilityValues.Children)
                 {
-                    if (item.Value.ValueType == KVValueType.Collection)
+                    BaseSpell.AbilityValue abilityValue;
+                    if (kvAbilityValue.Value.ValueType == KVValueType.Collection)
                     {
-                        if (Regex.IsMatch(item.Name, @"\d+"))
+                        if (Regex.IsMatch(kvAbilityValue.Name, @"\d+"))
                         {
-                            var value = item.First(x => x.Name != "var_type" && x.Name != "ad_linked_abilities");
-                            abilityValues.Add(new()
+                            var value = kvAbilityValue.First(x => x.Name != "var_type" && x.Name != "ad_linked_abilities");
+                            abilityValue = new()
                             {
                                 Name               = value.Name,
                                 Values             = value.ParseList<float>(),
-                                LinkedSpecialBonus = item.ParseChildValue<string>("ad_linked_abilities"),
-                                RequiresScepter    = item.ParseChildValue<bool>("RequiresScepter"),
-                                RequiresShard    = item.ParseChildValue<bool>("RequiresShard"),
-                            });
+                                LinkedSpecialBonus = kvAbilityValue.ParseChildValue<string>("ad_linked_abilities"),
+                                RequiresScepter    = kvAbilityValue.ParseChildValue<bool>("RequiresScepter"),
+                                RequiresShard      = kvAbilityValue.ParseChildValue<bool>("RequiresShard"),
+                                Description        = GetAbilityValue(language, kvAbility.Name, value.Name),
+                            };
                         }
                         else
                         {
-                            if (item.Any(x => x.Name == "LinkedSpecialBonus"))
+                            if (kvAbilityValue.Any(x => x.Name == "LinkedSpecialBonus"))
                             {
-                                abilityValues.Add(new()
+                                abilityValue = new()
                                 {
-                                    Name               = item.Name,
-                                    Values             = item.ParseChildValueList<float>("value"),
-                                    LinkedSpecialBonus = item.ParseChildValue<string>("LinkedSpecialBonus"),
-                                    RequiresScepter    = item.ParseChildValue<bool>("RequiresScepter"),
-                                    RequiresShard    = item.ParseChildValue<bool>("RequiresShard"),
-                                });
+                                    Name               = kvAbilityValue.Name,
+                                    Values             = kvAbilityValue.ParseChildValueList<float>("value"),
+                                    LinkedSpecialBonus = kvAbilityValue.ParseChildValue<string>("LinkedSpecialBonus"),
+                                    RequiresScepter    = kvAbilityValue.ParseChildValue<bool>("RequiresScepter"),
+                                    RequiresShard      = kvAbilityValue.ParseChildValue<bool>("RequiresShard"),
+                                    Description        = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
+                                };
                             }
                             else
                             {
-                                var bonus = item.FirstOrDefault(x => x.Name.StartsWith("special_bonus_"));
-                                var values = item.ParseChildValue<string>("value") != "FIELD_INTEGER" ? item.ParseChildValueList<float>("value") : Enumerable.Empty<float>();
-                                abilityValues.Add(new()
+                                var bonus = kvAbilityValue.FirstOrDefault(x => x.Name.StartsWith("special_bonus_"));
+                                var values = kvAbilityValue.ParseChildValue<string>("value") != "FIELD_INTEGER" ? kvAbilityValue.ParseChildValueList<float>("value") : Array.Empty<float>();
+                                abilityValue = new()
                                 {
-                                    Name               = item.Name,
+                                    Name               = kvAbilityValue.Name,
                                     Values             = values,
                                     LinkedSpecialBonus = bonus?.Name,
                                     SpecialBonusValue  = bonus.ParseValue<string>(),
-                                    RequiresScepter    = item.ParseChildValue<bool>("RequiresScepter"),
-                                    RequiresShard    = item.ParseChildValue<bool>("RequiresShard"),
-                                });
+                                    RequiresScepter    = kvAbilityValue.ParseChildValue<bool>("RequiresScepter"),
+                                    RequiresShard      = kvAbilityValue.ParseChildValue<bool>("RequiresShard"),
+                                    Description        = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
+                                };
                             }
                         }
                     }
                     else
                     {
-                        abilityValues.Add(new()
+                        abilityValue = new()
                         {
-                            Name   = item.Name,
-                            Values = item.ParseList<float>(),
-                        });
+                            Name        = kvAbilityValue.Name,
+                            Values      = kvAbilityValue.ParseList<float>(),
+                            Description = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
+                        };
                     }
+                    abilityValues.Add(abilityValue);
                 }
             }
             return abilityValues;
@@ -376,19 +390,87 @@ namespace Magus.DataBuilder
 
         private void FormatAbility(Ability ability)
         {
-            var valueKeyRegex      = new Regex(@"(?<=%?)\w+(?=%)");
+            var valueKeyRegex      = new Regex(@"(?<=%)\w+(?=%)");
             var bonusValueKeyRegex = new Regex(@"%\w+%");
-            var escapedPercentage  = new Regex(@"%(?=%[^%])");
+            var escapedPercentage  = new Regex(@"%(?=[^%])");
+
+            if (ability.Description == null) 
+                return;
 
             var descriptionValueKeys = valueKeyRegex.Matches(ability.Description);
             foreach (var valueKey in descriptionValueKeys.AsEnumerable())
             {
                 var value = ability.AbilityValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
-                if (value == null)
-                    value = GetAbilityProperty(valueKey.Value, ability);
+                value ??= GetAbilityProperty(valueKey.Value, ability);
                 if (value != null)
-                    ability.Description = Regex.Replace(ability.Description, @$"%{valueKey.Value}%", string.Join(',', value.Distinct())); // Use distinct as some all duplicates
-                ability.Description = escapedPercentage.Replace(ability.Description, string.Empty);
+                {
+                    var formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct()));
+                    if (Regex.IsMatch(ability.Description, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
+                    {
+                        formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct().Select(x => x.ToString() + "%")));
+                    }
+                    ability.Description = Regex.Replace(ability.Description,
+                                                        @$"%{valueKey.Value}%",
+                                                        Discord.Format.Bold(string.Join(" / ", formattedValue))); // Use distinct as some all duplicates
+                }
+                ability.Description = escapedPercentage.Replace(ability.Description, "");
+                ability.Description = CleanSimple(ability.Description);
+            }
+            foreach (var value in ability.AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)))
+            {
+                var joinedValue = string.Join(" / ", value.Values.Distinct());
+                if (value.Description!.StartsWith('%'))
+                {
+                    value.Description = value.Description.Trim('%');
+                    joinedValue = string.Join(" / ", value.Values.Distinct().Select(x => x.ToString() + "%"));
+                }
+                value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
+                value.Description = CleanSimple(value.Description);
+            }
+
+            if (!string.IsNullOrEmpty(ability.ShardDescription))
+            {
+                var shardValueKeys = valueKeyRegex.Matches(ability.ShardDescription);
+                foreach (var valueKey in shardValueKeys.AsEnumerable())
+                {
+                    var value = ability.AbilityValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                    value ??= GetAbilityProperty(valueKey.Value, ability);
+                    if (value != null)
+                    {
+                        var formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct()));
+                        if (Regex.IsMatch(ability.ShardDescription, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
+                        {
+                            formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct().Select(x => x.ToString() + "%")));
+                        }
+                        ability.ShardDescription = Regex.Replace(ability.ShardDescription,
+                                                            @$"%{valueKey.Value}%",
+                                                            Discord.Format.Bold(string.Join(" / ", formattedValue))); // Use distinct as some all duplicates
+                    }
+                    ability.ShardDescription = escapedPercentage.Replace(ability.ShardDescription, "");
+                }
+                ability.ShardDescription = CleanSimple(ability.ShardDescription);
+            }
+            if (!string.IsNullOrEmpty(ability.ScepterDescription))
+            {
+                var scepterValueKeys = valueKeyRegex.Matches(ability.ScepterDescription);
+                foreach (var valueKey in scepterValueKeys.AsEnumerable())
+                {
+                    var value = ability.AbilityValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                    value ??= GetAbilityProperty(valueKey.Value, ability);
+                    if (value != null)
+                    {
+                        var formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct()));
+                        if (Regex.IsMatch(ability.ScepterDescription, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
+                        {
+                            formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct().Select(x => x.ToString() + "%")));
+                        }
+                        ability.ScepterDescription = Regex.Replace(ability.ScepterDescription,
+                                                            @$"%{valueKey.Value}%",
+                                                            Discord.Format.Bold(string.Join(" / ", formattedValue))); // Use distinct as some all duplicates
+                    }
+                    ability.ScepterDescription = escapedPercentage.Replace(ability.ScepterDescription, "");
+                }
+                ability.ScepterDescription = CleanSimple(ability.ScepterDescription);
             }
 
             var newNotes = new List<string>();
@@ -400,15 +482,23 @@ namespace Magus.DataBuilder
                 {
                     var value = ability.AbilityValues.FirstOrDefault(x => x.Name == bonusValueKey.Value)?.Values;
                     if (value != null)
-                        newNote = Regex.Replace(ability.Description, @$"%{bonusValueKey.Value}%", string.Join(',', value));
-                    newNote = escapedPercentage.Replace(ability.Description, string.Empty);
+                    {
+                        var formattedValue = Discord.Format.Bold(string.Join(" / ", value.Distinct()));
+                        if (Regex.IsMatch(ability.Description, String.Format(@"(?<=%?){0}(?=%%%)", bonusValueKey.Value)))
+                        {
+                            formattedValue = Discord.Format.Bold(string.Join(" / ", value.Distinct().Select(x => x.ToString() + "%")));
+                        }
+                        newNote = Regex.Replace(newNote, @$"%{bonusValueKey.Value}%", formattedValue);
+                    }
                 }
+                newNote = escapedPercentage.Replace(newNote, "");
+                newNote = CleanLocaleValue(newNote);
                 newNotes.Add(newNote);
             }
             ability.Notes = newNotes;
         }
 
-        private IEnumerable<float>? GetAbilityProperty(string name, Ability ability)
+        private IList<float>? GetAbilityProperty(string name, Ability ability)
 
             => name.ToLower() switch
             {
@@ -469,7 +559,19 @@ namespace Magus.DataBuilder
             hero.StatusManaRegen      = kvhero.ParseChildValue<float>("StatusManaRegen", _baseHero.StatusHealthRegen);
 
             hero.Abilities = GetHeroAbilities(language, kvhero);
-            hero.Talents = GetHeroTalents(language, kvhero);
+            hero.Talents   = GetHeroTalents(language, kvhero);
+
+            _heroAbilities.AddRange(hero.Abilities);
+
+            //var abilityTalentLinks = new HashSet<(Ability, Talent)>();
+            //foreach (var ability in hero.Abilities)
+            //    foreach (var link in ability.AbilityValues.Where(x => x.LinkedSpecialBonus != null))
+            //        abilityTalentLinks.Add((ability, hero.Talents.First(x => x.InternalName == link.SpecialBonusValue)));
+
+            //foreach (var talent in hero.Talents)
+            //    foreach (var link in talent.TalentValues.Where(x => x.AdLinkedAbilities != null))
+            //        abilityTalentLinks.Add((hero.Abilities.First(x => x.InternalName == link.AdLinkedAbilities), talent));
+
 
             if (hero.Talents.Count() != 8) _logger.LogWarning("Hero {0} doesn't have 8 talents but {1}", hero.InternalName, hero.Talents.Count());
 
@@ -487,29 +589,23 @@ namespace Magus.DataBuilder
         {
             var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*>");
             var italicsRegex = new Regex(@"(?i)<[/]?\s*i\s*>");
+            var htmlTagRegex   = new Regex(@"(?i)<[/]?\s*[^>]*>");
             value            = value.Replace("<br>", "\n");
             value            = boldRegex.Replace(value, "**");
             value            = italicsRegex.Replace(value, "*");
+            value              = htmlTagRegex.Replace(value, "");
 
             return value;
         }
 
         private static string CleanLocaleValue(string value)
         {
-            var onlyBreak      = new Regex(@"^\s*<br>\s*$");
-            var tableRegex     = new Regex(@"<table>(.|\n)*<\/table>");
             var boldRegex      = new Regex(@"(?i)<[/]?\s*b\s*/?>");
-            var infoRegex      = new Regex(@"(?i)<[/]?\s*info\s*/?>");
-            var highlightRegex = new Regex(@"(?i)<[/]?[\s.]*(class=""(New|Reworked)"")?[^>]*>");
+            var italicsRegex   = new Regex(@"(?i)<[/]?\s*i\s*>");
             var htmlTagRegex   = new Regex(@"(?i)<[/]?\s*[^>]*>");
-            value              = onlyBreak.Replace(value, "\n");
             value              = value.Replace("<br>", "\n");
-            value              = value.Replace("&nbsp;", "");
-            value              = value.Replace("*", "\\*");
-            value              = tableRegex.Replace(value, "");
             value              = boldRegex.Replace(value, "**");
-            value              = infoRegex.Replace(value, "*");
-            value              = highlightRegex.Replace(value, "__");
+            value              = italicsRegex.Replace(value, "*");
             value              = htmlTagRegex.Replace(value, "");
 
             return value;
@@ -522,9 +618,15 @@ namespace Magus.DataBuilder
             return _kvSerializer.Deserialize(stream, new KVSerializerOptions() { HasEscapeSequences = true });
         }
 
-        private string GetAbilityValue(string language, string internalName, string? postfix = null)
+        private string GetAbilityValue(string language, string internalName, string? valueName = null)
         {
-            var key = (language, Key: $"DOTA_Tooltip_ability_{internalName}{(postfix != null ? $"_{postfix}" : "")}");
+            var postfix = valueName switch
+            {
+                null                  => "",
+                _                     => "_" + valueName,
+            };
+
+            var key = (language, Key: $"DOTA_Tooltip_ability_{internalName}{postfix}");
             if (_abilityValues.ContainsKey(key))
             {
                 return _abilityValues[key];
@@ -532,11 +634,11 @@ namespace Magus.DataBuilder
             else
             {
                 _abilityValues.TryGetValue((_sourceDefaultLanguage, key.Key), out var value);
-                return value ?? "";
+                return value ?? String.Empty;
             }
         }
 
-        private IEnumerable<string> GetAbilityNoteValues(string language, string internalName)
+        private IList<string> GetAbilityNoteValues(string language, string internalName)
         {
             var noteRegex = new Regex($"DOTA_Tooltip_ability_{internalName}_Note\\d+");
             // Distinct as the same Key will be present in different languages.
@@ -571,7 +673,7 @@ namespace Magus.DataBuilder
             }
         }
 
-        private IEnumerable<Ability> GetHeroAbilities(string language, KVObject kvHero)
+        private IList<Ability> GetHeroAbilities(string language, KVObject kvHero)
         {
             var abilityRegex       = new Regex("Ability\\d+");
             var hiddenOrEmptyRegex = new Regex("([\\w]+_empty\\d*)|([\\w]+_hidden\\d*)");
@@ -587,8 +689,8 @@ namespace Magus.DataBuilder
             }
             return abilities;
         }
-
-        private IEnumerable<Talent> GetHeroTalents(string language, KVObject kvHero)
+         
+        private IList<Talent> GetHeroTalents(string language, KVObject kvHero)
         {
             var abilityRegex       = new Regex("Ability\\d+");
             var hiddenOrEmptyRegex = new Regex("([\\w]+_empty\\d*)|([\\w]+_hidden\\d*)");
@@ -610,26 +712,38 @@ namespace Magus.DataBuilder
         {
             _logger.LogInformation("Converting entities to Info Embed records");
             var heroInfoEmbeds = new List<HeroInfoEmbed>();
+            var abilityInfoEmbeds = new List<AbilityInfoEmbed>();
             var latestPatch    = _db.GetLatestPatch();
 
             foreach (var hero in _heroes)
             {
-                _logger.LogDebug("Processing hero info embeds for {0,-5} in {1}", hero.InternalName, hero.Language);
+                _logger.LogDebug("Processing hero info embeds for {0,-40} in {1}", hero.InternalName, hero.Language);
                 heroInfoEmbeds.AddRange(hero.GetHeroInfoEmbeds(_sourceLocaleMappings, latestPatch));
             }
+            foreach (var heroAbility in _heroAbilities)
+            {
+                _logger.LogDebug("Processing ability info embeds for {0,-40} in {1}", heroAbility.InternalName, heroAbility.Language);
+                abilityInfoEmbeds.AddRange(heroAbility.CreateAbilityInfoEmbeds(_sourceLocaleMappings, latestPatch));
+            }
+
+
             _logger.LogInformation("Updating entity info embeds in Database");
 
             _db.UpsertRecords(heroInfoEmbeds);
+            _db.UpsertRecords(abilityInfoEmbeds);
             EnsureIndexes();
         }
 
         private void EnsureIndexes()
         {
+            _db.EnsureIndex<HeroInfoEmbed>("Locale");
             _db.EnsureIndex<HeroInfoEmbed>("InternalName");
             _db.EnsureIndex<HeroInfoEmbed>("Name");
             _db.EnsureIndex<HeroInfoEmbed>("RealName");
             _db.EnsureIndex<HeroInfoEmbed>("Aliases");
+            _db.EnsureIndex<AbilityInfoEmbed>("Locale");
+            _db.EnsureIndex<AbilityInfoEmbed>("InternalName");
+            _db.EnsureIndex<AbilityInfoEmbed>("Name");
         }
-
     }
 }

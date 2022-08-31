@@ -1,23 +1,19 @@
-﻿using Discord;
-using Magus.Common.Extensions;
+﻿using Magus.Common.Extensions;
 using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Magus.DataBuilder.Extensions
 {
     public static class EntityExtensions
     {
-        private static readonly string _patchUrlBase = "https://www.dota2.com/patches/";
-
         public static IEnumerable<HeroInfoEmbed> GetHeroInfoEmbeds(this Hero hero, Dictionary<string, string[]> languageMap, Patch latestPatch)
         {
-            var heroInfoEmbed = new Data.Models.Embeds.Embed()
+            var heroInfoEmbed = new Embed()
             {
                 Title        = hero.Name,
-                Description  = hero.NpeDesc,
+                Description  = $"> {hero.NpeDesc}",
                 Url          = DotaUrls.GetHeroUrl(hero.Name),
                 ColorRaw     = 0X00A84300,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
@@ -51,7 +47,7 @@ namespace Magus.DataBuilder.Extensions
             heroInfoFields.Add(new()
             {
                 Name     = "Attack",
-                Value    = $"{Emotes.DamageIcon} {hero.GetAttackDamageMin()}-{hero.GetAttackDamageMax()}\n{Emotes.AttackTimeIcon} {hero.GetAttackTime().ToString("n2")}{Emotes.Spacer}({hero.AttackRate.ToString("n1")} Base)\n{Emotes.AttackRangeIcon} {hero.AttackRange}\n{hero.AttackCapabilities.GetAttackTypeIcon()} {hero.AttackCapabilities.GetDisplayName()}",
+                Value    = $"{Emotes.DamageIcon} {hero.GetAttackDamageMin()} - {hero.GetAttackDamageMax()}\n{Emotes.AttackTimeIcon} {hero.GetAttackTime().ToString("n2")}{Emotes.Spacer}({hero.AttackRate.ToString("n1")} Base)\n{Emotes.AttackRangeIcon} {hero.AttackRange}\n{Emotes.ProjectileSpeedIcon} {hero.ProjectileSpeed}",
                 IsInline = true
             });
             heroInfoFields.Add(new()
@@ -67,35 +63,10 @@ namespace Magus.DataBuilder.Extensions
                 IsInline = true
             });
 
-            var abilityValue = "";
-            foreach (var ability in hero.Abilities)
-            {
-                if (ability.AbilityIsGrantedByScepter)
-                {
-                    abilityValue += ability.Name + Emotes.ScepterIcon + "   ";
-                }
-                else if (ability.AbilityIsGrantedByShard)
-                {
-                    abilityValue += ability.Name + Emotes.ShardIcon + "   ";
-                }
-                else
-                {
-                    abilityValue += ability.Name + "   ";
-                }
-            }
-            // Break hero abilities across new lines, except for certain heroes
-            if (hero.Name == "Invoker")
-            {
-                abilityValue = abilityValue.Trim().Replace("   ", " | ");
-            }
-            else
-            {
-                abilityValue = abilityValue.Trim().Replace("   ", "\n");
-            }
             heroInfoFields.Add(new()
             {
-                Name     = "Abilities",
-                Value    = abilityValue,
+                Name     = "Attack Type",
+                Value    = $"{hero.AttackCapabilities.GetAttackTypeIcon()} {hero.AttackCapabilities.GetDisplayName()}",
                 IsInline = true
             });
 
@@ -110,7 +81,7 @@ namespace Magus.DataBuilder.Extensions
             foreach (var role in hero.Role)
             {
                 if (hero.GetHightestRoles().Contains(role))
-                    roleValues.Add(Format.Bold(role.ToString()));
+                    roleValues.Add(Discord.Format.Bold(role.ToString()));
                 else
                     roleValues.Add(role.ToString());
             }
@@ -122,10 +93,28 @@ namespace Magus.DataBuilder.Extensions
                 IsInline = true,
             });
 
+
+            var abilityValues = new List<string>();
+            foreach (var ability in hero.Abilities)
+            {
+                var name = ability.Name;
+                if (ability.AbilityType == AbilityType.DOTA_ABILITY_TYPE_ULTIMATE)
+                    name = Discord.Format.Bold(name);
+
+                if (ability.AbilityIsGrantedByScepter)
+                    name = Emotes.ScepterIcon + name;
+                else if (ability.AbilityIsGrantedByShard)
+                    name = Emotes.ShardIcon + name;
+
+                abilityValues.Add(name);
+            }
+
+            var abilityValue = String.Join(" | ", abilityValues);
             heroInfoFields.Add(new()
             {
-                Name  = "About",
-                Value = hero.Hype,
+                Name     = "Abilities",
+                Value    = abilityValue,
+                IsInline = false
             });
 
             heroInfoEmbed.Fields = heroInfoFields;
@@ -139,10 +128,132 @@ namespace Magus.DataBuilder.Extensions
                     EntityId     = hero.Id,
                     Locale       = locale,
                     InternalName = hero.InternalName,
+                    Aliases      = hero.NameAliases,
+                    RealName     = hero.RealName,
+                    Name         = hero.Name,
                     Embed        = heroInfoEmbed,
                 });
             }
             return heroInfoEmbedList;
+        }
+
+        public static IEnumerable<AbilityInfoEmbed> CreateAbilityInfoEmbeds(this Ability ability, Dictionary<string, string[]> languageMap, Patch latestPatch)
+        {
+            var embed = new Embed()
+            {
+                Title        = $"{ability.Name}",
+                Description  = ability.Description,
+                ColorRaw     = 0x00E67E22,
+                Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
+                Footer       = new Footer() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
+                ThumbnailUrl = DotaUrls.GetAbilityImage(ability.InternalName),
+            };
+            var embedFields = new List<Field>();
+
+            if (ability.AbilityIsGrantedByScepter)
+            {
+                embed.Description = Emotes.ScepterIcon + " SCEPTER NEW ABILITY\n" + embed.Description;
+            }
+            else if (ability.AbilityIsGrantedByShard)
+            {
+                embed.Description = Emotes.ShardIcon + " SHARD NEW ABILITY\n" + embed.Description;
+            }
+
+            // Ability Properties
+
+            var leftEmbedField       = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
+            var rightEmbedField      = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
+            var leftEmbedFieldValue  = "";
+            var rightEmbedFieldValue = "";
+
+            leftEmbedFieldValue += $"Ability: **{string.Join(" | ", ability.GetTargetTypeNames())}**\n";
+            if (ability.AbilityUnitTargetTeam != AbilityUnitTargetTeam.DOTA_UNIT_TARGET_TEAM_NONE)
+            {
+                leftEmbedFieldValue += $"Affects: **{ability.AbilityUnitTargetTeam.GetDisplayName()}**\n";
+            }
+            if (ability.AbilityUnitDamageType != AbilityUnitDamageType.DAMAGE_TYPE_NONE)
+            {
+                leftEmbedFieldValue += $"Damage type: **{ability.AbilityUnitDamageType.GetDisplayName()}**\n";
+            }
+            if (ability.SpellImmunityType != SpellImmunityType.SPELL_IMMUNITY_NONE)
+            {
+                rightEmbedFieldValue += $"Pierces Spell Immunity: **{ability.SpellImmunityType.GetDisplayName()}**\n";
+            }
+            if (ability.SpellDispellableType != SpellDispellableType.SPELL_DISPELLABLE_NONE)
+            {
+                rightEmbedFieldValue += $"Dispellable: **{ability.SpellDispellableType.GetDisplayName()}**\n";
+            }
+
+            if (leftEmbedFieldValue != "")
+            {
+                leftEmbedField.Value = leftEmbedFieldValue;
+                embedFields.Add(leftEmbedField);
+            }
+            if (rightEmbedFieldValue != "")
+            {
+                rightEmbedField.Value = rightEmbedFieldValue;
+                embedFields.Add(rightEmbedField);
+            }
+
+            // Ability spell values
+            if (ability.GetAbilityValues().Count() > 0)
+            {
+                var spellEmbed = new Field() { Name = Emotes.Spacer.ToString(), Value = string.Empty };
+                foreach (var spellValue in ability.GetAbilityValues())
+                {
+                    spellEmbed.Value += $"{spellValue.Description}\n";
+                }
+                var cooldownString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityCooldown.Distinct()));
+                var manaString     = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Distinct()));
+                var spacers        = string.Concat(Enumerable.Repeat(Emotes.Spacer, 2));
+                spellEmbed.Value  += $"\n{Emotes.CooldownIcon}\u00A0{cooldownString} {spacers} {Emotes.ManaIcon}\u00A0{manaString}";
+                embedFields.Add(spellEmbed);
+            }
+
+            if (ability.AbilityHasScepter)
+            {
+                var value = $">>> {ability.ScepterDescription}\n";
+                foreach (var spellValue in ability.GetScepterValues())
+                {
+                    value += $"{spellValue.Description}\n";
+                }
+                embedFields.Add(new Field() { Name = $"{Emotes.ScepterIcon} Scepter Upgrade", Value = value! });
+            }
+            if (ability.AbilityHasShard)
+            {
+                var value = $">>> {ability.ShardDescription}\n";
+                foreach (var spellValue in ability.GetShardValues())
+                {
+                    value += $"{spellValue.Description}\n";
+                }
+                embedFields.Add(new Field() { Name = $"{Emotes.ShardIcon} Shard Upgrade", Value = value! });
+            }
+
+            if (ability.Notes.Count() > 0)
+            {
+                var notesField = new Field() {Name = "Notes", Value = ""};
+                foreach (var note in ability.Notes)
+                {
+                    notesField.Value += $"> {note}\n";
+                }
+                embedFields.Add(notesField);
+            }
+            embed.Fields = embedFields;
+
+            var abilityInfoEmbedList = new List<AbilityInfoEmbed>();
+            foreach (var locale in languageMap[ability.Language])
+            {
+                abilityInfoEmbedList.Add(new()
+                {
+                    Id           = GetEntityId(ability.Id, ability.InternalName, locale),
+                    EntityId     = ability.Id,
+                    Locale       = locale,
+                    InternalName = ability.InternalName,
+                    Name         = ability.Name,
+                    Embed        = embed,
+                });
+            }
+            return abilityInfoEmbedList;
         }
 
         //private static string CreateFormattedDescription(BaseSpell notes, int maxLength = 4096)
