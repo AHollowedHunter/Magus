@@ -3,6 +3,8 @@ using Magus.Data.Models;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Microsoft.Extensions.Configuration;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace Magus.Data
 {
@@ -115,8 +117,8 @@ namespace Magus.Data
         {
             var order = orderByDesc ? Query.Descending : Query.Ascending;
             var collecton = _liteDB.GetCollection<T>();
-            var results = collecton.Find(Query.EQ("Locale", locale));
-            return orderByDesc !? results.Take(limit) : results.OrderByDescending(x => x.Id).Take(limit);
+            var results = collecton.Find(record => record.Locale == locale, limit: limit);
+            return orderByDesc !? results : results.OrderByDescending(x => x.Id);
         }
 
         public IEnumerable<T> GetRecords<T>(ulong id, string locale = IDatabaseService.DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord
@@ -186,15 +188,10 @@ namespace Magus.Data
             return results.Take(limit);
         }
 
-        public IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
+        public IEnumerable<T> GetPatchNotes<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
         {
             var collection = _liteDB.GetCollection<T>();
-            IEnumerable<T> results;
-            results = collection.Find(Query.Contains("LocalName", entityName), limit: limit);
-            results.Concat(collection.Find(Query.Contains("RealName", entityName), limit: limit));
-            results.Concat(collection.Find(Query.Contains("InternalName", entityName), limit: limit));
-            results.Concat(collection.Find(Query.Contains("Aliases[*]", entityName), limit: limit));
-            return results.Take(limit);
+            return collection.Find(QueryLocaleEntityName<T>(entityName, locale), limit: limit);
         }
 
         public T GetPatchNote<T>(string patchNumber, int entityId) where T : EntityPatchNoteEmbed
@@ -207,12 +204,7 @@ namespace Magus.Data
         public IEnumerable<T> GetPatchNote<T>(string patchNumber, string entityName, int limit = int.MaxValue) where T : EntityPatchNoteEmbed
         {
             var collection = _liteDB.GetCollection<T>();
-            IEnumerable<T> results;
-            results = collection.Find(Query.And(Query.EQ("PatchNumber", patchNumber), Query.Contains("LocalName", entityName)), limit: limit);
-            results.Concat(collection.Find(Query.And(Query.EQ("PatchNumber", patchNumber), Query.Contains("RealName", entityName)), limit: limit));
-            results.Concat(collection.Find(Query.And(Query.EQ("PatchNumber", patchNumber), Query.Contains("InternalName", entityName)), limit: limit));
-            results.Concat(collection.Find(Query.And(Query.EQ("PatchNumber", patchNumber), Query.Contains("Aliases[*]", entityName)), limit: limit));
-            return results.Take(limit);
+            return collection.Find(QueryPatchNoteEntityName<T>(entityName, patchNumber), limit: limit);
         }
 
         public T GetEntityInfo<T>(int entityId, string locale = IDatabaseService.DEFAULT_LOCALE) where T : EntityInfoEmbed
@@ -225,12 +217,7 @@ namespace Magus.Data
         public IEnumerable<T> GetEntityInfo<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE, int limit = int.MaxValue) where T : EntityInfoEmbed
         {
             var collection = _liteDB.GetCollection<T>();
-            IEnumerable<T> results;
-            results = collection.Find(Query.And(Query.Contains("LocalName", entityName), Query.EQ("Locale", locale)), limit: limit); // todo startswith?
-            results.Concat(collection.Find(Query.And(Query.Contains("InternalName", entityName), Query.EQ("Locale", locale)), limit: limit));
-            //results.Concat(collection.Find(Query.And(Query.Contains("RealName", entityName), Query.EQ("Locale", locale)), limit: limit));
-            //results.Concat(collection.Find(Query.Contains("Aliases[*]", entityName), limit: limit));
-            return results.Take(limit);
+            return collection.Find(QueryLocaleEntityName<T>(entityName, locale), limit: limit);
         }
 
         public bool EnsureIndex<T>(string fieldName, bool unique = false) where T : ISnowflakeRecord
@@ -240,5 +227,17 @@ namespace Magus.Data
                 return false;
             return collection.EnsureIndex(fieldName, unique);
         }
+
+        private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : INamedEntity, ILocaleRecord
+            => entity => entity.Locale == locale && (entity.Name!.Contains(entityName)
+                                                                       || entity.RealName!.StartsWith(entityName)
+                                                                       || entity.Aliases!.Any(alias => alias.StartsWith(entityName, StringComparison.InvariantCultureIgnoreCase))
+                                                                       || entity.InternalName!.Contains(entityName));
+
+        private static Expression<Func<T, bool>> QueryPatchNoteEntityName<T>(string entityName, string patchNumber) where T : EntityPatchNoteEmbed
+            => entity => entity.PatchNumber == patchNumber && (entity.Name!.Contains(entityName)
+                                                                       || entity.RealName!.StartsWith(entityName)
+                                                                       || entity.Aliases!.Any(alias => alias.StartsWith(entityName, StringComparison.InvariantCultureIgnoreCase))
+                                                                       || entity.InternalName!.Contains(entityName));
     }
 }

@@ -14,7 +14,7 @@ namespace Magus.Data.Models.Dota
         public string InternalName { get; set; }
         public string Description { get; set; } // Move to ability, and change for Items, which have multiple actives, so List<string> split via <h1> tags
         public string Lore { get; set; }
-        public IEnumerable<string> Notes { get; set; }
+        public IList<string> Notes { get; set; }
 
         public byte MaxLevel { get; set; }
         public AbilityType AbilityType { get; set; }
@@ -28,13 +28,13 @@ namespace Magus.Data.Models.Dota
         public int Flags { get; set; } // What is this?
 
         // Stats
-        public IEnumerable<float>? AbilityCastRange { get; set; }
-        public IEnumerable<float>? AbilityCastPoint { get; set; }
-        public IEnumerable<float>? AbilityChannelTime { get; set; }
-        public IEnumerable<float>? AbilityCooldown { get; set; }
-        public IEnumerable<float>? AbilityDuration { get; set; }
-        public IEnumerable<float>? AbilityDamage { get; set; }
-        public IEnumerable<float>? AbilityManaCost { get; set; }
+        public IList<float> AbilityCastRange { get; set; }
+        public IList<float> AbilityCastPoint { get; set; }
+        public IList<float> AbilityChannelTime { get; set; }
+        public IList<float> AbilityCooldown { get; set; }
+        public IList<float> AbilityDuration { get; set; }
+        public IList<float> AbilityDamage { get; set; }
+        public IList<float> AbilityManaCost { get; set; }
 
         public IEnumerable<AbilityValue> AbilityValues { get; set; }
 
@@ -42,7 +42,7 @@ namespace Magus.Data.Models.Dota
         {
             public string Name { get; set; }
             public string? Description { get; set; }
-            public IEnumerable<float> Values { get; set; }
+            public IList<float> Values { get; set; }
             public string? LinkedSpecialBonus { get; set; }
             public string? SpecialBonusValue { get; set; }
             public bool RequiresScepter { get; set; }
@@ -53,7 +53,7 @@ namespace Magus.Data.Models.Dota
         public Dictionary<string, object>? ExtensionData { get; set; }
 
         public bool HasBehaviour(AbilityBehavior behavior)
-            => ((AbilityBehavior)AbilityBehavior).HasFlag(behavior);
+            => AbilityBehavior.HasFlag(behavior);
 
         public List<AbilityBehavior> GetBehaviors()
         {
@@ -97,21 +97,6 @@ namespace Magus.Data.Models.Dota
                 }
             }
             return bonusValues;
-        }
-
-        public List<AbilityValue> GetSpellValues()
-        {
-            var spellValues = new List<AbilityValue>();
-
-            foreach (var value in AbilityValues)
-            {
-                if (!string.IsNullOrEmpty(value.Description) && !(value.Description.StartsWith('+') || value.Description.StartsWith('-')))
-                {
-                    spellValues.Add(value);
-                }
-            }
-
-            return spellValues;
         }
     }
 
@@ -187,10 +172,15 @@ namespace Magus.Data.Models.Dota
     public enum SpellImmunityType : byte
     {
         SPELL_IMMUNITY_NONE                  = 0,
+        [Display(Name = "Allies Yes")]
         SPELL_IMMUNITY_ALLIES_YES            = 1,
+        [Display(Name = "No")]
         SPELL_IMMUNITY_ALLIES_NO             = 2,
+        [Display(Name = "Yes")]
         SPELL_IMMUNITY_ENEMIES_YES           = 3,
+        [Display(Name = "No")]
         SPELL_IMMUNITY_ENEMIES_NO            = 4,
+        [Display(Name = "Allies Yes, Enemies No")]
         SPELL_IMMUNITY_ALLIES_YES_ENEMIES_NO = 5,
     }
 

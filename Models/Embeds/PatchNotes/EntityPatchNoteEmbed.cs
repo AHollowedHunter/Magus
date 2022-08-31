@@ -1,11 +1,11 @@
 ﻿namespace Magus.Data.Models.Embeds
 {
-    public abstract record EntityPatchNoteEmbed : BasePatchNoteEmbed
+    public abstract record EntityPatchNoteEmbed : BasePatchNoteEmbed, INamedEntity
     {
-        public int EntityId { get; init; }
-        public string? InternalName { get; init; }
-        public string? RealName { get; init; }
-        public string? LocalName { get; init; }
-        public IEnumerable<string>? Aliases { get; init; }
+        public int EntityId { get; set; }
+        public string InternalName { get; set; }
+        public string Name { get; set; }
+        public string? RealName { get; set; }
+        public IEnumerable<string>? Aliases { get; set; }
     }
 }

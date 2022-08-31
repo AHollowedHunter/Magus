@@ -118,7 +118,7 @@ namespace Magus.Data
         /// <summary>
         /// Get the specified types patch note(s) for the specified entityName
         /// </summary>
-        IEnumerable<T> GetPatchNotes<T>(string entityName, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed;
+        IEnumerable<T> GetPatchNotes<T>(string entityName, string locale = DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed;
         /// <summary>
         /// Get the specified types patch note for the specified patch and entityId
         /// </summary>

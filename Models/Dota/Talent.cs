@@ -17,7 +17,7 @@
         public record TalentValue
         {
             public string Name { get; set; }
-            public IEnumerable<float> Values { get; set; }
+            public string Value { get; set; }
             public string? AdLinkedAbilities { get; set; }
         }
 

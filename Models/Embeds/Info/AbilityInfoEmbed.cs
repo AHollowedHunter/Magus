@@ -1,6 +1,6 @@
 ﻿namespace Magus.Data.Models.Embeds
 {
-    public record CreepInfo : EntityInfoEmbed
+    public record AbilityInfoEmbed : EntityInfoEmbed
     {
 
     }

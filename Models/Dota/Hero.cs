@@ -18,8 +18,8 @@ namespace Magus.Data.Models.Dota
         public short HeroOrderID { get; set; }
 
         // Spells        
-        public IEnumerable<Ability> Abilities { get; set; }
-        public IEnumerable<Talent> Talents { get; set; }
+        public IList<Ability> Abilities { get; set; }
+        public IList<Talent> Talents { get; set; } // First is 10 right, 2nd left, 3rd 15 right, etc...
 
         // Attributes
         public byte AttributeBaseAgility { get; set; }
