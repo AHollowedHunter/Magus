@@ -25,18 +25,18 @@ namespace Magus.Bot.AutocompleteHandlers
             try
             {
                 var value = autocompleteInteraction.Data.Current.Value as string;
-                List<AbilityInfo> abilites;
+                List<AbilityInfoEmbed> abilites;
                 if (string.IsNullOrEmpty(value))
                 {
-                    abilites = _db.GetRecords<AbilityInfo>(25).ToList();
+                    abilites = _db.GetRecords<AbilityInfoEmbed>(25).ToList();
                 }
                 else
                 {
-                    abilites = _db.GetEntityInfo<AbilityInfo>(value, limit: 25).ToList();
+                    abilites = _db.GetEntityInfo<AbilityInfoEmbed>(value, limit: 25).ToList();
                 }
 
                 List<AutocompleteResult> results = new();
-                abilites.ForEach(ability => results.Add(new AutocompleteResult(ability.LocalName, (int)ability.Id)));
+                abilites.ForEach(ability => results.Add(new AutocompleteResult(ability.Name, ability.EntityId)));
 
                 return Task.FromResult(AutocompletionResult.FromSuccess(results));
             }

@@ -24,19 +24,20 @@ namespace Magus.Bot.AutocompleteHandlers
         {
             try
             {
+                var locale = context.Interaction.UserLocale;
                 var value = autocompleteInteraction.Data.Current.Value as string;
-                List<HeroInfo> heroes;
+                List<HeroInfoEmbed> heroes;
                 if (string.IsNullOrEmpty(value))
                 {
-                    heroes = _db.GetRecords<HeroInfo>(25).ToList();
+                    heroes = _db.GetRecords<HeroInfoEmbed>(locale, 25).ToList();
                 }
                 else
                 {
-                    heroes = _db.GetEntityInfo<HeroInfo>(value, limit: 25).ToList();
+                    heroes = _db.GetEntityInfo<HeroInfoEmbed>(value, locale, limit: 25).ToList();
                 }
 
                 List<AutocompleteResult> results = new();
-                heroes.ForEach(hero => results.Add(new AutocompleteResult(hero.LocalName, (int)hero.Id)));
+                heroes.ForEach(hero => results.Add(new AutocompleteResult(hero.Name, hero.EntityId)));
 
                 return Task.FromResult(AutocompletionResult.FromSuccess(results));
             }
