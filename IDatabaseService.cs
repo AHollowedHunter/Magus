@@ -122,7 +122,7 @@ namespace Magus.Data
         /// <summary>
         /// Get the specified types patch note for the specified patch and entityId
         /// </summary>
-        T GetPatchNote<T>(string patchNumber, int entityId) where T : EntityPatchNoteEmbed;
+        T GetPatchNote<T>(string patchNumber, int entityId, string locale = DEFAULT_LOCALE) where T : EntityPatchNoteEmbed;
         /// <summary>
         /// Get the specified types patch note for the specified patch and entity name
         /// </summary>

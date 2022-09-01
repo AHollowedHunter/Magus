@@ -194,10 +194,10 @@ namespace Magus.Data
             return collection.Find(QueryLocaleEntityName<T>(entityName, locale), limit: limit);
         }
 
-        public T GetPatchNote<T>(string patchNumber, int entityId) where T : EntityPatchNoteEmbed
+        public T GetPatchNote<T>(string patchNumber, int entityId, string locale = IDatabaseService.DEFAULT_LOCALE) where T : EntityPatchNoteEmbed
         {
             var collection = _liteDB.GetCollection<T>();
-            var result = collection.FindOne(Query.And(Query.EQ("PatchNumber", patchNumber), Query.EQ("EntityId", entityId)));
+            var result = collection.FindOne(Query.And(Query.EQ("Locale", locale), Query.EQ("PatchNumber", patchNumber), Query.EQ("EntityId", entityId)));
             return result;
         }
 
