@@ -46,13 +46,13 @@ namespace Magus.DataBuilder.Extensions
         /// <param name="name"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public static IList<T> ParseChildValueList<T>(this KVObject kvObject, string name, IEnumerable<T> defaultValue = null!) where T : IConvertible
+        public static IList<T> ParseChildValueList<T>(this KVObject kvObject, string name, bool ignoreNoNumeric = false,  IEnumerable<T> defaultValue = null!) where T : IConvertible
         {
             var child = kvObject.Children.FirstOrDefault(x => x.Name == name);
             if (child == null)  
                 return Array.Empty<T>();
 
-            return child.ParseList<T>();
+            return child.ParseList<T>(ignoreNoNumeric);
         }
 
         /// <summary>
@@ -72,14 +72,19 @@ namespace Magus.DataBuilder.Extensions
             return child.ParseEnumList<TEnum>();
         }
 
-        public static IList<T> ParseList<T>(this KVObject? kvObject) where T : IConvertible
+        public static IList<T> ParseList<T>(this KVObject? kvObject, bool ignoreNoNumeric = false) where T : IConvertible
         {
             List<T> result = new();
             if (kvObject == null)
                 return result;
 
             var kvValue    = kvObject.Value.ToString() ?? "";
-            var separators = new Regex("[,;\\s]+");
+            if (ignoreNoNumeric && IsNumericType(typeof(T)))
+            {
+                var nonNumeric = new Regex(@"[^\d\-+.,:\s]*");
+                kvValue = nonNumeric.Replace(kvValue, "");
+            }
+            var separators = new Regex(@"[,;\s]+");
             var values     = separators.Split(kvValue);
 
             foreach (var value in values)
@@ -88,6 +93,27 @@ namespace Magus.DataBuilder.Extensions
                 result.Add(ParseValue<T>(value));
             }
             return result;
+        }
+
+        private static bool IsNumericType(Type type)
+        {
+            switch (Type.GetTypeCode(type))
+            {
+                case TypeCode.Byte:
+                case TypeCode.SByte:
+                case TypeCode.UInt16:
+                case TypeCode.UInt32:
+                case TypeCode.UInt64:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                case TypeCode.Decimal:
+                case TypeCode.Double:
+                case TypeCode.Single:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         /// <summary>

@@ -169,6 +169,7 @@ namespace Magus.DataBuilder.Extensions
             leftEmbedFieldValue += $"Ability: **{string.Join(" | ", ability.GetTargetTypeNames())}**\n";
             if (ability.AbilityUnitTargetTeam != AbilityUnitTargetTeam.DOTA_UNIT_TARGET_TEAM_NONE)
             {
+                // Logic for targetType
                 leftEmbedFieldValue += $"Affects: **{ability.AbilityUnitTargetTeam.GetDisplayName()}**\n";
             }
             if (ability.AbilityUnitDamageType != AbilityUnitDamageType.DAMAGE_TYPE_NONE)
@@ -196,15 +197,15 @@ namespace Magus.DataBuilder.Extensions
             }
 
             // Ability spell values
-            if (ability.GetAbilityValues().Count() > 0)
+            if (ability.DisplayedValues.Count() > 0)
             {
                 var spellEmbed = new Field() { Name = Emotes.Spacer.ToString(), Value = string.Empty };
-                foreach (var spellValue in ability.GetAbilityValues())
+                foreach (var spellValue in ability.DisplayedValues)
                 {
-                    spellEmbed.Value += $"{spellValue.Description}\n";
+                    spellEmbed.Value += $"{spellValue.Value}\n";
                 }
-                var cooldownString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityCooldown.Distinct()));
-                var manaString     = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Distinct()));
+                var cooldownString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", (ability.AbilityCooldown.Count() == 0 ? ability.AbilityValues.FirstOrDefault(x=>x.Name.Equals("AbilityCooldown"))?.Values : ability.AbilityCooldown.Distinct()) ?? new List<float>(){0F}));
+                var manaString     = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Count == 0 ? new List<float>(){0F} : ability.AbilityManaCost.Distinct()));
                 var spacers        = string.Concat(Enumerable.Repeat(Emotes.Spacer, 2));
                 spellEmbed.Value  += $"\n{Emotes.CooldownIcon}\u00A0{cooldownString} {spacers} {Emotes.ManaIcon}\u00A0{manaString}";
                 embedFields.Add(spellEmbed);
@@ -213,20 +214,20 @@ namespace Magus.DataBuilder.Extensions
             if (ability.AbilityHasScepter)
             {
                 var value = $">>> {ability.ScepterDescription}\n";
-                foreach (var spellValue in ability.GetScepterValues())
+                foreach (var spellValue in ability.ScepterValues)
                 {
                     value += $"{spellValue.Description}\n";
                 }
-                embedFields.Add(new Field() { Name = $"{Emotes.ScepterIcon} Scepter Upgrade", Value = value! });
+                embedFields.Add(new Field() { Name = $"{Emotes.ScepterIcon} Scepter Upgrade", Value = value });
             }
             if (ability.AbilityHasShard)
             {
                 var value = $">>> {ability.ShardDescription}\n";
-                foreach (var spellValue in ability.GetShardValues())
+                foreach (var spellValue in ability.ShardValues)
                 {
                     value += $"{spellValue.Description}\n";
                 }
-                embedFields.Add(new Field() { Name = $"{Emotes.ShardIcon} Shard Upgrade", Value = value! });
+                embedFields.Add(new Field() { Name = $"{Emotes.ShardIcon} Shard Upgrade", Value = value });
             }
 
             if (ability.Notes.Count() > 0)

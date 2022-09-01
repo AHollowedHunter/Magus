@@ -234,17 +234,18 @@ namespace Magus.DataBuilder
 
             // Following will need tweaking to use collections representing localised entity data from Magus.Data.Models.Dota
             // For now, while hero, ability, item etc. data is not procesed, use existing ...Info stored
-            var heroInfo    = _db.GetRecords<HeroInfoEmbed>("en-GB");
-            var abilityInfo = _db.GetRecords<AbilityInfoEmbed>("en-GB");
-            var itemInfo    = _db.GetRecords<ItemInfoEmbed>("en-GB");
 
-            foreach (var patch in _patchNotes)
-            {
-                _logger.LogDebug("Processing patch embeds {0,-5} in {1}", patch.PatchName, patch.Language);
-                generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_sourceLocaleMappings));
-                heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, abilityInfo, _sourceLocaleMappings));
-                itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, _sourceLocaleMappings));
-            }
+            foreach (var localeMap in _sourceLocaleMappings)
+                foreach (var locale in localeMap.Value)
+                    foreach (var patch in _patchNotes.Where(x=>x.Language == localeMap.Key))
+                    {
+                        _logger.LogDebug("Processing patch embeds {0,-5} in {1}", patch.PatchName, patch.Language);
+                        var abilityInfo = _db.GetRecords<AbilityInfoEmbed>(locale);
+                        generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_sourceLocaleMappings));
+                        heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(_db.GetRecords<HeroInfoEmbed>(locale), abilityInfo, _sourceLocaleMappings));
+                        itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(_db.GetRecords<ItemInfoEmbed>(locale), _sourceLocaleMappings));
+                    }
+
             _logger.LogInformation("Updating Patch Notes in Database");
             _db.DeleteCollection<Patch>(); //Patch uses random ID, so wipe collection and re-add. TODO: change this to use fixed id
             _db.InsertRecords(_patches);

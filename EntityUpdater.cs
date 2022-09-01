@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using ValveKeyValue;
+using static Magus.Data.Models.Dota.Ability;
 using static Magus.Data.Models.Dota.BaseSpell;
 
 namespace Magus.DataBuilder
@@ -31,6 +32,8 @@ namespace Magus.DataBuilder
         private readonly List<Hero> _heroes;
         private readonly List<Item> _items;
         private Hero _baseHero;
+
+        private static readonly string ValueSeparator = "\u00A0/\u00A0";
 
         public EntityUpdater(IDatabaseService db, IConfiguration config, ILogger<PatchNoteUpdater> logger, HttpClient httpClient)
         {
@@ -86,13 +89,13 @@ namespace Magus.DataBuilder
                 var heroLore  = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetHeroLore(language.Key));
 
                 foreach (var note in abilities.Children.First(x => x.Name == "Tokens"))
-                    _abilityValues.Add((language.Key, note.Name), CleanSimple(note.Value.ToString() ?? ""));
+                    _abilityValues.Add((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
 
                 foreach (var note in dota.Children.First(x => x.Name == "Tokens"))
-                    _dotaValues.Add((language.Key, note.Name), CleanSimple(note.Value.ToString() ?? ""));
+                    _dotaValues.Add((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
 
                 foreach (var note in heroLore.Children.First(x => x.Name == "Tokens"))
-                    _heroLoreValues.Add((language.Key, note.Name), CleanSimple(note.Value.ToString() ?? ""));
+                    _heroLoreValues.Add((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
             }
             _logger.LogInformation("Finished setting Entity values");
         }
@@ -311,67 +314,139 @@ namespace Magus.DataBuilder
             ability.ScepterDescription        = GetAbilityValue(language, ability.InternalName, "scepter_description");
             ability.ShardDescription          = GetAbilityValue(language, ability.InternalName, "shard_description");
 
-            ability.AbilityValues = GetAbilityValues(language, kvAbility);
+            ability.AbilityValues   = GetAbilityValues(language, kvAbility);
+            ability.DisplayedValues = GetDisplayedValues(language, kvAbility);
+            ability.ScepterValues   = GetUpgradeValue(language, kvAbility);
+            ability.ShardValues     = GetUpgradeValue(language, kvAbility, "Shard");
 
             _logger.LogTrace("Processed {0,7} {1,-64} in {2}\"", "ability", ability.InternalName, language);
             return ability;
         }
 
-        private IEnumerable<BaseSpell.AbilityValue> GetAbilityValues(string language, KVObject kvAbility)
+        private IList<AbilityValue> GetAbilityValues(string language, KVObject kvAbility)
         {
-            var abilityValues = new List<BaseSpell.AbilityValue>();
+            var abilityValues = new List<AbilityValue>();
+
+            var upgradeRegex = new Regex(@"(?i)(shard|scepter)_\w+|\w+(shard|scepter)");
+            var bonusRegex   = new Regex(@"(?i)LinkedSpecialBonus|ad_linked_abilities|special_bonus_\w+");
+            var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip");
 
             var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial");
             if (kvAbilityValues != null)
             {
                 foreach (var kvAbilityValue in kvAbilityValues.Children)
                 {
-                    BaseSpell.AbilityValue abilityValue;
+                    if (upgradeRegex.IsMatch(kvAbilityValue.Name) || kvAbilityValue.ParseChildValue<bool>("RequiresScepter") || kvAbilityValue.ParseChildValue<bool>("RequiresShard"))
+                        continue;
+
+                    AbilityValue abilityValue;
                     if (kvAbilityValue.Value.ValueType == KVValueType.Collection)
                     {
+
+                        var valueName   = kvAbilityValue.Name;
+                        var valueObject = kvAbilityValue.FirstOrDefault(x => !nonValueName.IsMatch(x.Name));
+                        if (valueObject == null)
+                        {
+                            _logger.LogDebug("Ability {0} with AbilityValue {1} is upgrade value only", kvAbility.Name, valueName);
+                            continue;
+                        }
+
+                        var values      = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>() : Array.Empty<float>();
+                        var linkedBonus = kvAbilityValue.FirstOrDefault(x => bonusRegex.IsMatch(x.Name));
                         if (Regex.IsMatch(kvAbilityValue.Name, @"\d+"))
+                            valueName = valueObject.Name;
+
+                        abilityValue = new()
                         {
-                            var value = kvAbilityValue.First(x => x.Name != "var_type" && x.Name != "ad_linked_abilities");
-                            abilityValue = new()
-                            {
-                                Name               = value.Name,
-                                Values             = value.ParseList<float>(),
-                                LinkedSpecialBonus = kvAbilityValue.ParseChildValue<string>("ad_linked_abilities"),
-                                RequiresScepter    = kvAbilityValue.ParseChildValue<bool>("RequiresScepter"),
-                                RequiresShard      = kvAbilityValue.ParseChildValue<bool>("RequiresShard"),
-                                Description        = GetAbilityValue(language, kvAbility.Name, value.Name),
-                            };
-                        }
-                        else
+                            Name                = valueName,
+                            Values              = values,
+                            LinkedSpecialBonus  = linkedBonus?.Name,
+                            SpecialBonusValue   = linkedBonus?.ParseValue<string>(),
+                            Description         = GetAbilityValue(language, kvAbility.Name, valueName),
+                        };
+
+                    }
+                    else
+                    {
+                        abilityValue = new()
                         {
-                            if (kvAbilityValue.Any(x => x.Name == "LinkedSpecialBonus"))
-                            {
-                                abilityValue = new()
-                                {
-                                    Name               = kvAbilityValue.Name,
-                                    Values             = kvAbilityValue.ParseChildValueList<float>("value"),
-                                    LinkedSpecialBonus = kvAbilityValue.ParseChildValue<string>("LinkedSpecialBonus"),
-                                    RequiresScepter    = kvAbilityValue.ParseChildValue<bool>("RequiresScepter"),
-                                    RequiresShard      = kvAbilityValue.ParseChildValue<bool>("RequiresShard"),
-                                    Description        = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
-                                };
-                            }
-                            else
-                            {
-                                var bonus = kvAbilityValue.FirstOrDefault(x => x.Name.StartsWith("special_bonus_"));
-                                var values = kvAbilityValue.ParseChildValue<string>("value") != "FIELD_INTEGER" ? kvAbilityValue.ParseChildValueList<float>("value") : Array.Empty<float>();
-                                abilityValue = new()
-                                {
-                                    Name               = kvAbilityValue.Name,
-                                    Values             = values,
-                                    LinkedSpecialBonus = bonus?.Name,
-                                    SpecialBonusValue  = bonus.ParseValue<string>(),
-                                    RequiresScepter    = kvAbilityValue.ParseChildValue<bool>("RequiresScepter"),
-                                    RequiresShard      = kvAbilityValue.ParseChildValue<bool>("RequiresShard"),
-                                    Description        = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
-                                };
-                            }
+                            Name        = kvAbilityValue.Name,
+                            Values      = kvAbilityValue.ParseList<float>(),
+                            Description = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
+                        };
+                    }
+                    abilityValues.Add(abilityValue);
+                }
+            }
+            return abilityValues;
+        }
+
+        private IDictionary<string, string> GetDisplayedValues(string language, KVObject kvAbility)
+        {
+            var displayValues    = new Dictionary<string,string>();
+            var abilityRegex     = new Regex($@"(?i)DOTA_Tooltip_ability_{kvAbility.Name}_");
+            var otherValuesRegex = new Regex(@"(?i)\w+(Note\d*|Lore|Description|shard|scepter|abilitydraft_note)");
+
+            var values = _abilityValues.Where(x => x.Key.Language == language && abilityRegex.IsMatch(x.Key.Key) && !otherValuesRegex.IsMatch(x.Key.Key));
+            foreach (var value in values)
+            {
+                displayValues.Add(abilityRegex.Replace(value.Key.Key, string.Empty), value.Value);
+            }
+            return displayValues;
+        }
+
+        private IList<UpgradeValues> GetUpgradeValue(string language, KVObject kvAbility, string type = "Scepter")
+        {
+            var abilityValues = new List<UpgradeValues>();
+
+            var upgradeRegex = new Regex(@$"(?i)({type})_\w+|\w+({type})");
+            var nonValueName = new Regex(@$"(?i)special_bonus_(?:(?!{type}))\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip");
+
+            var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial");
+            if (kvAbilityValues != null)
+            {
+                foreach (var kvAbilityValue in kvAbilityValues.Children)
+                {
+                    if (!(upgradeRegex.IsMatch(kvAbilityValue.Name)
+                          || kvAbilityValue.Any(x => x.Name.Equals($"special_bonus_{type}", StringComparison.InvariantCultureIgnoreCase))
+                          || kvAbilityValue.ParseChildValue<bool>($"Requires{type}")))
+                        continue;
+
+                    UpgradeValues abilityValue;
+                    if (kvAbilityValue.Value.ValueType == KVValueType.Collection)
+                    {
+                        var valueName   = kvAbilityValue.Name;
+                        var valueObject = kvAbilityValue.FirstOrDefault(x => !nonValueName.IsMatch(x.Name));
+                        if (valueObject == null)
+                        {
+                            _logger.LogDebug("Ability {0} with {1}Value {2} is upgrade value only", kvAbility.Name, type, valueName);
+                            continue;
                         }
+
+                        var values = kvAbilityValue.ParseChildValueList<float>($"special_bonus_{type.ToLower()}", true);
+                        if (kvAbilityValue.ParseChildValue<string>($"special_bonus_{type.ToLower()}")?.Contains("%") ?? false)
+                        {
+                            var mainValues = valueObject.ParseList<float>() ?? Array.Empty<float>();
+                            for (var i = 0; i < mainValues.Count; i++)
+                            {
+                                var percentage = values.Count == 1 ? values.First() : values[i];
+                                mainValues[i] = mainValues[i] + (mainValues[i] * (percentage/100));
+                            }
+                            values = mainValues;
+                        }
+                        if (values == null || values.Count() == 0)
+                            values = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>() : Array.Empty<float>();
+
+                        if (Regex.IsMatch(kvAbilityValue.Name, @"\d+"))
+                            valueName = valueObject.Name;
+
+                        abilityValue = new()
+                        {
+                            Name        = valueName,
+                            Values      = values,
+                            Description = GetAbilityValue(language, kvAbility.Name, valueName),
+                        };
+
                     }
                     else
                     {
@@ -392,7 +467,7 @@ namespace Magus.DataBuilder
         {
             var valueKeyRegex      = new Regex(@"(?<=%)\w+(?=%)");
             var bonusValueKeyRegex = new Regex(@"%\w+%");
-            var escapedPercentage  = new Regex(@"%(?=[^%])");
+            var escapedPercentage  = new Regex(@"%%(?=[^%])");
 
             if (ability.Description == null) 
                 return;
@@ -404,28 +479,78 @@ namespace Magus.DataBuilder
                 value ??= GetAbilityProperty(valueKey.Value, ability);
                 if (value != null)
                 {
-                    var formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct()));
+                    var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
                     if (Regex.IsMatch(ability.Description, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
                     {
-                        formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct().Select(x => x.ToString() + "%")));
+                        formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                     }
                     ability.Description = Regex.Replace(ability.Description,
                                                         @$"%{valueKey.Value}%",
-                                                        Discord.Format.Bold(string.Join(" / ", formattedValue))); // Use distinct as some all duplicates
+                                                        Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
                 }
                 ability.Description = escapedPercentage.Replace(ability.Description, "");
                 ability.Description = CleanSimple(ability.Description);
             }
             foreach (var value in ability.AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)))
             {
-                var joinedValue = string.Join(" / ", value.Values.Distinct());
+                var joinedValue = string.Join(ValueSeparator, value.Values.Distinct());
                 if (value.Description!.StartsWith('%'))
                 {
                     value.Description = value.Description.Trim('%');
-                    joinedValue = string.Join(" / ", value.Values.Distinct().Select(x => x.ToString() + "%"));
+                    var values        = value.Values.Distinct().Select(x => x.ToString() + "%");
+                    joinedValue       = string.Join(ValueSeparator, values);
                 }
                 value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
                 value.Description = CleanSimple(value.Description);
+            }
+
+            if (ability.DisplayedValues.Any())
+                foreach (var value in ability.DisplayedValues)
+                {
+                    var postFix = value.Value.StartsWith('%') ? "%" : string.Empty;
+                    ability.DisplayedValues[value.Key] = ability.DisplayedValues[value.Key].Trim('%');
+                    var values = ability.AbilityValues.FirstOrDefault(x => x.Name.Equals(value.Key, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().Select(x => x.ToString() + postFix);
+                    if (values == null || values.Count() == 0)
+                        values = GetAbilityProperty(value.Key,ability)?.Distinct().Select(x => x.ToString() + postFix);
+                    var joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
+                    
+                    if (string.IsNullOrWhiteSpace(joinedValue))
+                    {
+                        _logger.LogWarning("Skipped a display value for {0}", ability.InternalName);
+                        ability.DisplayedValues.Remove(value.Key);
+                        continue;
+                    }
+
+                    ability.DisplayedValues[value.Key] += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
+                    ability.DisplayedValues[value.Key]  = CleanSimple(ability.DisplayedValues[value.Key]);
+                }
+
+            foreach (var value in ability.ShardValues.Where(x => !string.IsNullOrEmpty(x.Description)))
+            {
+                var postFix = value.Description!.StartsWith('%') ? "%" : string.Empty;
+                value.Description = value.Description.Trim('%');
+                var values = value.Values.Distinct().Select(x => x.ToString() + postFix);
+                if (values.Count() == 0)
+                    values = ability.AbilityValues.First(x => x.Name.Equals(value.Name, StringComparison.InvariantCultureIgnoreCase)).Values.Distinct().Select(x => x.ToString() + postFix);
+                if (values.Count() == 0)
+                    values = ability.ShardValues.First(x => x.Name.Equals(value.Name, StringComparison.InvariantCultureIgnoreCase)).Values.Distinct().Select(x => x.ToString() + postFix);
+                var joinedValue = string.Join(ValueSeparator, values);
+                value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
+                value.Description = CleanSimple(value.Description);
+            }
+            foreach (var value in ability.ScepterValues.Where(x => !string.IsNullOrEmpty(x.Description)))
+            {
+                var postFix = value.Description!.StartsWith('%') ? "%" : string.Empty;
+                value.Description = value.Description.Trim('%');
+                var values = value.Values.Distinct().Select(x => x.ToString() + postFix);
+                if (values.Count() == 0)
+                    values = ability.AbilityValues.First(x => x.Name.Equals(value.Name, StringComparison.InvariantCultureIgnoreCase)).Values.Distinct().Select(x => x.ToString() + postFix);
+                if (values.Count() == 0)
+                    values = ability.ScepterValues.First(x => x.Name.Equals(value.Name, StringComparison.InvariantCultureIgnoreCase)).Values.Distinct().Select(x => x.ToString() + postFix);
+                var joinedValue = string.Join(ValueSeparator, values);
+
+                value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
+                value.Description  = CleanSimple(value.Description);
             }
 
             if (!string.IsNullOrEmpty(ability.ShardDescription))
@@ -433,18 +558,21 @@ namespace Magus.DataBuilder
                 var shardValueKeys = valueKeyRegex.Matches(ability.ShardDescription);
                 foreach (var valueKey in shardValueKeys.AsEnumerable())
                 {
-                    var value = ability.AbilityValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                    var value = ability.ShardValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
                     value ??= GetAbilityProperty(valueKey.Value, ability);
+                    if (value == null || value?.Count == 0)
+                        value = ability.ShardValues.FirstOrDefault(x => x.Name.Equals(valueKey.Value, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().ToList();
                     if (value != null)
+                        if (value != null)
                     {
-                        var formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct()));
+                        var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
                         if (Regex.IsMatch(ability.ShardDescription, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
                         {
-                            formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct().Select(x => x.ToString() + "%")));
+                            formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                         }
                         ability.ShardDescription = Regex.Replace(ability.ShardDescription,
                                                             @$"%{valueKey.Value}%",
-                                                            Discord.Format.Bold(string.Join(" / ", formattedValue))); // Use distinct as some all duplicates
+                                                            Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
                     }
                     ability.ShardDescription = escapedPercentage.Replace(ability.ShardDescription, "");
                 }
@@ -455,18 +583,20 @@ namespace Magus.DataBuilder
                 var scepterValueKeys = valueKeyRegex.Matches(ability.ScepterDescription);
                 foreach (var valueKey in scepterValueKeys.AsEnumerable())
                 {
-                    var value = ability.AbilityValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                    var value = ability.ScepterValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
                     value ??= GetAbilityProperty(valueKey.Value, ability);
+                    if (value == null || value?.Count == 0)
+                        value = ability.ScepterValues.FirstOrDefault(x => x.Name.Equals(valueKey.Value, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().ToList();
                     if (value != null)
                     {
-                        var formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct()));
+                        var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
                         if (Regex.IsMatch(ability.ScepterDescription, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
                         {
-                            formattedValue =  Discord.Format.Bold(string.Join(" / ", value.Distinct().Select(x => x.ToString() + "%")));
+                            formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                         }
                         ability.ScepterDescription = Regex.Replace(ability.ScepterDescription,
                                                             @$"%{valueKey.Value}%",
-                                                            Discord.Format.Bold(string.Join(" / ", formattedValue))); // Use distinct as some all duplicates
+                                                            formattedValue); // Use distinct as some all duplicates
                     }
                     ability.ScepterDescription = escapedPercentage.Replace(ability.ScepterDescription, "");
                 }
@@ -481,12 +611,13 @@ namespace Magus.DataBuilder
                 foreach (var bonusValueKey in noteValueKeys.AsEnumerable())
                 {
                     var value = ability.AbilityValues.FirstOrDefault(x => x.Name == bonusValueKey.Value)?.Values;
+                    value ??= GetAbilityProperty(bonusValueKey.Value, ability);
                     if (value != null)
                     {
-                        var formattedValue = Discord.Format.Bold(string.Join(" / ", value.Distinct()));
+                        var formattedValue = Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
                         if (Regex.IsMatch(ability.Description, String.Format(@"(?<=%?){0}(?=%%%)", bonusValueKey.Value)))
                         {
-                            formattedValue = Discord.Format.Bold(string.Join(" / ", value.Distinct().Select(x => x.ToString() + "%")));
+                            formattedValue = Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                         }
                         newNote = Regex.Replace(newNote, @$"%{bonusValueKey.Value}%", formattedValue);
                     }
@@ -626,7 +757,7 @@ namespace Magus.DataBuilder
                 _                     => "_" + valueName,
             };
 
-            var key = (language, Key: $"DOTA_Tooltip_ability_{internalName}{postfix}");
+            var key = (language, Key: $"DOTA_Tooltip_ability_{internalName}{postfix}".ToLower());
             if (_abilityValues.ContainsKey(key))
             {
                 return _abilityValues[key];
@@ -640,7 +771,7 @@ namespace Magus.DataBuilder
 
         private IList<string> GetAbilityNoteValues(string language, string internalName)
         {
-            var noteRegex = new Regex($"DOTA_Tooltip_ability_{internalName}_Note\\d+");
+            var noteRegex = new Regex($"(?i)DOTA_Tooltip_ability_{internalName}_Note\\d+");
             // Distinct as the same Key will be present in different languages.
             // Watch out if another language has more notes than default language...
             var notesCount = _abilityValues.Keys.Where(x => x.Language == language && noteRegex.IsMatch(x.Key)).Distinct().Count(); 
@@ -654,7 +785,7 @@ namespace Magus.DataBuilder
 
         private string GetHeroValue(string language, string internalName, string? postfix = null)
         {
-            var key = (language, Key: $"{internalName}{(postfix != null ? $"_{postfix}" : "")}");
+            var key = (language, Key: $"{internalName}{(postfix != null ? $"_{postfix}" : "")}".ToLower());
             if (_dotaValues.ContainsKey(key))
             {
                 return _dotaValues[key];

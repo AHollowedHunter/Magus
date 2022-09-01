@@ -64,16 +64,11 @@ namespace Magus.DataBuilder.Extensions
                 var heroInfo = heroes.Where(x => x.InternalName == hero.InternalName).First();
 
                 var fields = new List<Field>();
-                //if (hero.GeneralNotes.Count > 0)
-                //{
-                //    fields.Add(new() { Name = "General:", Value = CreateFormattedDescription(hero.GeneralNotes) });
-                //}
 
                 foreach (var abilityNote in hero.AbilityNotes)
                 {
-                    // Need to get ability info from gamefiles, as removed abilities don't exist here
-                    //var abilityInfo = abilities.Where(x => x.InternalName == abilityNote.InternalName).First();
-                    fields.Add(new() { Name = $"{abilityNote.InternalName}:", Value = CreateFormattedDescription(abilityNote.Notes) });
+                    var abilityInfo = abilities.Where(x => x.InternalName == abilityNote.InternalName).First(); // pass hero object with abilties included
+                    fields.Add(new() { Name = $"{abilityInfo.Name}:", Value = CreateFormattedDescription(abilityNote.Notes) });
                 }
 
                 if (hero.TalentNotes.Count > 0)
@@ -88,7 +83,7 @@ namespace Magus.DataBuilder.Extensions
                     Url          = _patchUrlBase + patch.PatchName,
                     ColorRaw     = Color.DarkOrange,
                     Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
-                    ThumbnailUrl = $"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/{hero.InternalName.Substring(14)}.png", // Store this in a hero object?
+                    ThumbnailUrl = DotaUrls.GetHeroImage(hero.InternalName), // Store this in a hero object?
                     Footer       = new() { Text = "Patch " + patch.PatchName},
                     Fields       = fields,
                 };
@@ -98,7 +93,7 @@ namespace Magus.DataBuilder.Extensions
                     {
                         Id           = GetPatchNoteId(patch.PatchName, hero.InternalName, locale), //Temp custom id
                         Locale       = locale,
-                        EntityId     = (int)heroInfo.Id,
+                        EntityId     = heroInfo.EntityId,
                         Name         = heroInfo.Name,
                         InternalName = hero.InternalName,
                         Embed        = heroPatchNoteEmbed,
@@ -134,7 +129,7 @@ namespace Magus.DataBuilder.Extensions
                     {
                         Id           = GetPatchNoteId(patch.PatchName, item.InternalName, locale), //Temp custom id
                         Locale       = locale,
-                        EntityId     = (int)itemInfo.Id,
+                        EntityId     = itemInfo.EntityId,
                         Name         = itemInfo.Name,
                         InternalName = itemInfo.InternalName,
                         Embed        = itemPatchNoteEmbed,
