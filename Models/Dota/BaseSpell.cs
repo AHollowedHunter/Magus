@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Newtonsoft.Json.Linq;
+using System.ComponentModel.DataAnnotations;
 namespace Magus.Data.Models.Dota
 {
     /// <summary>
@@ -36,7 +37,20 @@ namespace Magus.Data.Models.Dota
         public IList<float> AbilityDamage { get; set; }
         public IList<float> AbilityManaCost { get; set; }
 
-        public IEnumerable<AbilityValue> AbilityValues { get; set; }
+        public IList<AbilityValue> AbilityValues { get; set; }
+        public IDictionary<string, string> DisplayedValues { get; set; }
+
+        public IList<AbilityValue> GetDisplayedValues()
+        {
+            var spellValues = new List<AbilityValue>();
+
+            foreach (var value in AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)))
+            {
+                spellValues.Add(value);
+            }
+
+            return AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)).ToList();
+        }
 
         public record AbilityValue
         {
@@ -45,8 +59,6 @@ namespace Magus.Data.Models.Dota
             public IList<float> Values { get; set; }
             public string? LinkedSpecialBonus { get; set; }
             public string? SpecialBonusValue { get; set; }
-            public bool RequiresScepter { get; set; }
-            public bool RequiresShard { get; set; }
         }
 
         // Is there anything we don't know?

@@ -2,6 +2,8 @@
 {
     public record Ability : BaseSpell
     {
+        public IDictionary<string, Talent>? LinkedTalents { get; set; } = new Dictionary<string, Talent>();
+
         public bool AbilityHasScepter { get; set; }
         public bool AbilityHasShard { get; set; }
         public bool AbilityIsGrantedByScepter { get; set; }
@@ -10,39 +12,14 @@
         public string? ScepterDescription { get; set; }
         public string? ShardDescription { get; set; }
 
-        public IDictionary<string, Talent>? LinkedTalents { get; set; } = new Dictionary<string, Talent>();
+        public IList<UpgradeValues> ScepterValues { get; set; }
+        public IList<UpgradeValues> ShardValues { get; set; }
 
-        public IEnumerable<AbilityValue> GetAbilityValues()
+        public record UpgradeValues
         {
-            var spellValues = new List<AbilityValue>();
-
-            foreach (var value in AbilityValues.Where(x => !x.RequiresShard == true && !x.Name.StartsWith("shard_") && !x.RequiresScepter == true && !x.Name.StartsWith("scepter_")))
-            {
-                if (!string.IsNullOrEmpty(value.Description) && !(value.Description.StartsWith('+') || value.Description.StartsWith('-')))
-                {
-                    spellValues.Add(value);
-                }
-            }
-
-            return spellValues;
-        }
-
-        public IEnumerable<AbilityValue> GetShardValues()
-        {
-            var upgradeValues = new List<AbilityValue>();
-            if (!AbilityHasShard)
-                return upgradeValues;
-
-            return AbilityValues.Where(x => x.RequiresShard == true || x.Name.StartsWith("shard_"));
-        }
-
-        public IEnumerable<AbilityValue> GetScepterValues()
-        {
-            var upgradeValues = new List<AbilityValue>();
-            if (!AbilityHasScepter)
-                return upgradeValues;
-
-            return AbilityValues.Where(x => x.RequiresScepter == true || x.Name.StartsWith("scepter_"));
-        }
+            public string Name { get; set; }
+            public string? Description { get; set; }
+            public IList<float> Values { get; set; }
+        }        
     }
 }
