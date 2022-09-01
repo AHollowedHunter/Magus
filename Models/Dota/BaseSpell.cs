@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.ComponentModel.DataAnnotations;
+
 namespace Magus.Data.Models.Dota
 {
     /// <summary>
@@ -32,6 +33,7 @@ namespace Magus.Data.Models.Dota
         public IList<float> AbilityCastRange { get; set; }
         public IList<float> AbilityCastPoint { get; set; }
         public IList<float> AbilityChannelTime { get; set; }
+        public IList<float> AbilityCharges { get; set; }
         public IList<float> AbilityCooldown { get; set; }
         public IList<float> AbilityDuration { get; set; }
         public IList<float> AbilityDamage { get; set; }
@@ -125,6 +127,7 @@ namespace Magus.Data.Models.Dota
         DOTA_ABILITY_BEHAVIOR_UNIT_TARGET                    = 8,
         [Display(Name = "Point target")]
         DOTA_ABILITY_BEHAVIOR_POINT                          = 16,
+        [Display(Name = "AOE")]
         DOTA_ABILITY_BEHAVIOR_AOE                            = 32,
         DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE                  = 64,
         DOTA_ABILITY_BEHAVIOR_CHANNELLED                     = 128,
@@ -236,7 +239,7 @@ namespace Magus.Data.Models.Dota
         DOTA_UNIT_TARGET_TEAM_FRIENDLY = 1,
         [Display(Name = "Enemy")]
         DOTA_UNIT_TARGET_TEAM_ENEMY    = 2,
-        [Display(Name = "Both")]
+        [Display(Name = "Both Teams")]
         DOTA_UNIT_TARGET_TEAM_BOTH     = 3,
         DOTA_UNIT_TARGET_TEAM_CUSTOM   = 4,
         FORCEABILITY                   = 7, // Friendly, enemy, and custom
