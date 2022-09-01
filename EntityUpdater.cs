@@ -4,6 +4,7 @@ using Magus.Data.Models.Embeds;
 using Magus.DataBuilder.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -302,6 +303,7 @@ namespace Magus.DataBuilder
             ability.AbilityCastRange   = kvAbility.ParseChildValueList<float>("AbilityCastRange");
             ability.AbilityCastPoint   = kvAbility.ParseChildValueList<float>("AbilityCastPoint");
             ability.AbilityChannelTime = kvAbility.ParseChildValueList<float>("AbilityChannelTime");
+            ability.AbilityCharges     = kvAbility.ParseChildValueList<float>("AbilityCharges");
             ability.AbilityCooldown    = kvAbility.ParseChildValueList<float>("AbilityCooldown");
             ability.AbilityDuration    = kvAbility.ParseChildValueList<float>("AbilityDuration");
             ability.AbilityDamage      = kvAbility.ParseChildValueList<float>("AbilityDamage");
@@ -504,26 +506,25 @@ namespace Magus.DataBuilder
                 value.Description = CleanSimple(value.Description);
             }
 
-            if (ability.DisplayedValues.Any())
-                foreach (var value in ability.DisplayedValues)
-                {
-                    var postFix = value.Value.StartsWith('%') ? "%" : string.Empty;
-                    ability.DisplayedValues[value.Key] = ability.DisplayedValues[value.Key].Trim('%');
-                    var values = ability.AbilityValues.FirstOrDefault(x => x.Name.Equals(value.Key, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().Select(x => x.ToString() + postFix);
-                    if (values == null || values.Count() == 0)
-                        values = GetAbilityProperty(value.Key,ability)?.Distinct().Select(x => x.ToString() + postFix);
-                    var joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
-                    
-                    if (string.IsNullOrWhiteSpace(joinedValue))
-                    {
-                        _logger.LogWarning("Skipped a display value for {0}", ability.InternalName);
-                        ability.DisplayedValues.Remove(value.Key);
-                        continue;
-                    }
+            foreach (var value in ability.DisplayedValues)
+            {
+                var postFix = value.Value.StartsWith('%') ? "%" : string.Empty;
+                ability.DisplayedValues[value.Key] = ability.DisplayedValues[value.Key].Trim('%');
+                var values = ability.AbilityValues.FirstOrDefault(x => x.Name.Equals(value.Key, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().Select(x => x.ToString() + postFix);
+                if (values == null || values.Count() == 0)
+                    values = GetAbilityProperty(value.Key, ability)?.Distinct().Select(x => x.ToString() + postFix);
+                var joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
 
-                    ability.DisplayedValues[value.Key] += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
-                    ability.DisplayedValues[value.Key]  = CleanSimple(ability.DisplayedValues[value.Key]);
+                if (string.IsNullOrWhiteSpace(joinedValue))
+                {
+                    _logger.LogWarning("Skipped a display value for {0}", ability.InternalName);
+                    ability.DisplayedValues.Remove(value.Key);
+                    continue;
                 }
+
+                ability.DisplayedValues[value.Key] += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
+                ability.DisplayedValues[value.Key]  = CleanSimple(ability.DisplayedValues[value.Key]);
+            }
 
             foreach (var value in ability.ShardValues.Where(x => !string.IsNullOrEmpty(x.Description)))
             {
@@ -552,10 +553,14 @@ namespace Magus.DataBuilder
                 value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
                 value.Description  = CleanSimple(value.Description);
             }
-
-            if (!string.IsNullOrEmpty(ability.ShardDescription))
+            if (ability.AbilityHasShard && string.IsNullOrEmpty(ability.ShardDescription))
             {
-                var shardValueKeys = valueKeyRegex.Matches(ability.ShardDescription);
+                _logger.LogWarning("Skipped shard with no desc for {0}", ability.InternalName);
+                ability.AbilityHasShard = false;
+            }
+            else if (ability.AbilityHasShard || !string.IsNullOrEmpty(ability.ShardDescription))
+            {
+                var shardValueKeys = valueKeyRegex.Matches(ability.ShardDescription!);
                 foreach (var valueKey in shardValueKeys.AsEnumerable())
                 {
                     var value = ability.ShardValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
@@ -578,9 +583,16 @@ namespace Magus.DataBuilder
                 }
                 ability.ShardDescription = CleanSimple(ability.ShardDescription);
             }
-            if (!string.IsNullOrEmpty(ability.ScepterDescription))
+
+            // conditionally ignore and log missing descriptions/use HasScepter
+            if (ability.AbilityHasScepter && string.IsNullOrEmpty(ability.ScepterDescription))
             {
-                var scepterValueKeys = valueKeyRegex.Matches(ability.ScepterDescription);
+                _logger.LogWarning("Skipped scepter with no desc for {0}", ability.InternalName);
+                ability.AbilityHasScepter = false;
+            }
+            else if (ability.AbilityHasScepter || !string.IsNullOrEmpty(ability.ScepterDescription))
+            {
+                var scepterValueKeys = valueKeyRegex.Matches(ability.ScepterDescription!);
                 foreach (var valueKey in scepterValueKeys.AsEnumerable())
                 {
                     var value = ability.ScepterValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
