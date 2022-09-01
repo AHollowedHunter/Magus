@@ -7,7 +7,8 @@ namespace Magus.Common.Extensions
         public static string ToName(this Enum enumValue)
         {
             var displayAttribute = enumValue.GetType()
-                .GetMember(enumValue.ToString())[0]
+                .GetMember(enumValue.ToString())
+                .FirstOrDefault()?
                 .GetCustomAttributes(false)
                 .Select(x => x as DisplayAttribute)
                 .FirstOrDefault();
@@ -17,7 +18,8 @@ namespace Magus.Common.Extensions
         public static string? GetDisplayName(this Enum enumValue)
         {
             var displayAttribute = enumValue.GetType()
-                .GetMember(enumValue.ToString())[0]
+                .GetMember(enumValue.ToString())
+                .FirstOrDefault()?
                 .GetCustomAttributes(false)
                 .Select(x => x as DisplayAttribute)
                 .FirstOrDefault();
