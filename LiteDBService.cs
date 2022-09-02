@@ -179,11 +179,11 @@ namespace Magus.Data
             var results = collection.Find(Query.And(Query.EQ("EntityId", entityId), Query.EQ("Locale", locale)));
             if (!orderByDesc)
             {
-                results = results.OrderBy(x => x.PatchNumber);
+                results = results.OrderBy(x => x.Timestamp);
             }
             else
             {
-                results = results.OrderByDescending(x => x.PatchNumber);
+                results = results.OrderByDescending(x => x.Timestamp);
             }
             return results.Take(limit);
         }
@@ -191,7 +191,10 @@ namespace Magus.Data
         public IEnumerable<T> GetPatchNotes<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
         {
             var collection = _liteDB.GetCollection<T>();
-            return collection.Find(QueryLocaleEntityName<T>(entityName, locale), limit: limit);
+            var results = collection.Find(QueryLocaleEntityName<T>(entityName, locale)).OrderBy(x => x.Timestamp);
+            if (orderByDesc)
+                return results.Reverse().Take(limit);
+            return results.Take(limit);
         }
 
         public T GetPatchNote<T>(string patchNumber, int entityId, string locale = IDatabaseService.DEFAULT_LOCALE) where T : EntityPatchNoteEmbed
@@ -201,10 +204,10 @@ namespace Magus.Data
             return result;
         }
 
-        public IEnumerable<T> GetPatchNote<T>(string patchNumber, string entityName, int limit = int.MaxValue) where T : EntityPatchNoteEmbed
+        public T GetPatchNote<T>(string patchNumber, string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : EntityPatchNoteEmbed
         {
             var collection = _liteDB.GetCollection<T>();
-            return collection.Find(QueryPatchNoteEntityName<T>(entityName, patchNumber), limit: limit);
+            return collection.FindOne(QueryPatchNoteEntityName<T>(entityName, patchNumber, locale));
         }
 
         public T GetEntityInfo<T>(int entityId, string locale = IDatabaseService.DEFAULT_LOCALE) where T : EntityInfoEmbed
@@ -234,10 +237,10 @@ namespace Magus.Data
                                                                        || entity.Aliases!.Any(alias => alias.StartsWith(entityName, StringComparison.InvariantCultureIgnoreCase))
                                                                        || entity.InternalName!.Contains(entityName));
 
-        private static Expression<Func<T, bool>> QueryPatchNoteEntityName<T>(string entityName, string patchNumber) where T : EntityPatchNoteEmbed
-            => entity => entity.PatchNumber == patchNumber && (entity.Name!.Contains(entityName)
-                                                                       || entity.RealName!.StartsWith(entityName)
-                                                                       || entity.Aliases!.Any(alias => alias.StartsWith(entityName, StringComparison.InvariantCultureIgnoreCase))
-                                                                       || entity.InternalName!.Contains(entityName));
+        private static Expression<Func<T, bool>> QueryPatchNoteEntityName<T>(string entityName, string patchNumber, string locale = IDatabaseService.DEFAULT_LOCALE) where T : EntityPatchNoteEmbed
+            => entity => entity.PatchNumber == patchNumber && entity.Locale == locale && (entity.Name!.Contains(entityName)
+                                                                                          || entity.RealName!.StartsWith(entityName)
+                                                                                          || entity.Aliases!.Any(alias => alias.StartsWith(entityName, StringComparison.InvariantCultureIgnoreCase))
+                                                                                          || entity.InternalName!.Contains(entityName));
     }
 }
