@@ -32,6 +32,7 @@ namespace Magus.DataBuilder
         private readonly List<Talent> _talents;
         private readonly List<Hero> _heroes;
         private readonly List<Item> _items;
+        private Dictionary<string, byte> _neutralItemTiers;
         private Hero _baseHero;
 
         private static readonly string ValueSeparator = "\u00A0/\u00A0";
@@ -54,6 +55,7 @@ namespace Magus.DataBuilder
             _talents               = new();
             _heroes                = new();
             _items                 = new();
+            _neutralItemTiers      = new();
             _baseHero              = new();
         }
 
@@ -105,62 +107,72 @@ namespace Magus.DataBuilder
         {
             _logger.LogInformation("Setting Entities");
 
-            var mixedAbilities    = await GetKVObjectFromUri(Dota2GameFiles.NpcAbilities);
-            var heroes       = await GetKVObjectFromUri(Dota2GameFiles.NpcHeroes);
-            var items        = await GetKVObjectFromUri(Dota2GameFiles.Items);
-            var talentRegex  = new Regex("special_bonus_\\w+");
-            var mainAbilities      = new List<KVObject>();
+            var mixedAbilities = await GetKVObjectFromUri(Dota2GameFiles.NpcAbilities);
+            var heroes         = await GetKVObjectFromUri(Dota2GameFiles.NpcHeroes);
+            var items          = await GetKVObjectFromUri(Dota2GameFiles.Items);
+            var neutralItems   = await GetKVObjectFromUri(Dota2GameFiles.NeutralItems);
+
+            var talentRegex    = new Regex("special_bonus_\\w+");
+            var mainAbilities  = new List<KVObject>();
 
             _abilities.Clear();
             _talents.Clear();
             _heroes.Clear();
             _items.Clear();
 
-            foreach (var ability in mixedAbilities.Children.Where(x => x.Name != "Version"))
-            {
-                if (ability.Children.Count() == 0)
-                    continue;
-                if (!talentRegex.IsMatch(ability.Name))
-                {
-                    mainAbilities.Add(ability);
-                    continue;
-                }
-
-                _logger.LogDebug("Processing talent {0}", ability.Name);
-                foreach (var language in _sourceLocaleMappings.Keys)
-                {
-                    _talents.Add(CreateTalent(language, ability));
-                }
-            }
-
-            foreach (var ability in mainAbilities)
-            {
-                _logger.LogDebug("Processing ability {0}", ability.Name);
-                foreach (var language in _sourceLocaleMappings.Keys)
-                {
-                    _abilities.Add(CreateAbility(language, ability));
-                }
-            }
-
-            _baseHero = CreateHero("", heroes.Children.First(x => x.Name == "npc_dota_hero_base"));
-
-            foreach (var hero in heroes.Children.Where(x => x.Name != "Version" && x.Name != "npc_dota_hero_base" && x.Name != "npc_dota_hero_target_dummy"))
-            {
-                _logger.LogDebug("Processing hero {0}", hero.Name);
-                foreach (var language in _sourceLocaleMappings.Keys)
-                {
-                    _heroes.Add(CreateHero(language, hero));
-                }
-            }
-
-            //foreach (var item in items.Children.Where(x => x.Name != "Version"))
+            //foreach (var ability in mixedAbilities.Children.Where(x => x.Name != "Version"))
             //{
-            //    _logger.LogDebug("Processing item {0}", item.Name);
+            //    if (ability.Children.Count() == 0)
+            //        continue;
+            //    if (!talentRegex.IsMatch(ability.Name))
+            //    {
+            //        mainAbilities.Add(ability);
+            //        continue;
+            //    }
+
+            //    _logger.LogDebug("Processing talent {0}", ability.Name);
             //    foreach (var language in _sourceLocaleMappings.Keys)
             //    {
-            //        //_items.Add(CreateAbility(language, item));
+            //        _talents.Add(CreateTalent(language, ability));
             //    }
             //}
+
+            //foreach (var ability in mainAbilities)
+            //{
+            //    _logger.LogDebug("Processing ability {0}", ability.Name);
+            //    foreach (var language in _sourceLocaleMappings.Keys)
+            //    {
+            //        _abilities.Add(CreateAbility(language, ability));
+            //    }
+            //}
+
+            //_baseHero = CreateHero("", heroes.Children.First(x => x.Name == "npc_dota_hero_base"));
+
+            //foreach (var hero in heroes.Children.Where(x => x.Name != "Version" && x.Name != "npc_dota_hero_base" && x.Name != "npc_dota_hero_target_dummy"))
+            //{
+            //    _logger.LogDebug("Processing hero {0}", hero.Name);
+            //    foreach (var language in _sourceLocaleMappings.Keys)
+            //    {
+            //        _heroes.Add(CreateHero(language, hero));
+            //    }
+            //}
+
+            _neutralItemTiers = GetNeutralItemTiers(neutralItems);
+
+            foreach (var item in items.Children.Where(x => x.Name != "Version"))
+            {
+                // Ignore items that are obsolete, not in neutralItems, etc.
+                if (item.ParseChildValue<bool>("IsObsolete"))
+                    continue;
+                if (item.ParseChildValue<bool>("ItemIsNeutralDrop") && !_neutralItemTiers.ContainsKey(item.Name))
+                    continue;
+
+                _logger.LogDebug("Processing item {0}", item.Name);
+                foreach (var language in _sourceLocaleMappings.Keys)
+                {
+                    _items.Add(CreateItem(language, item));
+                }
+            }
 
             FormatEntities();
 
@@ -194,6 +206,18 @@ namespace Magus.DataBuilder
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error formatting ability {0,-32} in {1}", ability.InternalName, ability.Language);
+                }
+            }
+
+            foreach (var item in _items)
+            {
+                try
+                {
+                    FormatItem(item);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error formatting item {0,-32} in {1}", item.InternalName, item.Language);
                 }
             }
 
@@ -390,7 +414,7 @@ namespace Magus.DataBuilder
                         abilityValue = new()
                         {
                             Name        = kvAbilityValue.Name,
-                            Values      = kvAbilityValue.ParseList<float>(),
+                            Values      = kvAbilityValue.ParseList<float>(true),
                             Description = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
                         };
                     }
@@ -659,7 +683,7 @@ namespace Magus.DataBuilder
             ability.Notes = newNotes;
         }
 
-        private IList<float>? GetAbilityProperty(string name, Ability ability)
+        private IList<float>? GetAbilityProperty(string name, BaseSpell ability)
 
             => name.ToLower() switch
             {
@@ -885,13 +909,171 @@ namespace Magus.DataBuilder
             return talents;
         }
 
+        private Dictionary<string, byte> GetNeutralItemTiers(KVObject kvNeutralItems)
+        {
+            Dictionary<string, byte> neutralItems = new Dictionary<string, byte>();
+
+            foreach (var tier in kvNeutralItems)
+                foreach (var item in tier.First(x => x.Name == "items").Children)
+                    neutralItems.Add(item.Name, byte.Parse(tier.Name));
+
+            return neutralItems;
+        }
+
+        private Item CreateItem(string language, KVObject kvItem)
+        {
+            var item = new Item();
+
+            item.Id           = (int)kvItem.Children.First(x => x.Name == "ID").Value!;
+            item.InternalName = kvItem.Name;
+            item.Language     = language;
+
+            var itemName = string.Empty;
+            if (item.InternalName.StartsWith("item_dagon_")) // Damn dagon
+                itemName = GetAbilityValue(language, item.InternalName + "L");
+            else
+                itemName = GetAbilityValue(language, item.InternalName);
+            item.Name = itemName;
+
+            item.Description  = GetAbilityValue(language, item.InternalName, "Description");
+            item.Lore         = GetAbilityValue(language, item.InternalName, "Lore");
+            item.Notes        = GetAbilityNoteValues(language, item.InternalName);
+
+            item.AbilityType           = kvItem.ParseChildEnum<AbilityType>("AbilityType");
+            item.AbilityBehavior       = kvItem.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
+            item.AbilityUnitTargetTeam = kvItem.ParseChildEnum<AbilityUnitTargetTeam>("AbilityUnitTargetTeam");
+            item.AbilityUnitTargetType = kvItem.ParseChildEnum<AbilityUnitTargetType>("AbilityUnitTargetType");
+            item.AbilityUnitDamageType = kvItem.ParseChildEnum<AbilityUnitDamageType>("AbilityUnitDamageType");
+            item.SpellImmunityType     = kvItem.ParseChildEnum<SpellImmunityType>("SpellImmunityType");
+            item.SpellDispellableType  = kvItem.ParseChildEnum<SpellDispellableType>("SpellDispellableType");
+
+            item.AbilityCastRange         = kvItem.ParseChildValueList<float>("AbilityCastRange");
+            item.AbilityCastPoint         = kvItem.ParseChildValueList<float>("AbilityCastPoint");
+            item.AbilityChannelTime       = kvItem.ParseChildValueList<float>("AbilityChannelTime");
+            item.AbilityCharges           = kvItem.ParseChildValueList<float>("AbilityCharges");
+            item.AbilityChargeRestoreTime = kvItem.ParseChildValueList<float>("AbilityChargeRestoreTime");
+            item.AbilityCooldown          = kvItem.ParseChildValueList<float>("AbilityCooldown");
+            item.AbilityDuration          = kvItem.ParseChildValueList<float>("AbilityDuration");
+            item.AbilityDamage            = kvItem.ParseChildValueList<float>("AbilityDamage");
+            item.AbilityManaCost          = kvItem.ParseChildValueList<float>("AbilityManaCost");
+
+            item.ItemAliases          = kvItem.ParseChildValueList<string>("ItemAliases");
+            item.ItemBaseLevel        = kvItem.ParseChildValue<byte>("ItemBaseLevel");
+            item.MaxUpgradeLevel      = kvItem.ParseChildValue<byte>("MaxUpgradeLevel");
+            item.ItemCost             = kvItem.ParseChildValue<short>("ItemCost", emptyValueReturnDefault: true);
+            item.ItemInitialCharges   = kvItem.ParseChildValue<byte>("ItemInitialCharges");
+            item.ItemInitialStockTime = kvItem.ParseChildValue<float>("ItemInitialStockTime");
+            item.ItemIsNeutralDrop    = kvItem.ParseChildValue<bool>("ItemIsNeutralDrop");
+            item.ItemNeutralTier      = kvItem.ParseChildValue<byte>("ItemNeutralTier");
+            item.ItemPurchasable      = kvItem.ParseChildValue<bool>("ItemPurchasable");
+            item.ItemRecipe           = kvItem.ParseChildValue<bool>("ItemRecipe");
+            //item.ItemRequirements   = kvItem.ParseChildValueList<string[]>("ItemRequirements");
+            item.ItemResult           = kvItem.ParseChildValue<string>("ItemResult");
+            item.ItemStockInitial     = kvItem.ParseChildValue<byte>("ItemStockInitial");
+            item.ItemStockMax         = kvItem.ParseChildValue<byte>("ItemStockMax");
+            item.ItemStockTime        = kvItem.ParseChildValue<float>("ItemStockTime");
+
+            item.AbilityValues   = GetAbilityValues(language, kvItem);
+            item.DisplayedValues = GetDisplayedValues(language, kvItem);
+
+            _logger.LogTrace("Processed {0,7} {1,-64} in {2}\"", "ability", item.InternalName, language);
+            return item;
+        }
+
+        private void FormatItem(Item item)
+        {
+            var valueKeyRegex      = new Regex(@"(?<=%)\w+(?=%)");
+            var bonusValueKeyRegex = new Regex(@"%\w+%");
+            var escapedPercentage  = new Regex(@"%%(?=[^%])");
+
+            if (item.Description == null)
+                return;
+
+            var descriptionValueKeys = valueKeyRegex.Matches(item.Description);
+            foreach (var valueKey in descriptionValueKeys.AsEnumerable())
+            {
+                var value = item.AbilityValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                value ??= GetAbilityProperty(valueKey.Value, item);
+                if (value != null)
+                {
+                    var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
+                    if (Regex.IsMatch(item.Description, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
+                    {
+                        formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
+                    }
+                    item.Description = Regex.Replace(item.Description,
+                                                        @$"%{valueKey.Value}%",
+                                                        Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
+                }
+                item.Description = escapedPercentage.Replace(item.Description, "");
+                item.Description = CleanSimple(item.Description);
+            }
+            foreach (var value in item.AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)))
+            {
+                var joinedValue = string.Join(ValueSeparator, value.Values.Distinct());
+                if (value.Description!.StartsWith('%'))
+                {
+                    value.Description = value.Description.Trim('%');
+                    var values        = value.Values.Distinct().Select(x => x.ToString() + "%");
+                    joinedValue       = string.Join(ValueSeparator, values);
+                }
+                value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
+                value.Description = CleanSimple(value.Description);
+            }
+
+            foreach (var value in item.DisplayedValues)
+            {
+                var postFix = value.Value.StartsWith('%') ? "%" : string.Empty;
+                item.DisplayedValues[value.Key] = item.DisplayedValues[value.Key].Trim('%');
+                var values = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(value.Key, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().Select(x => x.ToString() + postFix);
+                if (values == null || values.Count() == 0)
+                    values = GetAbilityProperty(value.Key, item)?.Distinct().Select(x => x.ToString() + postFix);
+                var joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
+
+                if (string.IsNullOrWhiteSpace(joinedValue))
+                {
+                    _logger.LogDebug("Skipped a display value for {0} with key {1}", item.InternalName, value.Key);
+                    item.DisplayedValues.Remove(value.Key);
+                    continue;
+                }
+
+                item.DisplayedValues[value.Key] += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
+                item.DisplayedValues[value.Key]  = CleanSimple(item.DisplayedValues[value.Key]);
+            }
+
+            var newNotes = new List<string>();
+            foreach (var note in item.Notes)
+            {
+                var noteValueKeys = valueKeyRegex.Matches(note);
+                var newNote = note;
+                foreach (var bonusValueKey in noteValueKeys.AsEnumerable())
+                {
+                    var value = item.AbilityValues.FirstOrDefault(x => x.Name == bonusValueKey.Value)?.Values;
+                    value ??= GetAbilityProperty(bonusValueKey.Value, item);
+                    if (value != null)
+                    {
+                        var formattedValue = Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
+                        if (Regex.IsMatch(item.Description, String.Format(@"(?<=%?){0}(?=%%%)", bonusValueKey.Value)))
+                        {
+                            formattedValue = Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
+                        }
+                        newNote = Regex.Replace(newNote, @$"%{bonusValueKey.Value}%", formattedValue);
+                    }
+                }
+                newNote = escapedPercentage.Replace(newNote, "");
+                newNote = CleanLocaleValue(newNote);
+                newNotes.Add(newNote);
+            }
+            item.Notes = newNotes;
+        }
 
         private void StoreEntityEmbeds()
         {
             _logger.LogInformation("Converting entities to Info Embed records");
-            var heroInfoEmbeds = new List<HeroInfoEmbed>();
+            var heroInfoEmbeds    = new List<HeroInfoEmbed>();
             var abilityInfoEmbeds = new List<AbilityInfoEmbed>();
-            var latestPatch    = _db.GetLatestPatch();
+            var itemInfoEmbeds    = new List<ItemInfoEmbed>();
+            var latestPatch       = _db.GetLatestPatch();
 
             foreach (var hero in _heroes)
             {
@@ -903,12 +1085,18 @@ namespace Magus.DataBuilder
                 _logger.LogDebug("Processing ability info embeds for {0,-40} in {1}", heroAbility.InternalName, heroAbility.Language);
                 abilityInfoEmbeds.AddRange(heroAbility.CreateAbilityInfoEmbeds(_sourceLocaleMappings, latestPatch));
             }
+            foreach (var item in _items.Where(x => !x.ItemRecipe))
+            {
+                _logger.LogDebug("Processing item info embeds for {0,-40} in {1}", item.InternalName, item.Language);
+                itemInfoEmbeds.AddRange(item.CreateItemInfoEmbeds(_sourceLocaleMappings, latestPatch));
+            }
 
 
             _logger.LogInformation("Updating entity info embeds in Database");
 
             _db.UpsertRecords(heroInfoEmbeds);
             _db.UpsertRecords(abilityInfoEmbeds);
+            _db.UpsertRecords(itemInfoEmbeds);
             EnsureIndexes();
         }
 
@@ -922,6 +1110,10 @@ namespace Magus.DataBuilder
             _db.EnsureIndex<AbilityInfoEmbed>("Locale");
             _db.EnsureIndex<AbilityInfoEmbed>("InternalName");
             _db.EnsureIndex<AbilityInfoEmbed>("Name");
+            _db.EnsureIndex<ItemInfoEmbed>("Locale");
+            _db.EnsureIndex<ItemInfoEmbed>("InternalName");
+            _db.EnsureIndex<ItemInfoEmbed>("Name");
+            _db.EnsureIndex<ItemInfoEmbed>("Aliases");
         }
     }
 }

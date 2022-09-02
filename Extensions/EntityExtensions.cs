@@ -269,6 +269,109 @@ namespace Magus.DataBuilder.Extensions
             return abilityInfoEmbedList;
         }
 
+        public static IEnumerable<ItemInfoEmbed> CreateItemInfoEmbeds(this Item item, Dictionary<string, string[]> languageMap, Patch latestPatch)
+        {
+            var embed = new Embed()
+            {
+                Title        = $"{item.Name}",
+                Description  = item.Description,
+                ColorRaw     = 0x00E67E22,
+                Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
+                Footer       = new Footer() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
+                ThumbnailUrl = DotaUrls.GetAbilityImage(item.InternalName),
+            };
+            var embedFields = new List<Field>();
+
+            // Ability Properties
+
+            var leftEmbedField       = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
+            var rightEmbedField      = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
+            var leftEmbedFieldValue  = "";
+            var rightEmbedFieldValue = "";
+
+            // Add Logic for targetType
+            leftEmbedFieldValue += $"Ability: **{(item.HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_AOE) ? "AoE " : string.Empty)}{string.Join(" | ", item.GetTargetTypeNames())}**\n";
+            if (item.AbilityUnitTargetTeam.GetDisplayName() != null)
+            {
+                leftEmbedFieldValue += $"Affects: **{item.AbilityUnitTargetTeam.GetDisplayName()}**\n";
+            }
+            if (item.AbilityUnitDamageType != AbilityUnitDamageType.DAMAGE_TYPE_NONE)
+            {
+                leftEmbedFieldValue += $"Damage type: **{item.AbilityUnitDamageType.GetDisplayName()}**\n";
+            }
+            if (item.SpellImmunityType != SpellImmunityType.SPELL_IMMUNITY_NONE)
+            {
+                rightEmbedFieldValue += $"Pierces Spell Immunity: **{item.SpellImmunityType.GetDisplayName()}**\n";
+            }
+            if (item.SpellDispellableType != SpellDispellableType.SPELL_DISPELLABLE_NONE)
+            {
+                rightEmbedFieldValue += $"Dispellable: **{item.SpellDispellableType.GetDisplayName()}**\n";
+            }
+
+            if (leftEmbedFieldValue != "")
+            {
+                if (string.IsNullOrWhiteSpace(rightEmbedFieldValue))
+                    leftEmbedField.IsInline = false; //Do this to stop horrible inline IF ability values are 0
+                leftEmbedField.Value = leftEmbedFieldValue;
+                embedFields.Add(leftEmbedField);
+            }
+            if (rightEmbedFieldValue != "")
+            {
+                rightEmbedField.Value = rightEmbedFieldValue;
+                embedFields.Add(rightEmbedField);
+            }
+
+            // Ability spell values
+            var spellEmbed = new Field() { Name = Emotes.Spacer.ToString(), Value = string.Empty };
+            foreach (var spellValue in item.DisplayedValues)
+            {
+                spellEmbed.Value += $"{spellValue.Value}\n";
+            }
+            if (spellEmbed.Value != string.Empty)
+                embedFields.Add(spellEmbed);
+
+            var cooldowns = item.AbilityValues.FirstOrDefault(x=>x.Name.Equals("AbilityCooldown"))?.Values ?? item.AbilityCooldown.Distinct() ;
+            if (cooldowns.Count() == 0)
+                cooldowns = new List<float>() { 0F };
+            var cooldownString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", cooldowns));
+            var charges = item.AbilityValues.FirstOrDefault(x => x.Name == "AbilityCharges")?.Values ?? item.AbilityCharges ?? Enumerable.Empty<float>();
+            if (!charges.All(x => x == 0))
+            {
+                var chargeRestoreTimes = item.AbilityValues.FirstOrDefault(x => x.Name == "AbilityChargeRestoreTime")?.Values ?? item.AbilityChargeRestoreTime ?? Enumerable.Empty<float>();
+                cooldownString += $"\n> Charges:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", charges))}\n> Restore:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", chargeRestoreTimes))}";
+            }
+            var manaString     = Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityManaCost.Count == 0 ? new List<float>(){0F} : item.AbilityManaCost.Distinct()));
+            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.CooldownIcon}\u00A0{cooldownString}" });
+            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.ManaIcon}\u00A0{manaString}" });
+
+
+            if (item.Notes.Count > 0)
+            {
+                var notesField = new Field() {Name = "Notes", Value = ""};
+                foreach (var note in item.Notes)
+                {
+                    notesField.Value += $"> {note}\n";
+                }
+                embedFields.Add(notesField);
+            }
+            embed.Fields = embedFields;
+
+            var itemInfoEmbedList = new List<ItemInfoEmbed>();
+            foreach (var locale in languageMap[item.Language])
+            {
+                itemInfoEmbedList.Add(new()
+                {
+                    Id           = GetEntityId(item.Id, item.InternalName, locale),
+                    EntityId     = item.Id,
+                    Locale       = locale,
+                    InternalName = item.InternalName,
+                    Name         = item.Name,
+                    Embed        = embed,
+                });
+            }
+            return itemInfoEmbedList;
+        }
+
         //private static string CreateFormattedDescription(BaseSpell notes, int maxLength = 4096)
         //{
         //    var description = string.Empty;

@@ -15,12 +15,14 @@ namespace Magus.DataBuilder.Extensions
         /// <param name="name"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public static T? ParseChildValue<T>(this KVObject kvObject, string name, T defaultValue = default) where T : IConvertible
+        public static T? ParseChildValue<T>(this KVObject kvObject, string name, T? defaultValue = default, bool ignoreNoNumeric = false, bool emptyValueReturnDefault = false) where T : IConvertible
         {
             var child = kvObject.Children.FirstOrDefault(x => x.Name == name);
             if (child == null)
                 return defaultValue;
-            return child.ParseValue<T>();
+            if (emptyValueReturnDefault && string.IsNullOrWhiteSpace(child.Value.ToString()))
+                return defaultValue;
+            return child.ParseValue<T>(ignoreNoNumeric);
         }
 
         /// <summary>
@@ -139,12 +141,27 @@ namespace Magus.DataBuilder.Extensions
             return result;
         }
 
-        public static T? ParseValue<T>(this KVObject? kvObject) where T : IConvertible
-            => kvObject == null ? default : kvObject.Value.ParseValue<T>();
+        public static T? ParseValue<T>(this KVObject? kvObject, bool ignoreNoNumeric = false, bool emptyValueReturnDefault = false) where T : IConvertible
+        {
+            if (kvObject == null)
+                return default;
+            if (emptyValueReturnDefault && string.IsNullOrWhiteSpace(kvObject.Value.ToString()))
+                return default;
+            return kvObject.Value.ParseValue<T>(ignoreNoNumeric);
+        }
 
-        public static T ParseValue<T>(this KVValue? obj) where T : IConvertible
-            => (T)Convert.ChangeType(obj!, typeof(T));
-        
+        public static T ParseValue<T>(this KVValue obj, bool ignoreNoNumeric = false) where T : IConvertible
+        {
+            if (ignoreNoNumeric && IsNumericType(typeof(T)))
+            {
+                var kvValue = obj?.ToString() ?? "";
+                var nonNumeric = new Regex(@"[^\d\-+.,:\s]*");
+                kvValue = nonNumeric.Replace(kvValue, "");
+                return (T)Convert.ChangeType(kvValue, typeof(T));
+            }
+            return (T)Convert.ChangeType(obj, typeof(T));
+        }
+
 
         public static T ParseEnum<T>(this KVObject? kvObject) where T : struct, Enum
             => kvObject?.Value.ParseEnum<T>() ?? default;
