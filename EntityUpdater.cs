@@ -172,15 +172,31 @@ namespace Magus.DataBuilder
             _logger.LogInformation("Formatting entity values");
             foreach (var talent in _talents)
             {
-                FormatTalent(talent);
-                //if ((Regex.IsMatch(talent.Description, @"[{}]") || Regex.IsMatch(talent.Note, @"[{}]")) && _heroes.Any(x => x.Talents.Any(x => x == talent)))
-                //    _logger.LogWarning("{0} description/note formatting wrong: {1} / {2}", talent.InternalName, talent.Description, talent.Note);
+                try
+                {
+                    FormatTalent(talent);
+                    //if ((Regex.IsMatch(talent.Description, @"[{}]") || Regex.IsMatch(talent.Note, @"[{}]")) && _heroes.Any(x => x.Talents.Any(x => x == talent)))
+                    //    _logger.LogWarning("{0} description/note formatting wrong: {1} / {2}", talent.InternalName, talent.Description, talent.Note);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error formatting talent {0} in {1}", talent.InternalName, talent.Language);
+                }
             }
 
-            foreach (var ability in _abilities)
+            // Only format used abilities, in respective lists
+            foreach (var ability in _heroAbilities)
             {
-                FormatAbility(ability);
+                try
+                {
+                    FormatAbility(ability);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error formatting ability {0,-32} in {1}", ability.InternalName, ability.Language);
+                }
             }
+
             _logger.LogInformation("Completed formatting entity values");
         }
 
@@ -519,7 +535,7 @@ namespace Magus.DataBuilder
 
                 if (string.IsNullOrWhiteSpace(joinedValue))
                 {
-                    _logger.LogWarning("Skipped a display value for {0}", ability.InternalName);
+                    _logger.LogDebug("Skipped a display value for {0} with key {1}", ability.InternalName, value.Key);
                     ability.DisplayedValues.Remove(value.Key);
                     continue;
                 }
@@ -557,7 +573,7 @@ namespace Magus.DataBuilder
             }
             if (ability.AbilityHasShard && string.IsNullOrEmpty(ability.ShardDescription))
             {
-                _logger.LogWarning("Skipped shard with no desc for {0}", ability.InternalName);
+                _logger.LogDebug("Skipped shard with no desc for {0}", ability.InternalName);
                 ability.AbilityHasShard = false;
             }
             else if (ability.AbilityHasShard || !string.IsNullOrEmpty(ability.ShardDescription))
@@ -573,7 +589,7 @@ namespace Magus.DataBuilder
                         if (value != null)
                     {
                         var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
-                        if (Regex.IsMatch(ability.ShardDescription, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
+                        if (Regex.IsMatch(ability.ShardDescription!, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
                         {
                             formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                         }
@@ -581,15 +597,15 @@ namespace Magus.DataBuilder
                                                             @$"%{valueKey.Value}%",
                                                             Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
                     }
-                    ability.ShardDescription = escapedPercentage.Replace(ability.ShardDescription, "");
+                    ability.ShardDescription = escapedPercentage.Replace(ability.ShardDescription!, "");
                 }
-                ability.ShardDescription = CleanSimple(ability.ShardDescription);
+                ability.ShardDescription = CleanSimple(ability.ShardDescription!);
             }
 
             // conditionally ignore and log missing descriptions/use HasScepter
             if (ability.AbilityHasScepter && string.IsNullOrEmpty(ability.ScepterDescription))
             {
-                _logger.LogWarning("Skipped scepter with no desc for {0}", ability.InternalName);
+                _logger.LogDebug("Skipped scepter with no desc for {0}", ability.InternalName);
                 ability.AbilityHasScepter = false;
             }
             else if (ability.AbilityHasScepter || !string.IsNullOrEmpty(ability.ScepterDescription))
@@ -604,7 +620,7 @@ namespace Magus.DataBuilder
                     if (value != null)
                     {
                         var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
-                        if (Regex.IsMatch(ability.ScepterDescription, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
+                        if (Regex.IsMatch(ability.ScepterDescription!, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
                         {
                             formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                         }
@@ -612,9 +628,9 @@ namespace Magus.DataBuilder
                                                             @$"%{valueKey.Value}%",
                                                             formattedValue); // Use distinct as some all duplicates
                     }
-                    ability.ScepterDescription = escapedPercentage.Replace(ability.ScepterDescription, "");
+                    ability.ScepterDescription = escapedPercentage.Replace(ability.ScepterDescription!, "");
                 }
-                ability.ScepterDescription = CleanSimple(ability.ScepterDescription);
+                ability.ScepterDescription = CleanSimple(ability.ScepterDescription!);
             }
 
             var newNotes = new List<string>();
@@ -850,13 +866,21 @@ namespace Magus.DataBuilder
             var hiddenOrEmptyRegex = new Regex("([\\w]+_empty\\d*)|([\\w]+_hidden\\d*)");
             var talentNames        = kvHero.Children.Where(x => abilityRegex.IsMatch(x.Name)).Select(x => x.Value.ToString());
             var talents            = new List<Talent>();
+
+            var counter = 0f;
             foreach (var name in talentNames)
             {
                 if (string.IsNullOrEmpty(name) || name == "special_bonus_attributes" || hiddenOrEmptyRegex.IsMatch(name))
                     continue;
                 var talent = _talents.FirstOrDefault(x => x.InternalName == name && x.Language == language);
-                if (talent != null)
-                    talents.Add(talent);
+                if (talent == null)
+                    continue;
+
+                byte level       = (byte)(10 + (5 * Math.Floor(counter / 2)));
+                byte side        = (byte)(counter % 2);
+                talent.Position = (level, side);
+                talents.Add(talent);
+                counter++;
             }
             return talents;
         }

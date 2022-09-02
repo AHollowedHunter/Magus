@@ -226,7 +226,7 @@ namespace Magus.DataBuilder.Extensions
             if (ability.AbilityHasScepter)
             {
                 var value = $">>> {ability.ScepterDescription}\n";
-                foreach (var spellValue in ability.ScepterValues)
+                foreach (var spellValue in ability.ScepterValues.Where(x => !string.IsNullOrEmpty(x.Description)))
                 {
                     value += $"{spellValue.Description}\n";
                 }
@@ -235,14 +235,14 @@ namespace Magus.DataBuilder.Extensions
             if (ability.AbilityHasShard)
             {
                 var value = $">>> {ability.ShardDescription}\n";
-                foreach (var spellValue in ability.ShardValues)
+                foreach (var spellValue in ability.ShardValues.Where(x => !string.IsNullOrEmpty(x.Description)))
                 {
                     value += $"{spellValue.Description}\n";
                 }
                 embedFields.Add(new Field() { Name = $"{Emotes.ShardIcon} Shard Upgrade", Value = value });
             }
 
-            if (ability.Notes.Count() > 0)
+            if (ability.Notes.Count > 0)
             {
                 var notesField = new Field() {Name = "Notes", Value = ""};
                 foreach (var note in ability.Notes)
