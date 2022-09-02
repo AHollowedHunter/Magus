@@ -34,6 +34,7 @@ namespace Magus.Data.Models.Dota
         public IList<float> AbilityCastPoint { get; set; }
         public IList<float> AbilityChannelTime { get; set; }
         public IList<float> AbilityCharges { get; set; }
+        public IList<float> AbilityChargeRestoreTime { get; set; }
         public IList<float> AbilityCooldown { get; set; }
         public IList<float> AbilityDuration { get; set; }
         public IList<float> AbilityDamage { get; set; }
@@ -160,6 +161,7 @@ namespace Magus.Data.Models.Dota
         DOTA_ABILITY_BEHAVIOR_UNLOCKED_BY_EFFECT_INDEX       = 17179869184,
         DOTA_ABILITY_BEHAVIOR_SUPPRESS_ASSOCIATED_CONSUMABLE = 34359738368,
         DOTA_ABILITY_BEHAVIOR_FREE_DRAW_TARGETING            = 68719476736,
+        DOTA_ABILITY_BEHAVIOR_NOASSIST                       = 137438953472, // Is this right, valve you F***ers
     }
 
     [Flags]
