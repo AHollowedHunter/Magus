@@ -300,14 +300,15 @@ namespace Magus.DataBuilder
             ability.SpellImmunityType     = kvAbility.ParseChildEnum<SpellImmunityType>("SpellImmunityType");
             ability.SpellDispellableType  = kvAbility.ParseChildEnum<SpellDispellableType>("SpellDispellableType");
 
-            ability.AbilityCastRange   = kvAbility.ParseChildValueList<float>("AbilityCastRange");
-            ability.AbilityCastPoint   = kvAbility.ParseChildValueList<float>("AbilityCastPoint");
-            ability.AbilityChannelTime = kvAbility.ParseChildValueList<float>("AbilityChannelTime");
-            ability.AbilityCharges     = kvAbility.ParseChildValueList<float>("AbilityCharges");
-            ability.AbilityCooldown    = kvAbility.ParseChildValueList<float>("AbilityCooldown");
-            ability.AbilityDuration    = kvAbility.ParseChildValueList<float>("AbilityDuration");
-            ability.AbilityDamage      = kvAbility.ParseChildValueList<float>("AbilityDamage");
-            ability.AbilityManaCost    = kvAbility.ParseChildValueList<float>("AbilityManaCost");
+            ability.AbilityCastRange         = kvAbility.ParseChildValueList<float>("AbilityCastRange");
+            ability.AbilityCastPoint         = kvAbility.ParseChildValueList<float>("AbilityCastPoint");
+            ability.AbilityChannelTime       = kvAbility.ParseChildValueList<float>("AbilityChannelTime");
+            ability.AbilityCharges           = kvAbility.ParseChildValueList<float>("AbilityCharges");
+            ability.AbilityChargeRestoreTime = kvAbility.ParseChildValueList<float>("AbilityChargeRestoreTime");
+            ability.AbilityCooldown          = kvAbility.ParseChildValueList<float>("AbilityCooldown");
+            ability.AbilityDuration          = kvAbility.ParseChildValueList<float>("AbilityDuration");
+            ability.AbilityDamage            = kvAbility.ParseChildValueList<float>("AbilityDamage");
+            ability.AbilityManaCost          = kvAbility.ParseChildValueList<float>("AbilityManaCost");
 
             ability.AbilityIsGrantedByScepter = kvAbility.ParseChildValue<bool>("IsGrantedByScepter");
             ability.AbilityIsGrantedByShard   = kvAbility.ParseChildValue<bool>("IsGrantedByShard");
@@ -411,6 +412,7 @@ namespace Magus.DataBuilder
                 {
                     if (!(upgradeRegex.IsMatch(kvAbilityValue.Name)
                           || kvAbilityValue.Any(x => x.Name.Equals($"special_bonus_{type}", StringComparison.InvariantCultureIgnoreCase))
+                          || kvAbilityValue.Children.Any(x => x.Name.StartsWith(type, StringComparison.InvariantCultureIgnoreCase))
                           || kvAbilityValue.ParseChildValue<bool>($"Requires{type}")))
                         continue;
 
@@ -827,8 +829,17 @@ namespace Magus.DataBuilder
                 if (string.IsNullOrEmpty(name)  || name == "special_bonus_attributes" || hiddenOrEmptyRegex.IsMatch(name))
                     continue;
                 var ability = _abilities.FirstOrDefault(x => x.InternalName == name && x.Language == language);
-                if (ability != null)
-                    abilities.Add(ability);
+
+                if (ability == null)
+                    continue;
+
+                // Hidden and Not Learnable indicate secondary abilities that are linked to a main ability (e.g. Sun Ray Toggle)
+                // Skip these, as they are empty
+                if (ability.AbilityBehavior.HasFlag(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_HIDDEN | AbilityBehavior.DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE)
+                    && string.IsNullOrEmpty(ability.Description))
+                    continue;
+
+                abilities.Add(ability);
             }
             return abilities;
         }
