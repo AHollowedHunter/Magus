@@ -166,10 +166,10 @@ namespace Magus.DataBuilder.Extensions
             var leftEmbedFieldValue  = "";
             var rightEmbedFieldValue = "";
 
-            leftEmbedFieldValue += $"Ability: **{string.Join(" | ", ability.GetTargetTypeNames())}**\n";
-            if (ability.AbilityUnitTargetTeam != AbilityUnitTargetTeam.DOTA_UNIT_TARGET_TEAM_NONE)
+            // Add Logic for targetType
+            leftEmbedFieldValue += $"Ability: **{(ability.HasBehaviour(AbilityBehavior.DOTA_ABILITY_BEHAVIOR_AOE) ? "AoE " : string.Empty)}{string.Join(" | ", ability.GetTargetTypeNames())}**\n";
+            if (ability.AbilityUnitTargetTeam.GetDisplayName() != null)
             {
-                // Logic for targetType
                 leftEmbedFieldValue += $"Affects: **{ability.AbilityUnitTargetTeam.GetDisplayName()}**\n";
             }
             if (ability.AbilityUnitDamageType != AbilityUnitDamageType.DAMAGE_TYPE_NONE)
@@ -187,6 +187,8 @@ namespace Magus.DataBuilder.Extensions
 
             if (leftEmbedFieldValue != "")
             {
+                if (string.IsNullOrWhiteSpace(rightEmbedFieldValue))
+                    leftEmbedField.IsInline = false; //Do this to stop horrible inline IF ability values are 0
                 leftEmbedField.Value = leftEmbedFieldValue;
                 embedFields.Add(leftEmbedField);
             }
@@ -197,19 +199,29 @@ namespace Magus.DataBuilder.Extensions
             }
 
             // Ability spell values
-            if (ability.DisplayedValues.Count() > 0)
+            var spellEmbed = new Field() { Name = Emotes.Spacer.ToString(), Value = string.Empty };
+            foreach (var spellValue in ability.DisplayedValues)
             {
-                var spellEmbed = new Field() { Name = Emotes.Spacer.ToString(), Value = string.Empty };
-                foreach (var spellValue in ability.DisplayedValues)
-                {
-                    spellEmbed.Value += $"{spellValue.Value}\n";
-                }
-                var cooldownString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", (ability.AbilityCooldown.Count() == 0 ? ability.AbilityValues.FirstOrDefault(x=>x.Name.Equals("AbilityCooldown"))?.Values : ability.AbilityCooldown.Distinct()) ?? new List<float>(){0F}));
-                var manaString     = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Count == 0 ? new List<float>(){0F} : ability.AbilityManaCost.Distinct()));
-                var spacers        = string.Concat(Enumerable.Repeat(Emotes.Spacer, 2));
-                spellEmbed.Value  += $"\n{Emotes.CooldownIcon}\u00A0{cooldownString} {spacers} {Emotes.ManaIcon}\u00A0{manaString}";
-                embedFields.Add(spellEmbed);
+                spellEmbed.Value += $"{spellValue.Value}\n";
             }
+            if (spellEmbed.Value != string.Empty)
+                embedFields.Add(spellEmbed);
+
+            var cooldowns = ability.AbilityValues.FirstOrDefault(x=>x.Name.Equals("AbilityCooldown"))?.Values ?? ability.AbilityCooldown.Distinct() ;
+            if (cooldowns.Count() == 0)
+                cooldowns = new List<float>() { 0F };
+            var cooldownString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", cooldowns));
+            var charges = ability.AbilityValues.FirstOrDefault(x => x.Name == "AbilityCharges")?.Values ?? ability.AbilityCharges ?? Enumerable.Empty<float>();
+            if (!charges.All(x => x == 0))
+            {
+                var chargeRestoreTimes = ability.AbilityValues.FirstOrDefault(x => x.Name == "AbilityChargeRestoreTime")?.Values ?? ability.AbilityChargeRestoreTime ?? Enumerable.Empty<float>();
+                cooldownString += $"\n> Charges:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", charges))}\n> Restore:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", chargeRestoreTimes))}";
+            }
+            var manaString     = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Count == 0 ? new List<float>(){0F} : ability.AbilityManaCost.Distinct()));
+            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.CooldownIcon}\u00A0{cooldownString}" });
+            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.ManaIcon}\u00A0{manaString}" });
+
+            // Do talents
 
             if (ability.AbilityHasScepter)
             {
