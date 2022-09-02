@@ -36,7 +36,7 @@ namespace Magus.Bot.AutocompleteHandlers
                 }
 
                 List<AutocompleteResult> results = new();
-                abilites.ForEach(ability => results.Add(new AutocompleteResult(ability.Name, ability.EntityId)));
+                abilites.ForEach(ability => results.Add(new AutocompleteResult(ability.Name, ability.InternalName)));
 
                 return Task.FromResult(AutocompletionResult.FromSuccess(results));
             }

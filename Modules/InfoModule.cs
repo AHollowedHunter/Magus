@@ -19,26 +19,26 @@ namespace Magus.Bot.Modules
         }
 
         [SlashCommand("hero", "🎶 I need a hero 🎶")]
-        public async Task InfoHero([Autocomplete(typeof(HeroAutocompleteHandler))] int id)
+        public async Task InfoHero([Autocomplete(typeof(HeroAutocompleteHandler))] string name)
         {
-            var heroInfo = _db.GetEntityInfo<HeroInfoEmbed>(id, Context.Interaction.UserLocale);
+            var heroInfo = _db.GetEntityInfo<HeroInfoEmbed>(name, Context.Interaction.UserLocale, 1).First();
 
             await RespondAsync(embed: heroInfo.Embed.CreateDiscordEmbed());
         }
 
         //Disabled for now
         [SlashCommand("ability", "Ahh. How does this one work?")]
-        public async Task InfoAbility([Autocomplete(typeof(AbilityAutocompleteHandler))] int id)
+        public async Task InfoAbility([Autocomplete(typeof(AbilityAutocompleteHandler))] string name)
         {
-            var abilityInfo = _db.GetEntityInfo<AbilityInfoEmbed>(id, Context.Interaction.UserLocale);
+            var abilityInfo = _db.GetEntityInfo<AbilityInfoEmbed>(name, Context.Interaction.UserLocale, 1).First();
 
             await RespondAsync(embed: abilityInfo.Embed.CreateDiscordEmbed());
         }
 
         [SlashCommand("item", "Living in a material world")]
-        public async Task InfoItem([Autocomplete(typeof(ItemAutocompleteHandler))] int id)
+        public async Task InfoItem([Autocomplete(typeof(ItemAutocompleteHandler))] string name)
         {
-            var itemInfo = _db.GetEntityInfo<ItemInfoEmbed>(id, Context.Interaction.UserLocale);
+            var itemInfo = _db.GetEntityInfo<ItemInfoEmbed>(name, Context.Interaction.UserLocale, 1).First();
 
             await RespondAsync(embed: itemInfo.Embed.CreateDiscordEmbed());
         }

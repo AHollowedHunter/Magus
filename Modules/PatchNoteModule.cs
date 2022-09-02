@@ -33,18 +33,18 @@ namespace Magus.Bot.Modules
 
         [SlashCommand("item", "NullReferenceException Talisman")]
         public async Task PatchItem(
-            [Autocomplete(typeof(ItemAutocompleteHandler))] int id,
+            [Autocomplete(typeof(ItemAutocompleteHandler))] string name,
             [Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null)
         {
             var embeds = new List<Discord.Embed>();
             IEnumerable<ItemPatchNoteEmbed> patchNotes;
             if (patch == null)
             {
-                patchNotes = _db.GetPatchNotes<ItemPatchNoteEmbed>(id, limit: 3, orderByDesc: true);
+                patchNotes = _db.GetPatchNotes<ItemPatchNoteEmbed>(name, Context.Interaction.UserLocale, limit: 3, orderByDesc: true);
             }
             else
             {
-                patchNotes = new List<ItemPatchNoteEmbed> { _db.GetPatchNote<ItemPatchNoteEmbed>(patch, id) };
+                patchNotes = new List<ItemPatchNoteEmbed> { _db.GetPatchNote<ItemPatchNoteEmbed>(patch, name, Context.Interaction.UserLocale) };
             }
 
             if (patchNotes == null || patchNotes.Any(x => x == null) || patchNotes.Count() == 0)
@@ -63,18 +63,18 @@ namespace Magus.Bot.Modules
 
         [SlashCommand("hero", "🎶 I need a hero 🎶")]
         public async Task PatchHero(
-            [Autocomplete(typeof(HeroAutocompleteHandler))] int id,
+            [Autocomplete(typeof(HeroAutocompleteHandler))] string name,
             [Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null)
         {
             IEnumerable<HeroPatchNoteEmbed> patchNotes;
             if (patch == null)
             {
-                patchNotes = _db.GetPatchNotes<HeroPatchNoteEmbed>(id, limit: 1, orderByDesc: true);
+                patchNotes = _db.GetPatchNotes<HeroPatchNoteEmbed>(name, Context.Interaction.UserLocale, limit: 1, orderByDesc: true);
             }
             else
             {
                 var patchNote = new List<HeroPatchNoteEmbed>();
-                patchNote.Add(_db.GetPatchNote<HeroPatchNoteEmbed>(patch, id));
+                patchNote.Add(_db.GetPatchNote<HeroPatchNoteEmbed>(patch, name, Context.Interaction.UserLocale));
                 patchNotes = patchNote;
             }
 
