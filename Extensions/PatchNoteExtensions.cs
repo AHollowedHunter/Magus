@@ -51,12 +51,13 @@ namespace Magus.DataBuilder.Extensions
                     Locale      = locale,
                     Embed       = generalPatchEmbed,
                     PatchNumber = patch.PatchName,
+                    Timestamp    = patch.Timestamp,
                 });
             }
             return generalPatchNotesList;
         }
 
-        public static IEnumerable<HeroPatchNoteEmbed> GetHeroPatchNoteEmbeds(this PatchNote patch, IEnumerable<HeroInfoEmbed> heroes, IEnumerable<AbilityInfoEmbed> abilities, Dictionary<string, string[]> languageMap)
+        public static IEnumerable<HeroPatchNoteEmbed> GetHeroPatchNoteEmbeds(this PatchNote patch, IEnumerable<HeroInfoEmbed> heroes, Dictionary<(string Language, string Key), string> dotaValues, Dictionary<string, string[]> languageMap)
         {
             var heroPatchNotesList = new List<HeroPatchNoteEmbed>();
             foreach (var hero in patch.HeroesNotes)
@@ -67,8 +68,8 @@ namespace Magus.DataBuilder.Extensions
 
                 foreach (var abilityNote in hero.AbilityNotes)
                 {
-                    var abilityInfo = abilities.Where(x => x.InternalName == abilityNote.InternalName).First(); // pass hero object with abilties included
-                    fields.Add(new() { Name = $"{abilityInfo.Name}:", Value = CreateFormattedDescription(abilityNote.Notes) });
+                    var abilityName = GetLanguageValue(dotaValues, patch.Language, abilityNote.InternalName);
+                    fields.Add(new() { Name = $"{abilityName}:", Value = CreateFormattedDescription(abilityNote.Notes) });
                 }
 
                 if (hero.TalentNotes.Count > 0)
@@ -98,6 +99,7 @@ namespace Magus.DataBuilder.Extensions
                         InternalName = hero.InternalName,
                         Embed        = heroPatchNoteEmbed,
                         PatchNumber  = patch.PatchName,
+                        Timestamp    = patch.Timestamp,
                     });
                 }
             }
@@ -134,6 +136,7 @@ namespace Magus.DataBuilder.Extensions
                         InternalName = itemInfo.InternalName,
                         Embed        = itemPatchNoteEmbed,
                         PatchNumber  = patch.PatchName,
+                        Timestamp    = patch.Timestamp,
                     });
                 }
             }
@@ -186,6 +189,20 @@ namespace Magus.DataBuilder.Extensions
             var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(str));
             var id = BitConverter.ToUInt64(hash);
             return id;
+        }
+
+        private static string GetLanguageValue(Dictionary<(string Language, string Key), string> values, string language, string internalName, string defaultLanguage = "english")
+        {
+            var key = (Language: language, Key: internalName);
+            if (values.ContainsKey(key))
+            {
+                return values[key];
+            }
+            else
+            {
+                values.TryGetValue((defaultLanguage, key.Key), out var value);
+                return value ?? "";
+            }
         }
     }
 }

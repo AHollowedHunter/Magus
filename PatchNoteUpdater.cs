@@ -22,6 +22,7 @@ namespace Magus.DataBuilder
         private readonly string _sourceDefaultLanguage;
         private readonly Dictionary<string, string[]> _sourceLocaleMappings; // Switch to config class
         private readonly Dictionary<(string Language, string Key), string> _patchNoteValues; // this should be its own class with methods
+        private readonly Dictionary<(string Language, string Key), string> _dotaValues; // this should be its own class with methods
         private readonly List<Patch> _patches;
         private readonly List<PatchNote> _patchNotes;
 
@@ -36,6 +37,7 @@ namespace Magus.DataBuilder
             _sourceDefaultLanguage = _config.GetSection("Localisation").GetValue("DefaultLanguage", "english");
             _sourceLocaleMappings  = _config.GetSection("Localisation").GetSection("SourceLocaleMappings").Get<Dictionary<string, string[]>>();
             _patchNoteValues       = new();
+            _dotaValues            = new();
             _patches               = new();
             _patchNotes            = new();
         }
@@ -65,7 +67,12 @@ namespace Magus.DataBuilder
                 var localePatchNotes = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetPatchNotes(language.Key));
                 foreach (var note in localePatchNotes)
                     _patchNoteValues.Add((language.Key, note.Name), CleanLocaleValue(note.Value.ToString() ?? ""));
+
+                var dota = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetDota(language.Key));
+                foreach (var note in dota.Children.First(x => x.Name == "Tokens"))
+                    _dotaValues.Add((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
             }
+
             _logger.LogInformation("Finished setting Patch Note values");
         }
 
@@ -240,9 +247,9 @@ namespace Magus.DataBuilder
                     foreach (var patch in _patchNotes.Where(x=>x.Language == localeMap.Key))
                     {
                         _logger.LogDebug("Processing patch embeds {0,-5} in {1}", patch.PatchName, patch.Language);
-                        var abilityInfo = _db.GetRecords<AbilityInfoEmbed>(locale);
+
                         generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_sourceLocaleMappings));
-                        heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(_db.GetRecords<HeroInfoEmbed>(locale), abilityInfo, _sourceLocaleMappings));
+                        heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(_db.GetRecords<HeroInfoEmbed>(locale), _dotaValues, _sourceLocaleMappings));
                         itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(_db.GetRecords<ItemInfoEmbed>(locale), _sourceLocaleMappings));
                     }
 
@@ -300,6 +307,19 @@ namespace Magus.DataBuilder
                 _patchNoteValues.TryGetValue((_sourceDefaultLanguage, key.key), out var value);
                 return value;
             }
+        }
+
+        private static string CleanSimple(string value)
+        {
+            var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*>");
+            var italicsRegex = new Regex(@"(?i)<[/]?\s*i\s*>");
+            var htmlTagRegex   = new Regex(@"(?i)<[/]?\s*[^>]*>");
+            value            = value.Replace("<br>", "\n");
+            value            = boldRegex.Replace(value, "**");
+            value            = italicsRegex.Replace(value, "*");
+            value              = htmlTagRegex.Replace(value, "");
+
+            return value;
         }
 
         private static string CleanLocaleValue(string patchNote)
