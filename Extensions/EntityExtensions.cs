@@ -274,16 +274,18 @@ namespace Magus.DataBuilder.Extensions
             var embed = new Embed()
             {
                 Title        = $"{item.Name}",
-                Description  = item.Description,
-                ColorRaw     = 0x00E67E22,
+                ColorRaw     = 0x00206694,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
                 Footer       = new Footer() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
-                ThumbnailUrl = DotaUrls.GetAbilityImage(item.InternalName),
+                ThumbnailUrl = DotaUrls.GetItemImage(item.InternalName),
             };
             var embedFields = new List<Field>();
 
+            if (item.ItemPurchasable)
+                embed.Description = $"{Emotes.GoldIcon}\u00A0{Discord.Format.Bold(item.ItemCost.ToString())}\n\n";
+            embed.Description += String.Join("\n", item.DisplayedValues.Select(x => x.Value));
+            
             // Ability Properties
-
             var leftEmbedField       = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
             var rightEmbedField      = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
             var leftEmbedFieldValue  = "";
@@ -321,15 +323,6 @@ namespace Magus.DataBuilder.Extensions
                 embedFields.Add(rightEmbedField);
             }
 
-            // Ability spell values
-            var spellEmbed = new Field() { Name = Emotes.Spacer.ToString(), Value = string.Empty };
-            foreach (var spellValue in item.DisplayedValues)
-            {
-                spellEmbed.Value += $"{spellValue.Value}\n";
-            }
-            if (spellEmbed.Value != string.Empty)
-                embedFields.Add(spellEmbed);
-
             var cooldowns = item.AbilityValues.FirstOrDefault(x=>x.Name.Equals("AbilityCooldown"))?.Values ?? item.AbilityCooldown.Distinct() ;
             if (cooldowns.Count() == 0)
                 cooldowns = new List<float>() { 0F };
@@ -340,9 +333,31 @@ namespace Magus.DataBuilder.Extensions
                 var chargeRestoreTimes = item.AbilityValues.FirstOrDefault(x => x.Name == "AbilityChargeRestoreTime")?.Values ?? item.AbilityChargeRestoreTime ?? Enumerable.Empty<float>();
                 cooldownString += $"\n> Charges:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", charges))}\n> Restore:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", chargeRestoreTimes))}";
             }
-            var manaString     = Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityManaCost.Count == 0 ? new List<float>(){0F} : item.AbilityManaCost.Distinct()));
-            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.CooldownIcon}\u00A0{cooldownString}" });
-            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.ManaIcon}\u00A0{manaString}" });
+            cooldownString = $"{Emotes.CooldownIcon}\u00A0{cooldownString}";
+            var manaString = $"{Emotes.ManaIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityManaCost.Count == 0 ? new List<float>(){0F} : item.AbilityManaCost.Distinct()))}";
+
+            var cooldownAndManaFields = new List<Field>() {
+                new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = cooldownString },
+                new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = manaString }
+            };
+
+            if (item.Spells != null)
+            {
+                var firstSpell = true;
+                foreach (var spell in item.Spells)
+                {
+                    embedFields.Add(new Field() { Name = spell.Name, Value = $">>> {spell.Description}" });
+                    if (firstSpell)
+                    {
+                        embedFields.AddRange(cooldownAndManaFields);
+                        firstSpell = false;
+                    }
+                }
+            }
+            else
+            {
+                embedFields.AddRange(cooldownAndManaFields);
+            }
 
 
             if (item.Notes.Count > 0)

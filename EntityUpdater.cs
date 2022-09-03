@@ -92,7 +92,7 @@ namespace Magus.DataBuilder
                 var heroLore  = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetHeroLore(language.Key));
 
                 foreach (var note in abilities.Children.First(x => x.Name == "Tokens"))
-                    _abilityValues.Add((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
+                    _abilityValues.Add((language.Key, note.Name.ToLower()), note.Value.ToString() ?? "");
 
                 foreach (var note in dota.Children.First(x => x.Name == "Tokens"))
                     _dotaValues.Add((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
@@ -438,6 +438,20 @@ namespace Magus.DataBuilder
             return displayValues;
         }
 
+        private IDictionary<string, string> GetItemDisplayedValues(string language, KVObject kvItem)
+        {
+            var displayValues    = new Dictionary<string,string>();
+            var abilityRegex     = new Regex($@"(?i)DOTA_Tooltip_ability_{kvItem.Name}_(?=[^\d])");
+            var otherValuesRegex = new Regex(@"(?i)\w+(Note\d*|Lore|Description|shard|scepter|abilitydraft_note)");
+
+            var values = _abilityValues.Where(x => x.Key.Language == language && abilityRegex.IsMatch(x.Key.Key) && !otherValuesRegex.IsMatch(x.Key.Key));
+            foreach (var value in values)
+            {
+                displayValues.Add(abilityRegex.Replace(value.Key.Key, string.Empty), value.Value);
+            }
+            return displayValues;
+        }
+
         private IList<UpgradeValues> GetUpgradeValue(string language, KVObject kvAbility, string type = "Scepter")
         {
             var abilityValues = new List<UpgradeValues>();
@@ -535,6 +549,9 @@ namespace Magus.DataBuilder
                 ability.Description = escapedPercentage.Replace(ability.Description, "");
                 ability.Description = CleanSimple(ability.Description);
             }
+            
+            // Not needed, as using display values? Can't find AbiilityValue.Description used
+            /*
             foreach (var value in ability.AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)))
             {
                 var joinedValue = string.Join(ValueSeparator, value.Values.Distinct());
@@ -547,6 +564,7 @@ namespace Magus.DataBuilder
                 value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
                 value.Description = CleanSimple(value.Description);
             }
+            */
 
             foreach (var value in ability.DisplayedValues)
             {
@@ -617,7 +635,7 @@ namespace Magus.DataBuilder
                         {
                             formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                         }
-                        ability.ShardDescription = Regex.Replace(ability.ShardDescription,
+                        ability.ShardDescription = Regex.Replace(ability.ShardDescription!,
                                                             @$"%{valueKey.Value}%",
                                                             Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
                     }
@@ -648,7 +666,7 @@ namespace Magus.DataBuilder
                         {
                             formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                         }
-                        ability.ScepterDescription = Regex.Replace(ability.ScepterDescription,
+                        ability.ScepterDescription = Regex.Replace(ability.ScepterDescription!,
                                                             @$"%{valueKey.Value}%",
                                                             formattedValue); // Use distinct as some all duplicates
                     }
@@ -774,24 +792,46 @@ namespace Magus.DataBuilder
         {
             var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*>");
             var italicsRegex = new Regex(@"(?i)<[/]?\s*i\s*>");
-            var htmlTagRegex   = new Regex(@"(?i)<[/]?\s*[^>]*>");
+            var htmlTagRegex = new Regex(@"(?i)<[/]?\s*[^>]*>");
             value            = value.Replace("<br>", "\n");
             value            = boldRegex.Replace(value, "**");
             value            = italicsRegex.Replace(value, "*");
-            value              = htmlTagRegex.Replace(value, "");
+            value            = htmlTagRegex.Replace(value, "");
 
             return value;
         }
 
+        /// <summary>
+        /// Replaces "$agi"-style placeholder variables and appends it after the variables
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="language"></param>
+        /// <returns></returns>
+        private string CleanPlaceholders(string description, string values, string language)
+        {
+            var matches = Regex.Matches(description, @"\$\w+");
+            var signRegex = new Regex(@"[+-](?=\w+)");
+            description = CleanSimple(description);
+            if (matches.Count > 0)
+                foreach (Match match in matches)
+                    description = description.Replace(match.Value, $"\u00A0{values}\u00A0\u00A0{_abilityValues[(language, $"dota_ability_variable_{match.Value.Trim('$')}")]}");
+            else if (signRegex.IsMatch(description))
+                description = signRegex.Replace(description, m => string.Format("{0}\u00A0{1}\u00A0", m.Value, signRegex.Replace(values, string.Empty)));
+            else
+                description += $"\u00A0{values}";
+
+            return description;
+        }
+
         private static string CleanLocaleValue(string value)
         {
-            var boldRegex      = new Regex(@"(?i)<[/]?\s*b\s*/?>");
-            var italicsRegex   = new Regex(@"(?i)<[/]?\s*i\s*>");
-            var htmlTagRegex   = new Regex(@"(?i)<[/]?\s*[^>]*>");
-            value              = value.Replace("<br>", "\n");
-            value              = boldRegex.Replace(value, "**");
-            value              = italicsRegex.Replace(value, "*");
-            value              = htmlTagRegex.Replace(value, "");
+            var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*/?>");
+            var italicsRegex = new Regex(@"(?i)<[/]?\s*i\s*>");
+            var htmlTagRegex = new Regex(@"(?i)<[/]?\s*[^>]*>");
+            value            = value.Replace("<br>", "\n");
+            value            = boldRegex.Replace(value, "**");
+            value            = italicsRegex.Replace(value, "*");
+            value            = htmlTagRegex.Replace(value, "");
 
             return value;
         }
@@ -965,7 +1005,7 @@ namespace Magus.DataBuilder
             item.ItemInitialStockTime = kvItem.ParseChildValue<float>("ItemInitialStockTime");
             item.ItemIsNeutralDrop    = kvItem.ParseChildValue<bool>("ItemIsNeutralDrop");
             item.ItemNeutralTier      = kvItem.ParseChildValue<byte>("ItemNeutralTier");
-            item.ItemPurchasable      = kvItem.ParseChildValue<bool>("ItemPurchasable");
+            item.ItemPurchasable      = kvItem.ParseChildValue<bool>("ItemPurchasable", true);
             item.ItemRecipe           = kvItem.ParseChildValue<bool>("ItemRecipe");
             //item.ItemRequirements   = kvItem.ParseChildValueList<string[]>("ItemRequirements");
             item.ItemResult           = kvItem.ParseChildValue<string>("ItemResult");
@@ -974,7 +1014,7 @@ namespace Magus.DataBuilder
             item.ItemStockTime        = kvItem.ParseChildValue<float>("ItemStockTime");
 
             item.AbilityValues   = GetAbilityValues(language, kvItem);
-            item.DisplayedValues = GetDisplayedValues(language, kvItem);
+            item.DisplayedValues = GetItemDisplayedValues(language, kvItem);
 
             _logger.LogTrace("Processed {0,7} {1,-64} in {2}\"", "ability", item.InternalName, language);
             return item;
@@ -982,63 +1022,74 @@ namespace Magus.DataBuilder
 
         private void FormatItem(Item item)
         {
-            var valueKeyRegex      = new Regex(@"(?<=%)\w+(?=%)");
-            var bonusValueKeyRegex = new Regex(@"%\w+%");
-            var escapedPercentage  = new Regex(@"%%(?=[^%])");
+            var valueKeyRegex         = new Regex(@"(?<=%)\w+(?=%)");
+            var valuePlaceholderRegex = new Regex(@"%\w+[%]{1,3}");
+            var escapedPercentage     = new Regex(@"%%(?=[^%])");
+            var itemSpellRegex        = new Regex(@"<h1>.*?(?=<h1>|\Z|$)", RegexOptions.Singleline);
+            var spellNameRegex        = new Regex(@"<h1>(.+?)</h1>");
 
             if (item.Description == null)
                 return;
 
-            var descriptionValueKeys = valueKeyRegex.Matches(item.Description);
-            foreach (var valueKey in descriptionValueKeys.AsEnumerable())
+            var itemSpells        = new List<Item.Spell>();
+            var spellDescriptions = itemSpellRegex.Matches(item.Description);
+            foreach (Match spell in spellDescriptions)
             {
-                var value = item.AbilityValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
-                value ??= GetAbilityProperty(valueKey.Value, item);
-                if (value != null)
-                {
-                    var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
-                    if (Regex.IsMatch(item.Description, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
-                    {
-                        formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
-                    }
-                    item.Description = Regex.Replace(item.Description,
-                                                        @$"%{valueKey.Value}%",
-                                                        Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
-                }
-                item.Description = escapedPercentage.Replace(item.Description, "");
-                item.Description = CleanSimple(item.Description);
-            }
-            foreach (var value in item.AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)))
-            {
-                var joinedValue = string.Join(ValueSeparator, value.Values.Distinct());
-                if (value.Description!.StartsWith('%'))
-                {
-                    value.Description = value.Description.Trim('%');
-                    var values        = value.Values.Distinct().Select(x => x.ToString() + "%");
-                    joinedValue       = string.Join(ValueSeparator, values);
-                }
-                value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
-                value.Description = CleanSimple(value.Description);
-            }
+                var name        = spellNameRegex.Match(spell.Value).Groups[1].Value; //This should match the group
+                var description = spellNameRegex.Replace(spell.Value, string.Empty);
 
+                var descriptionPlaceholders = valuePlaceholderRegex.Matches(item.Description);
+                foreach (Match placeholder in descriptionPlaceholders)
+                {
+                    var key     = valueKeyRegex.Match(placeholder.Value).Value;
+                    var postFix = escapedPercentage.IsMatch(placeholder.Value) ? "%" : string.Empty;
+                    var values  = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(key, StringComparison.InvariantCultureIgnoreCase))?.Values.Select(x => x.ToString() + postFix).ToList();
+                    if (values == null || values.Count() == 0)
+                        values = GetAbilityProperty(key, item)?.Select(x => x.ToString() + postFix).ToList();
+                    var joinedValue = string.Empty;
+                    if (item.InternalName.StartsWith("item_dagon"))
+                    {
+                        values![item.ItemBaseLevel-1] = Discord.Format.Bold(values[item.ItemBaseLevel-1]);
+                        joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
+                    }
+                    else
+                    {
+                        joinedValue = Discord.Format.Bold(string.Join(ValueSeparator, values ?? Enumerable.Empty<string>()));
+                    }
+                    description = Regex.Replace(description, $@"%{key}[%]{{1,3}}", joinedValue);
+                }
+                description = CleanSimple(description);
+                itemSpells.Add(new() { Name = name, Description = description });
+            }
+            item.Spells = itemSpells;
+            
             foreach (var value in item.DisplayedValues)
             {
                 var postFix = value.Value.StartsWith('%') ? "%" : string.Empty;
                 item.DisplayedValues[value.Key] = item.DisplayedValues[value.Key].Trim('%');
-                var values = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(value.Key, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().Select(x => x.ToString() + postFix);
+                IList<string>? values = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(value.Key, StringComparison.InvariantCultureIgnoreCase))?.Values.Select(x => x.ToString() + postFix).ToList();
                 if (values == null || values.Count() == 0)
-                    values = GetAbilityProperty(value.Key, item)?.Distinct().Select(x => x.ToString() + postFix);
-                var joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
-
-                if (string.IsNullOrWhiteSpace(joinedValue))
+                    values = GetAbilityProperty(value.Key, item)?.Distinct().Select(x => x.ToString() + postFix).ToList();
+                if (values == null || values.Count == 0)
                 {
                     _logger.LogDebug("Skipped a display value for {0} with key {1}", item.InternalName, value.Key);
                     item.DisplayedValues.Remove(value.Key);
                     continue;
                 }
+                var joinedValue = string.Empty;
+                if (item.InternalName.StartsWith("item_dagon"))
+                {
+                    values![item.ItemBaseLevel-1] = Discord.Format.Bold(values[item.ItemBaseLevel-1]);
+                    joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
+                }
+                else
+                {
+                    joinedValue = Discord.Format.Bold(string.Join(ValueSeparator, values ?? Enumerable.Empty<string>()));
+                }
+                var displayedValue = item.DisplayedValues[value.Key];
+                displayedValue     = CleanPlaceholders(displayedValue, joinedValue, item.Language);
 
-                item.DisplayedValues[value.Key] += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
-                item.DisplayedValues[value.Key]  = CleanSimple(item.DisplayedValues[value.Key]);
+                item.DisplayedValues[value.Key] = displayedValue;
             }
 
             var newNotes = new List<string>();
