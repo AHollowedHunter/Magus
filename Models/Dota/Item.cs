@@ -23,5 +23,13 @@
 
         public bool IsObsolete { get; set; } = false;
         public bool ItemPurchasable { get; set; } = true;
+
+        public IList<Spell>? Spells { get; set; }
+
+        public record Spell
+        {
+            public string Name { get; set; }
+            public string Description { get; set; }
+        }
     }
 }

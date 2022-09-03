@@ -42,19 +42,6 @@ namespace Magus.Data.Models.Dota
 
         public IList<AbilityValue> AbilityValues { get; set; }
         public IDictionary<string, string> DisplayedValues { get; set; }
-
-        public IList<AbilityValue> GetDisplayedValues()
-        {
-            var spellValues = new List<AbilityValue>();
-
-            foreach (var value in AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)))
-            {
-                spellValues.Add(value);
-            }
-
-            return AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)).ToList();
-        }
-
         public record AbilityValue
         {
             public string Name { get; set; }
@@ -162,6 +149,7 @@ namespace Magus.Data.Models.Dota
         DOTA_ABILITY_BEHAVIOR_SUPPRESS_ASSOCIATED_CONSUMABLE = 34359738368,
         DOTA_ABILITY_BEHAVIOR_FREE_DRAW_TARGETING            = 68719476736,
         DOTA_ABILITY_BEHAVIOR_NOASSIST                       = 137438953472, // Is this right, valve you F***ers
+        DOTA_ABILITY_BEHAVIOR_OVERSHOOT                      = 274877906944, // Is this right, valve you F***ers
     }
 
     [Flags]
