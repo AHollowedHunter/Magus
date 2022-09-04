@@ -39,25 +39,21 @@ namespace Magus.Data.Models.Dota
         public AttackCapabilities AttackCapabilities { get; set; }
         public short AttackDamageMin { get; set; }
         public short AttackDamageMax { get; set; }
-        public float AttackRate { get; set; }      = 1.7F;
-        public short BaseAttackSpeed { get; set; } = 100; 
+        public float AttackRate { get; set; }
+        public short BaseAttackSpeed { get; set; }
         public float AttackAnimationPoint { get; set; }
         public float AttackRange { get; set; }
         public float ProjectileSpeed { get; set; }
         public short ArmorPhysical { get; set; }
-        public short MagicalResistance { get; set; } = 25; // ALl heroes have base 25%
+        public short MagicalResistance { get; set; }
         public short MovementSpeed { get; set; }
-        public float MovementTurnRate { get; set; }     = 0.6F; // Default. Maybe create the base hero and infer defaults from that in future if valve changes these
-        public short VisionDaytimeRange { get; set; }   = 1800;
-        public short VisionNighttimeRange { get; set; } = 800;
-        public short StatusHealth { get; set; }         = 200; // Default is 200, rest comes from strength
-        public float StatusHealthRegen { get; set; }    = 0.25F; // This is bonus regen, ignoring Strength based HP regen
-        public short StatusMana { get; set; }           = 75; // Default is 75, rest from intellect
-        public float StatusManaRegen { get; set; }      = 0; //Bonus mana regen, ignoring Intellect base regen
-
-
-        // Is there anything we don't know?
-        public Dictionary<string, object>? ExtensionData { get; set; }
+        public float MovementTurnRate { get; set; }
+        public short VisionDaytimeRange { get; set; }
+        public short VisionNighttimeRange { get; set; }
+        public short StatusHealth { get; set; }
+        public float StatusHealthRegen { get; set; }
+        public short StatusMana { get; set; }
+        public float StatusManaRegen { get; set; }
 
         public int GetRoleLevel(Role role)
             => Rolelevels[Array.IndexOf(Role, role)];

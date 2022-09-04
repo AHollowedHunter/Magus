@@ -3,7 +3,6 @@ using Magus.Data.Models;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Microsoft.Extensions.Configuration;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace Magus.Data
@@ -118,7 +117,7 @@ namespace Magus.Data
             var order = orderByDesc ? Query.Descending : Query.Ascending;
             var collecton = _liteDB.GetCollection<T>();
             var results = collecton.Find(record => record.Locale == locale, limit: limit);
-            return orderByDesc !? results : results.OrderByDescending(x => x.Id);
+            return orderByDesc! ? results : results.OrderByDescending(x => x.Id);
         }
 
         public IEnumerable<T> GetRecords<T>(ulong id, string locale = IDatabaseService.DEFAULT_LOCALE, int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord
