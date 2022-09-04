@@ -15,10 +15,10 @@ namespace Magus.Bot
 
         public CommandHandler(DiscordSocketClient client, InteractionService interactions, ILogger<CommandHandler> logger, IServiceProvider services)
         {
-            _client = client;
+            _client       = client;
             _interactions = interactions;
-            _logger = logger;
-            _services = services;
+            _logger       = logger;
+            _services     = services;
         }
 
         public async Task InitializeAsync()
@@ -28,10 +28,10 @@ namespace Magus.Bot
             _client.InteractionCreated += HandleInteraction;
 
             // Process the command execution results 
-            _interactions.SlashCommandExecuted += SlashCommandExecuted;
-            _interactions.ContextCommandExecuted += ContextCommandExecuted;
+            _interactions.SlashCommandExecuted     += SlashCommandExecuted;
+            _interactions.ContextCommandExecuted   += ContextCommandExecuted;
             _interactions.ComponentCommandExecuted += ComponentCommandExecuted;
-            _interactions.ModalCommandExecuted += ModalCommandExecuted;
+            _interactions.ModalCommandExecuted     += ModalCommandExecuted;
 
             _logger.LogInformation("CommandHandler Initialised");
         }
@@ -96,11 +96,11 @@ namespace Magus.Bot
             return Task.CompletedTask;
         }
 
-        private Task SlashCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, IResult arg3)
+        private Task SlashCommandExecuted(SlashCommandInfo slashCommandInfo, IInteractionContext interactionContext, IResult result)
         {
-            if (!arg3.IsSuccess)
+            if (!result.IsSuccess)
             {
-                switch (arg3.Error)
+                switch (result.Error)
                 {
                     case InteractionCommandError.UnmetPrecondition:
                         // implement
@@ -157,23 +157,22 @@ namespace Magus.Bot
 
         # region Execution
 
-        private async Task HandleInteraction(SocketInteraction arg)
+        private async Task HandleInteraction(SocketInteraction interaction)
         {
             try
             {
-                var ctx = new SocketInteractionContext(_client, arg);
+                var ctx = new SocketInteractionContext(_client, interaction);
 
                 await _interactions.ExecuteCommandAsync(ctx, _services);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error handling interaction");
-                _logger.LogInformation("Test in HanldeInte");
 
                 // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
                 // response, or at least let the user know that something went wrong during the command execution.
-                if (arg.Type == InteractionType.ApplicationCommand)
-                    await arg.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+                if (interaction.Type == InteractionType.ApplicationCommand)
+                    await interaction.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
             }
         }
 
