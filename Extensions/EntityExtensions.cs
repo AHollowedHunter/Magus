@@ -337,28 +337,24 @@ namespace Magus.DataBuilder.Extensions
             var manaString = $"{Emotes.ManaIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityManaCost.Count == 0 ? new List<float>(){0F} : item.AbilityManaCost.Distinct()))}";
 
             var cooldownAndManaFields = new List<Field>() {
-                new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = cooldownString },
-                new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = manaString }
+                new Field() { Name = cooldownString, IsInline = true, Value = $"{Emotes.Spacer}" },
+                new Field() { Name = manaString, IsInline = true, Value = $"{Emotes.Spacer}" }
             };
 
-            if (item.Spells != null)
+            if (item.Spells != null && item.Spells.Count > 0)
             {
                 var firstSpell = true;
                 foreach (var spell in item.Spells)
                 {
-                    embedFields.Add(new Field() { Name = spell.Name, Value = $">>> {spell.Description}" });
+                    var spellField = new Field() { Name = spell.Name, Value = $">>>{spell.Description}" };
                     if (firstSpell)
                     {
-                        embedFields.AddRange(cooldownAndManaFields);
+                        spellField.Value += $"\n{manaString}{Emotes.Spacer}{cooldownString}";
                         firstSpell = false;
                     }
+                    embedFields.Add(spellField);
                 }
             }
-            else
-            {
-                embedFields.AddRange(cooldownAndManaFields);
-            }
-
 
             if (item.Notes.Count > 0)
             {
@@ -385,45 +381,6 @@ namespace Magus.DataBuilder.Extensions
                 });
             }
             return itemInfoEmbedList;
-        }
-
-        //private static string CreateFormattedDescription(BaseSpell notes, int maxLength = 4096)
-        //{
-        //    var description = string.Empty;
-        //    string truncatedMessage = "***See website for full patchnote***";
-        //    foreach (var note in notes)
-        //    {
-        //        var indent = notes.Any(x=> x.Indent == 0) ? note.Indent : note.Indent - 1; // Some set of notes are all indedented, so remove a level
-        //        var tab = string.Empty;
-
-        //        if (!Regex.Match(note.Value, @"^\s+$").Success)
-        //        {
-        //            tab = GetTab(indent);
-        //        }
-
-        //        var valueToAdd = tab + note.Value + "\n";
-        //        if (!string.IsNullOrEmpty(note.Info))
-        //        {
-        //            valueToAdd += $"{GetTab(indent + 1)}{note.Info}\n";
-        //        }
-
-        //        if (description.Length + valueToAdd.Length + truncatedMessage.Length > maxLength)
-        //        {
-        //            description += truncatedMessage;
-        //            break;
-        //        }
-        //        description += valueToAdd;
-        //    }
-        //    return description;
-        //}
-
-        private static string GetTab(int indent)
-        {
-            if (indent > 0)
-            {
-                return String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), indent)) + "◦ ";
-            }
-            return "• ";
         }
 
         private static ulong GetEntityId(int entityId, string internalName, string locale)
