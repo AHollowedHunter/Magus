@@ -47,7 +47,7 @@ namespace Magus.DataBuilder.Extensions
             {
                 generalPatchNotesList.Add(new()
                 {
-                    Id          = GetPatchNoteId(patch.PatchName,"General", locale), //Temp custom id
+                    Id          = GetPatchNoteId(patch.PatchName, "General", locale), //Temp custom id
                     Locale      = locale,
                     Embed       = generalPatchEmbed,
                     PatchNumber = patch.PatchName,

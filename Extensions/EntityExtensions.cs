@@ -284,7 +284,7 @@ namespace Magus.DataBuilder.Extensions
             if (item.ItemPurchasable)
                 embed.Description = $"{Emotes.GoldIcon}\u00A0{Discord.Format.Bold(item.ItemCost.ToString())}\n\n";
             embed.Description += String.Join("\n", item.DisplayedValues.Select(x => x.Value));
-            
+
             // Ability Properties
             var leftEmbedField       = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
             var rightEmbedField      = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };

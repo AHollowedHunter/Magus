@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using ValveKeyValue;
 
 namespace Magus.DataBuilder.Extensions
@@ -48,10 +47,10 @@ namespace Magus.DataBuilder.Extensions
         /// <param name="name"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public static IList<T> ParseChildValueList<T>(this KVObject kvObject, string name, bool ignoreNoNumeric = false,  IEnumerable<T> defaultValue = null!) where T : IConvertible
+        public static IList<T> ParseChildValueList<T>(this KVObject kvObject, string name, bool ignoreNoNumeric = false, IEnumerable<T> defaultValue = null!) where T : IConvertible
         {
             var child = kvObject.Children.FirstOrDefault(x => x.Name == name);
-            if (child == null)  
+            if (child == null)
                 return Array.Empty<T>();
 
             return child.ParseList<T>(ignoreNoNumeric);
@@ -68,7 +67,7 @@ namespace Magus.DataBuilder.Extensions
         public static IList<TEnum> ParseChildEnumList<TEnum>(this KVObject kvObject, string name) where TEnum : struct, Enum
         {
             var child = kvObject.Children.FirstOrDefault(x => x.Name == name);
-            if (child == null)  
+            if (child == null)
                 return Array.Empty<TEnum>();
 
             return child.ParseEnumList<TEnum>();

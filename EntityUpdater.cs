@@ -4,7 +4,6 @@ using Magus.Data.Models.Embeds;
 using Magus.DataBuilder.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -261,7 +260,8 @@ namespace Magus.DataBuilder
                 var key = bonusValueKey.Value;
                 var ability = _abilities.FirstOrDefault(x => x.AbilityValues.Any(y => y.LinkedSpecialBonus == talent.InternalName && y.Name == key));
                 var abilityValue = ability?.AbilityValues.First(x => x.Name == key);
-                if (abilityValue != null) {
+                if (abilityValue != null)
+                {
                     talent.Description = Regex.Replace(talent.Description, @$"(?<=[+-]?){{s:bonus_{key}}}", abilityValue.SpecialBonusValue?.ToString() ?? "");
                 }
             }
@@ -527,7 +527,7 @@ namespace Magus.DataBuilder
             var bonusValueKeyRegex = new Regex(@"%\w+%");
             var escapedPercentage  = new Regex(@"%%(?=[^%])");
 
-            if (ability.Description == null) 
+            if (ability.Description == null)
                 return;
 
             var descriptionValueKeys = valueKeyRegex.Matches(ability.Description);
@@ -549,7 +549,7 @@ namespace Magus.DataBuilder
                 ability.Description = escapedPercentage.Replace(ability.Description, "");
                 ability.Description = CleanSimple(ability.Description);
             }
-            
+
             // Not needed, as using display values? Can't find AbiilityValue.Description used
             /*
             foreach (var value in ability.AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)))
@@ -629,16 +629,16 @@ namespace Magus.DataBuilder
                         value = ability.ShardValues.FirstOrDefault(x => x.Name.Equals(valueKey.Value, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().ToList();
                     if (value != null)
                         if (value != null)
-                    {
-                        var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
-                        if (Regex.IsMatch(ability.ShardDescription!, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
                         {
-                            formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
+                            var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
+                            if (Regex.IsMatch(ability.ShardDescription!, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
+                            {
+                                formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
+                            }
+                            ability.ShardDescription = Regex.Replace(ability.ShardDescription!,
+                                                                @$"%{valueKey.Value}%",
+                                                                Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
                         }
-                        ability.ShardDescription = Regex.Replace(ability.ShardDescription!,
-                                                            @$"%{valueKey.Value}%",
-                                                            Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
-                    }
                     ability.ShardDescription = escapedPercentage.Replace(ability.ShardDescription!, "");
                 }
                 ability.ShardDescription = CleanSimple(ability.ShardDescription!);
@@ -713,7 +713,7 @@ namespace Magus.DataBuilder
                 "abilitymanacost" => ability.AbilityManaCost,
                 _ => null
             };
-        
+
 
         private Hero CreateHero(string language, KVObject kvhero)
         {
@@ -868,7 +868,7 @@ namespace Magus.DataBuilder
             var noteRegex = new Regex($"(?i)DOTA_Tooltip_ability_{internalName}_Note\\d+");
             // Distinct as the same Key will be present in different languages.
             // Watch out if another language has more notes than default language...
-            var notesCount = _abilityValues.Keys.Where(x => x.Language == language && noteRegex.IsMatch(x.Key)).Distinct().Count(); 
+            var notesCount = _abilityValues.Keys.Where(x => x.Language == language && noteRegex.IsMatch(x.Key)).Distinct().Count();
             var notes = new List<string>();
             for (var i = 0; i < notesCount; i++)
             {
@@ -923,7 +923,7 @@ namespace Magus.DataBuilder
             }
             return abilities;
         }
-         
+
         private IList<Talent> GetHeroTalents(string language, KVObject kvHero)
         {
             var abilityRegex       = new Regex("Ability\\d+");
@@ -1062,7 +1062,7 @@ namespace Magus.DataBuilder
                 itemSpells.Add(new() { Name = name, Description = description });
             }
             item.Spells = itemSpells;
-            
+
             foreach (var value in item.DisplayedValues)
             {
                 var postFix = value.Value.StartsWith('%') ? "%" : string.Empty;

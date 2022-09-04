@@ -244,7 +244,7 @@ namespace Magus.DataBuilder
 
             foreach (var localeMap in _sourceLocaleMappings)
                 foreach (var locale in localeMap.Value)
-                    foreach (var patch in _patchNotes.Where(x=>x.Language == localeMap.Key))
+                    foreach (var patch in _patchNotes.Where(x => x.Language == localeMap.Key))
                     {
                         _logger.LogDebug("Processing patch embeds {0,-5} in {1}", patch.PatchName, patch.Language);
 
