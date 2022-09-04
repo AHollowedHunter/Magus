@@ -31,18 +31,14 @@ namespace Magus.Data
         public static string GetItemImage(string internalName)    => $"{Item}{internalName[5..]}.png";
 
         public static string GetAttributeIcon(this AttributePrimary attribute)
-        {
-            switch (attribute)
-            {
-                case AttributePrimary.DOTA_ATTRIBUTE_STRENGTH:
-                    return StrengthIcon;
-                case AttributePrimary.DOTA_ATTRIBUTE_AGILITY:
-                    return AgilityIcon;
-                case AttributePrimary.DOTA_ATTRIBUTE_INTELLECT:
-                    return IntelligenceIcon;
-                default:
-                    return null;
-            }
-        }
+#pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
+         => attribute switch
+         {
+             AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => StrengthIcon,
+             AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AgilityIcon,
+             AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => IntelligenceIcon,
+         };
+#pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
+
     }
 }
