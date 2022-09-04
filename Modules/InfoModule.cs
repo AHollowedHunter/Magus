@@ -26,7 +26,6 @@ namespace Magus.Bot.Modules
             await RespondAsync(embed: heroInfo.Embed.CreateDiscordEmbed());
         }
 
-        //Disabled for now
         [SlashCommand("ability", "Ahh. How does this one work?")]
         public async Task InfoAbility([Autocomplete(typeof(AbilityAutocompleteHandler))] string name)
         {
