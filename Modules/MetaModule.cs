@@ -10,14 +10,17 @@ using System.Reflection;
 namespace Magus.Bot.Modules
 {
     [Group("magus", "All things MagusBot")]
-    public class MetaModule : InteractionModuleBase<SocketInteractionContext>
+    public class MetaModule : ModuleBase
     {
         private readonly IDatabaseService _db;
         private readonly IConfiguration _config;
         private readonly ILogger<MetaModule> _logger;
         private readonly Services.IWebhook _webhook;
 
-        string inviteLink => _config["BotInvite"];
+        readonly string version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
+        DateTimeOffset versionDate = DateTimeOffset.Now;
+
+        string InviteLink => _config["BotInvite"];
 
         public MetaModule(IDatabaseService db, IConfiguration config, ILogger<MetaModule> logger, Services.IWebhook webhook)
         {
@@ -27,16 +30,12 @@ namespace Magus.Bot.Modules
             _webhook = webhook;
         }
 
-        string version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-
-        DateTimeOffset versionDate = DateTimeOffset.Now;
-
         [SlashCommand("about", "About Me!")]
         public async Task About()
         {
             var author = await Context.Client.GetUserAsync(240463688627126278);
             var latestPatchNote = _db.GetLatestPatch();
-            var latestPatch = $"[{latestPatchNote.PatchNumber}](https://www.dota2.com/patches/{latestPatchNote.PatchNumber}) - <t:{latestPatchNote.PatchTimestamp}:R>";
+            var latestPatch = $"[{latestPatchNote.PatchNumber}](https://www.dota2.com/patches/{latestPatchNote.PatchNumber}) - <t:{latestPatchNote.Timestamp}:R>";
             var response = new EmbedBuilder()
             {
                 Title = "MagusBot",
@@ -52,7 +51,7 @@ namespace Magus.Bot.Modules
             //response.AddField(new EmbedFieldBuilder() { Name = "Latency", Value = Context.Client.Latency + "ms", IsInline = true });
             //response.AddField(new EmbedFieldBuilder() { Name = "ShardId", Value = Context.Client.ShardId, IsInline = true });
 
-            var links = $"[Invite Link]({inviteLink})\n[MagusBot.xyz](https://magusbot.xyz)\n";
+            var links = $"[Invite Link]({InviteLink})\n[MagusBot.xyz](https://magusbot.xyz)\n";
             response.AddField(new EmbedFieldBuilder() { Name = "Links", Value = links, IsInline = false });
 
             await RespondAsync(embed: response.Build(), ephemeral: true);
@@ -61,67 +60,9 @@ namespace Magus.Bot.Modules
         [SlashCommand("invite", "Where shall I go next? Ultimyr University? Yama Raskav? Hmm.")]
         public async Task Invite()
         {
-            await RespondAsync(text: "Share me with your friends (or server admin) with my invite link!\n" + inviteLink);
+            await RespondAsync(text: "Share me with your friends (or server admin) with my invite link!\n" + InviteLink);
         }
 
-        [SlashCommand("help", "Get help using MagusBot")]
-        public async Task Help()
-        {
-            List<IApplicationCommand> commands = new List<IApplicationCommand>();
-            commands.AddRange(await Context.Guild.GetApplicationCommandsAsync());
-            commands.AddRange(await Context.Client.Rest.GetGlobalApplicationCommands());
-
-            var embeds = new List<Embed>();
-
-            foreach (IApplicationCommand command in commands)
-            {
-                if (command.Type != ApplicationCommandType.Slash) continue;
-
-                var embed = new EmbedBuilder()
-                {
-                    Title = "/" + command.Name,
-                    Description = command.Description,
-                    Color = Color.DarkGreen,
-                    Timestamp = versionDate,
-                    Footer = new() { Text = $"MagusBot version {version}" }
-                };
-
-                if (!command.Options.Any(x => x.Type == ApplicationCommandOptionType.SubCommand))
-                {
-                    embed.Description += $"\nTry it: </{command.Name}:{command.Id}>\n";
-                }
-                else
-                {
-                    foreach (var option in command.Options)
-                    {
-                        var field = new EmbedFieldBuilder()
-                        {
-                            Name = $"/{command.Name} {option.Name}",
-                        };
-                        var value = $"{option.Description}\n";
-                        if (option.Type == ApplicationCommandOptionType.SubCommand)
-                        {
-                            value += $"Try it: </{command.Name} {option.Name}:{command.Id}>\n";
-                        }
-                        else
-                        {
-                            foreach (var optionLevelTwo in option.Options)
-                            {
-                                if (optionLevelTwo.Type == ApplicationCommandOptionType.SubCommand)
-                                {
-                                    var fullCommand = $"{command.Name} {option.Name} {optionLevelTwo.Name}";
-                                    value += $"**/{fullCommand}**\n*{optionLevelTwo.Description}*\nTry it: </{fullCommand}:{command.Id}>\n";
-                                }
-                            }
-                        }
-                        field.WithValue(value);
-                        embed.AddField(field);
-                    }
-                }
-                embeds.Add(embed.Build());
-            }
-            await RespondAsync(embeds: embeds.ToArray(), ephemeral: true);
-        }
 
         [SlashCommand("feedback", "Got a bug or suggestion? Give it here!")]
         public async Task Feedback()

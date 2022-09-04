@@ -8,7 +8,7 @@ using Magus.Data.Models.Embeds;
 namespace Magus.Bot.Modules
 {
     [Group("patch", "Knowledge 📚")]
-    public class PatchNoteModule : InteractionModuleBase<SocketInteractionContext>
+    public class PatchNoteModule : ModuleBase
     {
         private readonly IDatabaseService _db;
         private readonly IServiceProvider _services;

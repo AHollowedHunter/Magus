@@ -7,7 +7,7 @@ using Magus.Data.Models.Embeds;
 namespace Magus.Bot.Modules
 {
     [Group("info", "Information commands")]
-    public class InfoModule : InteractionModuleBase<SocketInteractionContext>
+    public class InfoModule : ModuleBase
     {
         private readonly IDatabaseService _db;
         private readonly IServiceProvider _services;
