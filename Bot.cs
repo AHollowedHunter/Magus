@@ -29,13 +29,13 @@ namespace Magus.Bot
         static async Task RunAsync()
         {
             using var services = ConfigureServices();
-            _logger = services.GetRequiredService<ILogger<Bot>>();
+            _logger            = services.GetRequiredService<ILogger<Bot>>();
 
-            var client = services.GetRequiredService<DiscordSocketClient>();
+            var client   = services.GetRequiredService<DiscordSocketClient>();
             var commands = services.GetRequiredService<InteractionService>();
 
 
-            client.Log += LogAsync;
+            client.Log   += LogAsync;
             commands.Log += LogAsync;
 
             client.Ready += async () =>
@@ -62,12 +62,12 @@ namespace Magus.Bot
             var severity = message.Severity switch
             {
                 LogSeverity.Critical => LogLevel.Critical,
-                LogSeverity.Error => LogLevel.Error,
-                LogSeverity.Warning => LogLevel.Warning,
-                LogSeverity.Info => LogLevel.Information,
-                LogSeverity.Verbose => LogLevel.Debug,
-                LogSeverity.Debug => LogLevel.Trace,
-                _ => LogLevel.Information
+                LogSeverity.Error    => LogLevel.Error,
+                LogSeverity.Warning  => LogLevel.Warning,
+                LogSeverity.Info     => LogLevel.Information,
+                LogSeverity.Verbose  => LogLevel.Debug,
+                LogSeverity.Debug    => LogLevel.Trace,
+                _                    => LogLevel.Information
             };
             _logger.Log(severity, message.Exception, $"[{message.Source}] {message.Message ?? message.Exception.Message}");
             return Task.CompletedTask;
