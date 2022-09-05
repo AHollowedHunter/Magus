@@ -346,7 +346,7 @@ namespace Magus.DataBuilder.Extensions
                 var firstSpell = true;
                 foreach (var spell in item.Spells)
                 {
-                    var spellField = new Field() { Name = spell.Name, Value = $">>>{spell.Description}" };
+                    var spellField = new Field() { Name = spell.Name, Value = $">>> {spell.Description.Trim()}" };
                     if (firstSpell)
                     {
                         spellField.Value += $"\n{manaString}{Emotes.Spacer}{cooldownString}";
