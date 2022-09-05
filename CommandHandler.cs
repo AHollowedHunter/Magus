@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
-using Microsoft.Extensions.Logging;
 using System.Reflection;
 
 namespace Magus.Bot

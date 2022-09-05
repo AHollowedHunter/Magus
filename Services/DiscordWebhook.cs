@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace Magus.Bot.Services
+﻿namespace Magus.Bot.Services
 {
     public class DiscordWebhook : IWebhook
     {

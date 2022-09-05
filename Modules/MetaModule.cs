@@ -1,11 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Bot.Attributes;
-using Magus.Bot.Modal;
 using Magus.Data;
-using Magus.Data.Models.Magus;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using System.Reflection;
 
 namespace Magus.Bot.Modules

@@ -1,5 +1,5 @@
-﻿using Discord.Interactions;
-using Discord;
+﻿using Discord;
+using Discord.Interactions;
 using System.Reflection;
 
 namespace Magus.Bot.Modules

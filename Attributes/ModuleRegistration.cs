@@ -13,7 +13,7 @@
         /// </summary>
         /// <param name="location">To what group of guilds should a command be registered. See <see cref="Attributes.Location"/></param>
         /// <param name="isEnabled">Use to deterimine if a module is registered or not. Defaults to <c>true</c></param>
-        public ModuleRegistration (Location location, bool isEnabled = true)
+        public ModuleRegistration(Location location, bool isEnabled = true)
         {
             Location=location;
             IsEnabled=isEnabled;

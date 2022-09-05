@@ -4,9 +4,7 @@ using Discord.WebSocket;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
 using Magus.Data;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 
 namespace Magus.Bot
@@ -38,7 +36,7 @@ namespace Magus.Bot
 
             client.Log              += LogAsync;
             _interactionService.Log += LogAsync;
-            
+
             if (IsDebug())
                 client.Ready += async () => await _interactionService.RegisterCommandsToGuildAsync(configuration.GetValue<ulong>("DevGuild"), true);
             else
