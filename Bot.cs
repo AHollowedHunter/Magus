@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Magus.Bot.Attributes;
 using Magus.Bot.Services;
 using Magus.Data;
 using Microsoft.Extensions.Configuration;
@@ -37,8 +38,11 @@ namespace Magus.Bot
 
             client.Log              += LogAsync;
             _interactionService.Log += LogAsync;
-
-            client.Ready += RegisterModules;
+            
+            if (IsDebug())
+                client.Ready += async () => await _interactionService.RegisterCommandsToGuildAsync(configuration.GetValue<ulong>("DevGuild"), true);
+            else
+                client.Ready += RegisterModules;
 
             // Here we can initialize the service that will register and execute our commands
             await services.GetRequiredService<CommandHandler>().InitializeAsync();
@@ -53,10 +57,26 @@ namespace Magus.Bot
 
         static async Task RegisterModules()
         {
-            if (IsDebug())
-                await _interactionService.RegisterCommandsToGuildAsync(configuration.GetValue<ulong>("TestGuild"), true);
-            else
-                await _interactionService.RegisterCommandsGloballyAsync(true);
+            var modules = new Dictionary<ModuleInfo, Location>();
+            foreach (var module in _interactionService.Modules)
+                modules.Add(module, ((ModuleRegistration)module.Attributes.First(x => typeof(ModuleRegistration).IsAssignableFrom(x.GetType()))).Location);
+
+            // Register GLOBAL commands
+            await _interactionService.AddModulesGloballyAsync(true, modules: modules.Where(x => x.Value == Location.GLOBAL).Select(x => x.Key).ToArray());
+
+            // Disabled, need to fix registering to the same guild multiple times. Either create logic to remove commands separately, or get all modules applicable to a guild 
+            // What happens when removing a guild? need to de-register the commands
+            // Maybe a DB field with guild "CommandsLastRegistered" and whenever the bot updates cycle through? 
+            // 
+            // Register TESTING commands
+            //foreach (var guild in configuration.GetSection("TestingGuilds").Get<ulong[]>())
+            //    await _interactionService.AddModulesToGuildAsync(guild, true, modules: modules.Where(x => x.Value == Location.TESTING).Select(x => x.Key).ToArray());
+
+            // Register MANAGEMENT commands
+            foreach (var guild in configuration.GetSection("ManagementGuilds").Get<ulong[]>())
+                await _interactionService.AddModulesToGuildAsync(guild, true, modules: modules.Where(x => x.Value == Location.MANAGEMENT).Select(x => x.Key).ToArray());
+
+            return;
         }
 
         static Task LogAsync(LogMessage message)
@@ -71,7 +91,7 @@ namespace Magus.Bot
                 LogSeverity.Debug    => LogLevel.Trace,
                 _                    => LogLevel.Information
             };
-            _logger.Log(severity, message.Exception, $"[{message.Source}] {message.Message ?? message.Exception.Message}");
+            _logger.Log(severity, message.Exception, $"[{{0}}] {message.Message ?? message.Exception.Message}", message.Source);
             return Task.CompletedTask;
         }
 
