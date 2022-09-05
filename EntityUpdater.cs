@@ -119,42 +119,42 @@ namespace Magus.DataBuilder
             _heroes.Clear();
             _items.Clear();
 
-            //foreach (var ability in mixedAbilities.Children.Where(x => x.Name != "Version"))
-            //{
-            //    if (ability.Children.Count() == 0)
-            //        continue;
-            //    if (!talentRegex.IsMatch(ability.Name))
-            //    {
-            //        mainAbilities.Add(ability);
-            //        continue;
-            //    }
+            foreach (var ability in mixedAbilities.Children.Where(x => x.Name != "Version"))
+            {
+                if (ability.Children.Count() == 0)
+                    continue;
+                if (!talentRegex.IsMatch(ability.Name))
+                {
+                    mainAbilities.Add(ability);
+                    continue;
+                }
 
-            //    _logger.LogDebug("Processing talent {0}", ability.Name);
-            //    foreach (var language in _sourceLocaleMappings.Keys)
-            //    {
-            //        _talents.Add(CreateTalent(language, ability));
-            //    }
-            //}
+                _logger.LogDebug("Processing talent {0}", ability.Name);
+                foreach (var language in _sourceLocaleMappings.Keys)
+                {
+                    _talents.Add(CreateTalent(language, ability));
+                }
+            }
 
-            //foreach (var ability in mainAbilities)
-            //{
-            //    _logger.LogDebug("Processing ability {0}", ability.Name);
-            //    foreach (var language in _sourceLocaleMappings.Keys)
-            //    {
-            //        _abilities.Add(CreateAbility(language, ability));
-            //    }
-            //}
+            foreach (var ability in mainAbilities)
+            {
+                _logger.LogDebug("Processing ability {0}", ability.Name);
+                foreach (var language in _sourceLocaleMappings.Keys)
+                {
+                    _abilities.Add(CreateAbility(language, ability));
+                }
+            }
 
-            //_baseHero = CreateHero("", heroes.Children.First(x => x.Name == "npc_dota_hero_base"));
+            _baseHero = CreateHero("", heroes.Children.First(x => x.Name == "npc_dota_hero_base"));
 
-            //foreach (var hero in heroes.Children.Where(x => x.Name != "Version" && x.Name != "npc_dota_hero_base" && x.Name != "npc_dota_hero_target_dummy"))
-            //{
-            //    _logger.LogDebug("Processing hero {0}", hero.Name);
-            //    foreach (var language in _sourceLocaleMappings.Keys)
-            //    {
-            //        _heroes.Add(CreateHero(language, hero));
-            //    }
-            //}
+            foreach (var hero in heroes.Children.Where(x => x.Name != "Version" && x.Name != "npc_dota_hero_base" && x.Name != "npc_dota_hero_target_dummy"))
+            {
+                _logger.LogDebug("Processing hero {0}", hero.Name);
+                foreach (var language in _sourceLocaleMappings.Keys)
+                {
+                    _heroes.Add(CreateHero(language, hero));
+                }
+            }
 
             _neutralItemTiers = GetNeutralItemTiers(neutralItems);
 
