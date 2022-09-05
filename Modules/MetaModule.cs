@@ -10,32 +10,23 @@ using System.Reflection;
 
 namespace Magus.Bot.Modules
 {
-    [Group("test", "All things MagusBot")]
-    [ModuleRegistration(Location.GLOBAL)]
-    public class Module
-    {
-
-    }
-        [Group("magus", "All things MagusBot")]
+    [Group("magus", "All things MagusBot")]
     [ModuleRegistration(Location.GLOBAL)]
     public class MetaModule : ModuleBase
     {
         private readonly IDatabaseService _db;
         private readonly IConfiguration _config;
         private readonly ILogger<MetaModule> _logger;
-        private readonly Services.IWebhook _webhook;
 
         readonly string version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
-        DateTimeOffset versionDate = DateTimeOffset.Now;
 
         string InviteLink => _config["BotInvite"];
 
-        public MetaModule(IDatabaseService db, IConfiguration config, ILogger<MetaModule> logger, Services.IWebhook webhook)
+        public MetaModule(IDatabaseService db, IConfiguration config, ILogger<MetaModule> logger)
         {
             _db = db;
             _config = config;
             _logger = logger;
-            _webhook = webhook;
         }
 
         [SlashCommand("about", "About Me!")]
@@ -50,7 +41,6 @@ namespace Magus.Bot.Modules
                 Description = "A DotA 2 Discord bot",
                 //Author = new EmbedAuthorBuilder() { Name = "AHollowedHunter", Url = $"https://github.com/AHollowedHunter", IconUrl = "https://avatars.githubusercontent.com/u/45659989?v=4&s=48" },
                 Color = Color.Purple,
-                Timestamp = versionDate,
                 Footer = new() { Text = "Hot Damn!", IconUrl = Context.Client.CurrentUser.GetAvatarUrl() },
             };
             response.AddField(new EmbedFieldBuilder() { Name = "Version", Value = version, IsInline = true });
@@ -67,108 +57,6 @@ namespace Magus.Bot.Modules
         public async Task Invite()
         {
             await RespondAsync(text: "Share me with your friends (or server admin) with my invite link!\n" + InviteLink);
-        }
-
-
-        [SlashCommand("feedback", "Got a bug or suggestion? Give it here!")]
-        public async Task Feedback()
-        {
-            var selectMenuBuilder = new SelectMenuBuilder()
-                .WithPlaceholder("Select the type of feedback")
-                .WithCustomId("feedback-type")
-                .AddOption("Feature", FeedbackType.Feature.ToString())
-                .AddOption("Bug", FeedbackType.Bug.ToString())
-                .AddOption("Other", FeedbackType.Other.ToString())
-                .WithMinValues(1)
-                .WithMaxValues(1);
-
-            var builder = new ComponentBuilder()
-                .WithSelectMenu(selectMenuBuilder);
-
-            await RespondAsync(components: builder.Build(), ephemeral: true);
-        }
-
-        [ComponentInteraction("feedback-type", ignoreGroupNames: true)]
-        public async Task HandleFeedbackSelect(string input)
-        {
-            Enum.TryParse(input, out FeedbackType type);
-            switch (type)
-            {
-                case FeedbackType.Feature:
-                    await Context.Interaction.RespondWithModalAsync<FeatureFeedbackModal>("feature-feedback");
-                    break;
-                case FeedbackType.Bug:
-                    await Context.Interaction.RespondWithModalAsync<BugFeedbackModal>("bug-feedback");
-                    break;
-                case FeedbackType.Other:
-                    await Context.Interaction.RespondWithModalAsync<OtherFeedbackModal>("feedback");
-                    break;
-            }
-        }
-
-        [ModalInteraction("feature-feedback", ignoreGroupNames: true)]
-        public async Task FeatureFeedbackResponse(FeatureFeedbackModal feedback)
-        {
-            var feedbackId = await SaveFeedback(feedback);
-            await FeedbackResponse(feedbackId);
-
-        }
-
-        [ModalInteraction("bug-feedback", ignoreGroupNames: true)]
-        public async Task BugFeedbackResponse(BugFeedbackModal feedback)
-        {
-            var feedbackId = await SaveFeedback(feedback);
-            await FeedbackResponse(feedbackId);
-        }
-
-        [ModalInteraction("feedback", ignoreGroupNames: true)]
-        public async Task FeedbackResponse(OtherFeedbackModal feedback)
-        {
-            var feedbackId = await SaveFeedback(feedback);
-            await FeedbackResponse(feedbackId);
-        }
-
-        private async Task<ulong> SaveFeedback<T>(T feedbackModal) where T : FeedbackModalBase
-        {
-            var feedback = feedbackModal.ToFeedback();
-            if (Context.Interaction.IsDMInteraction)
-            {
-                feedback.IsDMSubmitted = true;
-            }
-            else
-            {
-                feedback.GuildSubmitted = Context.Guild.Id;
-            }
-            feedback.Author = Context.Interaction.User.Id;
-            feedback.Id = MakeFeedbackId(feedback.Author);
-
-            var id = _db.InsertRecord(feedback);
-            if (id != 0xFFFFFFFFFFFFFFFF)
-            {
-                var success = await _webhook.SendMessage(CreateFeedbackMessage(feedback), _config["FeedbackWebhook"]);
-                if (!success) _logger.LogWarning("Failed to send webhook for feedback #{id}", id);
-            }
-            return id;
-        }
-
-        private static ulong MakeFeedbackId(ulong authorId)
-           => (((ulong)DateTimeOffset.Now.ToUnixTimeMilliseconds() - 1651363200000) << 22) + (authorId & 0x2FFFFF);
-
-        private async Task FeedbackResponse(ulong feedbackId)
-        {
-            if (feedbackId != 0xFFFFFFFFFFFFFFFF)
-            {
-                await RespondAsync(text: "Thank you for your feedback.\nFeedback ID: " + feedbackId, ephemeral: true);
-            }
-            else
-            {
-                await RespondAsync(text: "Failed to save feedback, please try again in a minute", ephemeral: true);
-            }
-        }
-
-        private string CreateFeedbackMessage(Feedback feedback)
-        {
-            return @$"{{""embeds"": [{{""title"": ""{feedback.Type} #{feedback.Id}"",""description"": ""{feedback.Message}""}}]}}";
         }
     }
 }
