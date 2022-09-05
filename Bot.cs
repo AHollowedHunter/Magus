@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Services;
@@ -19,7 +18,10 @@ namespace Magus.Bot
                 .AddUserSecrets<Bot>()
                 .Build();
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private static ILogger<Bot> _logger;
+        private static InteractionService _interactionService;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         static void Main(string[] args)
         {
@@ -28,23 +30,15 @@ namespace Magus.Bot
 
         static async Task RunAsync()
         {
-            using var services = ConfigureServices();
-            _logger            = services.GetRequiredService<ILogger<Bot>>();
+            using var services  = ConfigureServices();
+            var client          = services.GetRequiredService<DiscordSocketClient>();
+            _interactionService = services.GetRequiredService<InteractionService>();
+            _logger             = services.GetRequiredService<ILogger<Bot>>();
 
-            var client   = services.GetRequiredService<DiscordSocketClient>();
-            var commands = services.GetRequiredService<InteractionService>();
+            client.Log              += LogAsync;
+            _interactionService.Log += LogAsync;
 
-
-            client.Log   += LogAsync;
-            commands.Log += LogAsync;
-
-            client.Ready += async () =>
-            {
-                if (IsDebug())
-                    await commands.RegisterCommandsToGuildAsync(configuration.GetValue<ulong>("TestGuild"), true);
-                else
-                    await commands.RegisterCommandsGloballyAsync(true);
-            };
+            client.Ready += RegisterModules;
 
             // Here we can initialize the service that will register and execute our commands
             await services.GetRequiredService<CommandHandler>().InitializeAsync();
@@ -55,6 +49,14 @@ namespace Magus.Bot
             await client.SetGameAsync(name: "\"/magus help\"", type: ActivityType.Playing);
 
             await Task.Delay(Timeout.Infinite);
+        }
+
+        static async Task RegisterModules()
+        {
+            if (IsDebug())
+                await _interactionService.RegisterCommandsToGuildAsync(configuration.GetValue<ulong>("TestGuild"), true);
+            else
+                await _interactionService.RegisterCommandsGloballyAsync(true);
         }
 
         static Task LogAsync(LogMessage message)
@@ -79,7 +81,6 @@ namespace Magus.Bot
                 .AddSingleton(configuration)
                 .AddSingleton<IDatabaseService>(x => new LiteDBService(configuration.GetSection("DatabaseService")))
                 .AddSingleton(new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GatewayIntents.AllUnprivileged }))
-                .AddSingleton<CommandService>()
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<Services.IWebhook>(x => new DiscordWebhook())
