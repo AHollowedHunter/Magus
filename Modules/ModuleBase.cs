@@ -28,8 +28,9 @@ namespace Magus.Bot.Modules
         private async Task<Embed> CreateHelpEmbed()
         {
             List<IApplicationCommand> commands = new();
-            commands.AddRange(await Context.Guild.GetApplicationCommandsAsync());
             commands.AddRange(await Context.Client.Rest.GetGlobalApplicationCommands());
+            if (!Context.Interaction.IsDMInteraction)
+                commands.AddRange(await Context.Guild.GetApplicationCommandsAsync());
 
             var embeds = new List<Embed>();
 
