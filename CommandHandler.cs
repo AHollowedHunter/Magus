@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Magus.Bot.Attributes;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 
@@ -23,7 +24,8 @@ namespace Magus.Bot
 
         public async Task InitializeAsync()
         {
-            await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            foreach (var module in GetEnabledModules())
+                await _interactions.AddModuleAsync(module, _services);
 
             _client.InteractionCreated += HandleInteraction;
 
@@ -34,6 +36,24 @@ namespace Magus.Bot
             _interactions.ModalCommandExecuted     += ModalCommandExecuted;
 
             _logger.LogInformation("CommandHandler Initialised");
+        }
+
+        private List<TypeInfo> GetEnabledModules()
+        {
+            TypeInfo moduleTypeInfo = typeof(IInteractionModuleBase).GetTypeInfo();
+            List<TypeInfo> result   = new();
+            foreach (TypeInfo definedType in Assembly.GetEntryAssembly()!.DefinedTypes)
+            {
+                var moduleRegistration = definedType.GetCustomAttribute<ModuleRegistration>();
+                if (!(moduleRegistration != null && moduleRegistration.IsEnabled))
+                    continue;
+
+                if (moduleTypeInfo.IsAssignableFrom(definedType))
+                    result.Add(definedType);
+                else
+                    _logger.LogWarning("Class {0} is marked with ModuleRegistration, but it does not implement IInteractionModuleBase", definedType.FullName);
+            }
+            return result;
         }
 
         # region Error Handling

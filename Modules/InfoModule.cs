@@ -1,4 +1,5 @@
 ﻿using Discord.Interactions;
+using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Extensions;
 using Magus.Data;
@@ -7,6 +8,7 @@ using Magus.Data.Models.Embeds;
 namespace Magus.Bot.Modules
 {
     [Group("info", "Information commands")]
+    [ModuleRegistration(Location.GLOBAL)]
     public class InfoModule : ModuleBase
     {
         private readonly IDatabaseService _db;

@@ -9,17 +9,17 @@ namespace Magus.Bot.Modules
     /// 
     /// Any single root commands will need a separate root "help" command if desired
     /// </summary>
-    public abstract class ModuleBase : InteractionModuleBase<SocketInteractionContext>
+    public abstract class ModuleBase : InteractionModuleBase<SocketInteractionContext> // InteractionService will log a warning "not public" (as of v3.8) as the class is abstract. Ignore
     {
         readonly string version             = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
-        readonly DateTimeOffset versionDate = DateTimeOffset.Now;
+        readonly DateTimeOffset versionDate = DateTimeOffset.UtcNow;
 
         protected ModuleBase()
         {
 
         }
 
-        [SlashCommand("help", "Help using ")]
+        [SlashCommand("help", "Get help with these commands")]
         public async Task Help()
         {
             await RespondAsync(embed: await CreateHelpEmbed(), ephemeral: true);
