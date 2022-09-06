@@ -814,13 +814,27 @@ namespace Magus.DataBuilder
             description = CleanSimple(description);
             if (matches.Count > 0)
                 foreach (Match match in matches)
-                    description = description.Replace(match.Value, $"\u00A0{values}\u00A0\u00A0{_abilityValues[(language, $"dota_ability_variable_{match.Value.Trim('$')}")]}");
+                    description = description.Replace(match.Value, $"\u00A0{values}\u00A0\u00A0{GetAbilityVariable(language, match.Value.Trim('$'))}");
             else if (signRegex.IsMatch(description))
                 description = signRegex.Replace(description, m => string.Format("{0}\u00A0{1}\u00A0", m.Value, signRegex.Replace(values, string.Empty)));
             else
                 description += $"\u00A0{values}";
 
             return description;
+        }
+
+        private string GetAbilityVariable(string language, string name)
+        {
+            var key = (language, Key: $"dota_ability_variable_{name}".ToLower());
+            if (_abilityValues.ContainsKey(key))
+            {
+                return _abilityValues[key];
+            }
+            else
+            {
+                _abilityValues.TryGetValue((_sourceDefaultLanguage, key.Key), out var value);
+                return value ?? String.Empty;
+            }
         }
 
         private static string CleanLocaleValue(string value)
