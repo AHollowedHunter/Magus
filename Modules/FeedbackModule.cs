@@ -10,12 +10,12 @@ namespace Magus.Bot.Modules
     [ModuleRegistration(Location.TESTING, false)]
     public class FeedbackModule : ModuleBase
     {
-        private readonly IDatabaseService _db;
+        private readonly IAsyncDataService _db;
         private readonly IConfiguration _config;
         private readonly ILogger<MetaModule> _logger;
         private readonly Services.IWebhook _webhook;
 
-        public FeedbackModule(IDatabaseService db, IConfiguration config, ILogger<MetaModule> logger, Services.IWebhook webhook)
+        public FeedbackModule(IAsyncDataService db, IConfiguration config, ILogger<MetaModule> logger, Services.IWebhook webhook)
         {
             _db = db;
             _config = config;
@@ -95,13 +95,16 @@ namespace Magus.Bot.Modules
             feedback.Author = Context.Interaction.User.Id;
             feedback.Id = MakeFeedbackId(feedback.Author);
 
-            var id = _db.InsertRecord(feedback);
-            if (id != 0xFFFFFFFFFFFFFFFF)
+            await _db.InsertRecord(feedback);
+            try
             {
                 var success = await _webhook.SendMessage(CreateFeedbackMessage(feedback), _config["FeedbackWebhook"]);
-                if (!success) _logger.LogWarning("Failed to send webhook for feedback #{id}", id);
             }
-            return id;
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send webhook for feedback #{id}", feedback.Id);
+            }
+            return feedback.Id;
         }
 
         private static ulong MakeFeedbackId(ulong authorId)
