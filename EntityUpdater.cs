@@ -1,12 +1,9 @@
 ﻿using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
-using Magus.DataBuilder.Extensions;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using ValveKeyValue;
 using static Magus.Data.Models.Dota.Ability;
 using static Magus.Data.Models.Dota.BaseSpell;
@@ -15,7 +12,7 @@ namespace Magus.DataBuilder
 {
     public class EntityUpdater
     {
-        private readonly IDatabaseService _db;
+        private readonly IAsyncDataService _db;
         private readonly IConfiguration _config;
         private readonly ILogger<PatchNoteUpdater> _logger;
         private readonly HttpClient _httpClient;
@@ -36,7 +33,7 @@ namespace Magus.DataBuilder
 
         private static readonly string ValueSeparator = "\u00A0/\u00A0";
 
-        public EntityUpdater(IDatabaseService db, IConfiguration config, ILogger<PatchNoteUpdater> logger, HttpClient httpClient)
+        public EntityUpdater(IAsyncDataService db, IConfiguration config, ILogger<PatchNoteUpdater> logger, HttpClient httpClient)
         {
             _db         = db;
             _config     = config;
@@ -66,7 +63,7 @@ namespace Magus.DataBuilder
             await SetEntityValues();
             await SetEntities();
 
-            StoreEntityEmbeds();
+            await StoreEntityEmbeds();
 
             stopwatch.Stop();
             var timeTaken = stopwatch.Elapsed.TotalSeconds;
@@ -86,9 +83,9 @@ namespace Magus.DataBuilder
             {
                 _logger.LogDebug("Processing values for {0}", language.Key);
 
-                var abilities = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetAbilities(language.Key));
-                var dota      = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetDota(language.Key));
-                var heroLore  = await GetKVObjectFromUri(Dota2GameFiles.Localization.GetHeroLore(language.Key));
+                var abilities = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetAbilities(language.Key), _httpClient);
+                var dota      = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetDota(language.Key), _httpClient);
+                var heroLore  = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetHeroLore(language.Key), _httpClient);
 
                 foreach (var note in abilities.Children.First(x => x.Name == "Tokens"))
                     _abilityValues.Add((language.Key, note.Name.ToLower()), note.Value.ToString() ?? "");
@@ -106,10 +103,10 @@ namespace Magus.DataBuilder
         {
             _logger.LogInformation("Setting Entities");
 
-            var mixedAbilities = await GetKVObjectFromUri(Dota2GameFiles.NpcAbilities);
-            var heroes         = await GetKVObjectFromUri(Dota2GameFiles.NpcHeroes);
-            var items          = await GetKVObjectFromUri(Dota2GameFiles.Items);
-            var neutralItems   = await GetKVObjectFromUri(Dota2GameFiles.NeutralItems);
+            var mixedAbilities = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.NpcAbilities, _httpClient);
+            var heroes         = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.NpcHeroes, _httpClient);
+            var items          = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Items, _httpClient);
+            var neutralItems   = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.NeutralItems, _httpClient);
 
             var talentRegex    = new Regex("special_bonus_\\w+");
             var mainAbilities  = new List<KVObject>();
@@ -550,22 +547,6 @@ namespace Magus.DataBuilder
                 ability.Description = CleanSimple(ability.Description);
             }
 
-            // Not needed, as using display values? Can't find AbiilityValue.Description used
-            /*
-            foreach (var value in ability.AbilityValues.Where(x => !string.IsNullOrEmpty(x.Description)))
-            {
-                var joinedValue = string.Join(ValueSeparator, value.Values.Distinct());
-                if (value.Description!.StartsWith('%'))
-                {
-                    value.Description = value.Description.Trim('%');
-                    var values        = value.Values.Distinct().Select(x => x.ToString() + "%");
-                    joinedValue       = string.Join(ValueSeparator, values);
-                }
-                value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
-                value.Description = CleanSimple(value.Description);
-            }
-            */
-
             foreach (var value in ability.DisplayedValues)
             {
                 var postFix = value.Value.StartsWith('%') ? "%" : string.Empty;
@@ -850,13 +831,6 @@ namespace Magus.DataBuilder
             return value;
         }
 
-        private async Task<KVObject> GetKVObjectFromUri(string uri)
-        {
-            var rawString = await _httpClient.GetStringAsync(uri);
-            Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(rawString));
-            return _kvSerializer.Deserialize(stream, new KVSerializerOptions() { HasEscapeSequences = true });
-        }
-
         private string GetAbilityValue(string language, string internalName, string? valueName = null)
         {
             var postfix = valueName switch
@@ -1038,7 +1012,7 @@ namespace Magus.DataBuilder
         {
             var valueKeyRegex         = new Regex(@"(?<=%)\w+(?=%)");
             var valuePlaceholderRegex = new Regex(@"%\w+[%]{1,3}");
-            var escapedPercentage     = new Regex(@"%%(?=[^%])");
+            var escapedPercentage     = new Regex(@"%%(?=[^%]?)");
             var itemSpellRegex        = new Regex(@"<h1>.*?(?=<h1>|\Z|$)", RegexOptions.Singleline);
             var spellNameRegex        = new Regex(@"<h1>(.+?)</h1>");
 
@@ -1132,13 +1106,13 @@ namespace Magus.DataBuilder
             item.Notes = newNotes;
         }
 
-        private void StoreEntityEmbeds()
+        private async Task StoreEntityEmbeds()
         {
             _logger.LogInformation("Converting entities to Info Embed records");
             var heroInfoEmbeds    = new List<HeroInfoEmbed>();
             var abilityInfoEmbeds = new List<AbilityInfoEmbed>();
             var itemInfoEmbeds    = new List<ItemInfoEmbed>();
-            var latestPatch       = _db.GetLatestPatch();
+            var latestPatch       = await _db.GetLatestPatch();
 
             foreach (var hero in _heroes)
             {
@@ -1159,26 +1133,31 @@ namespace Magus.DataBuilder
 
             _logger.LogInformation("Updating entity info embeds in Database");
 
-            _db.UpsertRecords(heroInfoEmbeds);
-            _db.UpsertRecords(abilityInfoEmbeds);
-            _db.UpsertRecords(itemInfoEmbeds);
-            EnsureIndexes();
+            await EnsureIndexes();
+            await _db.UpsertRecords(heroInfoEmbeds);
+            await _db.UpsertRecords(abilityInfoEmbeds);
+            await _db.UpsertRecords(itemInfoEmbeds);
         }
 
-        private void EnsureIndexes()
+        private async Task EnsureIndexes()
         {
-            _db.EnsureIndex<HeroInfoEmbed>("Locale");
-            _db.EnsureIndex<HeroInfoEmbed>("InternalName");
-            _db.EnsureIndex<HeroInfoEmbed>("Name");
-            _db.EnsureIndex<HeroInfoEmbed>("RealName");
-            _db.EnsureIndex<HeroInfoEmbed>("Aliases");
-            _db.EnsureIndex<AbilityInfoEmbed>("Locale");
-            _db.EnsureIndex<AbilityInfoEmbed>("InternalName");
-            _db.EnsureIndex<AbilityInfoEmbed>("Name");
-            _db.EnsureIndex<ItemInfoEmbed>("Locale");
-            _db.EnsureIndex<ItemInfoEmbed>("InternalName");
-            _db.EnsureIndex<ItemInfoEmbed>("Name");
-            _db.EnsureIndex<ItemInfoEmbed>("Aliases");
+            _db.CreateCollection<HeroInfoEmbed>();
+            await _db.EnsureIndex<HeroInfoEmbed>(x => x.Locale);
+            await _db.EnsureIndex<HeroInfoEmbed>(x => x.InternalName);
+            await _db.EnsureIndex<HeroInfoEmbed>(x => x.Name);
+            await _db.EnsureIndex<HeroInfoEmbed>(x => x.RealName!);
+            await _db.EnsureIndex<HeroInfoEmbed>(x => x.Aliases!);
+            Thread.Sleep(2000);
+            _db.CreateCollection<AbilityInfoEmbed>();
+            await _db.EnsureIndex<AbilityInfoEmbed>(x => x.Locale);
+            await _db.EnsureIndex<AbilityInfoEmbed>(x => x.InternalName);
+            await _db.EnsureIndex<AbilityInfoEmbed>(x => x.Name);
+            Thread.Sleep(1000);
+            _db.CreateCollection<ItemInfoEmbed>();
+            await _db.EnsureIndex<ItemInfoEmbed>(x => x.Locale);
+            await _db.EnsureIndex<ItemInfoEmbed>(x => x.InternalName);
+            await _db.EnsureIndex<ItemInfoEmbed>(x => x.Name);
+            await _db.EnsureIndex<ItemInfoEmbed>(x => x.Aliases!);
         }
     }
 }

@@ -1,6 +1,5 @@
-﻿using Magus.Data;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Magus.Common;
+using Magus.Data;
 using Serilog;
 using System.Diagnostics;
 
@@ -15,37 +14,32 @@ namespace Magus.DataBuilder
             .Build();
 
         private static readonly ServiceProvider services = ConfigureServices();
-        private static readonly IDatabaseService db      = services.GetRequiredService<IDatabaseService>();
 
         public static async Task Main()
         {
-
-            var patchNoteUpdater = services.GetRequiredService<PatchNoteUpdater>();
-            var entityUpdater = services.GetRequiredService<EntityUpdater>();
+            var dotaUpdater = services.GetRequiredService<DotaUpdater>();
 
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-
-            var entityInfotask = entityUpdater.Update();
-            await entityInfotask;
-            //var patchNoteTask = patchNoteUpdater.Update();
-            //await patchNoteTask;
+            await dotaUpdater.Update(DotaUpdater.DotaInfo.ALL);
 
             stopwatch.Stop();
             var timeTaken = stopwatch.Elapsed.TotalSeconds;
             Console.WriteLine(string.Format("Total Time Taken: {0:0.#}s", timeTaken));
-            db.Dispose();
         }
 
         static ServiceProvider ConfigureServices()
             => new ServiceCollection()
                 .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
                 .AddSingleton(configuration)
-                .AddSingleton<IDatabaseService>(x => new LiteDBService(configuration.GetSection("DatabaseService")))
+                .AddSingleton(x => new Configuration(configuration))
+                .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new HttpClient())
-                .AddSingleton<PatchNoteUpdater>()
-                .AddSingleton<EntityUpdater>()
+                .AddSingleton<DotaUpdater>()
+                .AddTransient<PatchNoteUpdater>()
+                .AddTransient<EntityUpdater>()
+                .AddTransient<PatchListUpdater>()
                 .BuildServiceProvider();
     }
 }
