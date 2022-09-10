@@ -57,7 +57,7 @@ namespace Magus.DataBuilder.Extensions
             return generalPatchNotesList;
         }
 
-        public static IEnumerable<HeroPatchNoteEmbed> GetHeroPatchNoteEmbeds(this PatchNote patch, IEnumerable<HeroInfoEmbed> heroes, Dictionary<(string Language, string Key), string> dotaValues, Dictionary<string, string[]> languageMap)
+        public static IEnumerable<HeroPatchNoteEmbed> GetHeroPatchNoteEmbeds(this PatchNote patch, IEnumerable<HeroInfoEmbed> heroes, Dictionary<(string Language, string Key), string> abilityValues, Dictionary<string, string[]> languageMap)
         {
             var heroPatchNotesList = new List<HeroPatchNoteEmbed>();
             foreach (var hero in patch.HeroesNotes)
@@ -68,7 +68,7 @@ namespace Magus.DataBuilder.Extensions
 
                 foreach (var abilityNote in hero.AbilityNotes)
                 {
-                    var abilityName = GetLanguageValue(dotaValues, patch.Language, abilityNote.InternalName);
+                    var abilityName = GetLanguageValue(abilityValues, patch.Language, abilityNote.InternalName);
                     fields.Add(new() { Name = $"{abilityName}:", Value = CreateFormattedDescription(abilityNote.Notes) });
                 }
 
@@ -193,7 +193,7 @@ namespace Magus.DataBuilder.Extensions
 
         private static string GetLanguageValue(Dictionary<(string Language, string Key), string> values, string language, string internalName, string defaultLanguage = "english")
         {
-            var key = (Language: language, Key: internalName);
+            var key = (Language: language, Key: $"DOTA_Tooltip_ability_{internalName}".ToLower());
             if (values.ContainsKey(key))
             {
                 return values[key];
