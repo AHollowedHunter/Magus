@@ -14,7 +14,8 @@ namespace Magus.Data
 
         public LiteDBService(IConfiguration config)
         {
-            _liteDB = new LiteDatabase(config["ConnectionString"]);
+            //_liteDB = new LiteDatabase(config["ConnectionString"]);
+            _liteDB = new LiteDatabase("U:/workspace/Magus/devDB.db");
 
             BsonMapper.Global.EnumAsInteger = true;
         }

@@ -90,11 +90,6 @@ namespace Magus.Data.Models.Dota
 
         public float GetArmor()
             => ArmorPhysical + (AttributeBaseAgility / 6);
-
-        public IEnumerable<HeroInfoEmbed> GetHeroInfoEmbeds(Dictionary<string, string[]> sourceLocaleMappings)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public enum AttributePrimary

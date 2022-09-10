@@ -1,7 +1,11 @@
-﻿namespace Magus.Data.Models.Embeds
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
+namespace Magus.Data.Models.Embeds
 {
     public abstract record EntityInfoEmbed : ISnowflakeRecord, ILocaleRecord, INamedEntity
     {
+        [BsonRepresentation(BsonType.Int64, AllowOverflow = true)]
         public ulong Id { get; set; }
         public int EntityId { get; set; }
         public string Locale { get; set; }
