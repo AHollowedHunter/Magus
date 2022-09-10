@@ -26,7 +26,7 @@ namespace Magus.Data
             MongoClientSettings settings = MongoClientSettings.FromUrl(new MongoUrl(_config.DatabaseService.ConnectionString));
             settings.SslSettings = new SslSettings() { EnabledSslProtocols = SslProtocols.Tls12 };
             _client = new MongoClient(settings);
-            _db = _client.GetDatabase("test");
+            _db = _client.GetDatabase(_config.DatabaseService.DatabaseName);
         }
 
         public void Dispose()
