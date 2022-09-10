@@ -3,8 +3,9 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
+using Magus.Common;
 using Magus.Data;
-using Microsoft.Extensions.DependencyInjection;
+using Magus.DataBuilder;
 using Serilog;
 
 namespace Magus.Bot
@@ -97,11 +98,17 @@ namespace Magus.Bot
             => new ServiceCollection()
                 .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
                 .AddSingleton(configuration)
-                .AddSingleton<IDatabaseService>(x => new LiteDBService(configuration.GetSection("DatabaseService")))
+                .AddSingleton(x => new Configuration(configuration))
+                .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GatewayIntents.AllUnprivileged }))
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .AddSingleton<CommandHandler>()
+                .AddSingleton(x => new HttpClient())
                 .AddSingleton<Services.IWebhook>(x => new DiscordWebhook())
+                .AddTransient<DotaUpdater>()
+                .AddTransient<PatchListUpdater>()
+                .AddTransient<EntityUpdater>()
+                .AddTransient<PatchNoteUpdater>()
                 .BuildServiceProvider();
 
         static bool IsDebug()

@@ -7,16 +7,16 @@ namespace Magus.Bot.AutocompleteHandlers
 {
     public class AbilityAutocompleteHandler : AutocompleteHandler
     {
-        private readonly IDatabaseService _db;
+        private readonly IAsyncDataService _db;
         private readonly IServiceProvider _services;
 
-        public AbilityAutocompleteHandler(IDatabaseService db, IServiceProvider services)
+        public AbilityAutocompleteHandler(IAsyncDataService db, IServiceProvider services)
         {
             _db = db;
             _services = services;
         }
 
-        public override Task<AutocompletionResult> GenerateSuggestionsAsync(
+        public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
             IInteractionContext context,
             IAutocompleteInteraction autocompleteInteraction,
             IParameterInfo parameter,
@@ -28,21 +28,21 @@ namespace Magus.Bot.AutocompleteHandlers
                 List<AbilityInfoEmbed> abilites;
                 if (string.IsNullOrEmpty(value))
                 {
-                    abilites = _db.GetRecords<AbilityInfoEmbed>(25).ToList();
+                    abilites = (await _db.GetRecords<AbilityInfoEmbed>(25)).ToList();
                 }
                 else
                 {
-                    abilites = _db.GetEntityInfo<AbilityInfoEmbed>(value, limit: 25).ToList();
+                    abilites = (await _db.GetEntityInfo<AbilityInfoEmbed>(value, limit: 25)).ToList();
                 }
 
                 List<AutocompleteResult> results = new();
                 abilites.ForEach(ability => results.Add(new AutocompleteResult(ability.Name, ability.InternalName)));
 
-                return Task.FromResult(AutocompletionResult.FromSuccess(results));
+                return AutocompletionResult.FromSuccess(results);
             }
             catch (Exception ex)
             {
-                return Task.FromResult(AutocompletionResult.FromError(ex));
+                return AutocompletionResult.FromError(ex);
             }
         }
 

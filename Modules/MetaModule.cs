@@ -10,7 +10,7 @@ namespace Magus.Bot.Modules
     [ModuleRegistration(Location.GLOBAL)]
     public class MetaModule : ModuleBase
     {
-        private readonly IDatabaseService _db;
+        private readonly IAsyncDataService _db;
         private readonly IConfiguration _config;
         private readonly ILogger<MetaModule> _logger;
 
@@ -18,7 +18,7 @@ namespace Magus.Bot.Modules
 
         string InviteLink => _config["BotInvite"];
 
-        public MetaModule(IDatabaseService db, IConfiguration config, ILogger<MetaModule> logger)
+        public MetaModule(IAsyncDataService db, IConfiguration config, ILogger<MetaModule> logger)
         {
             _db = db;
             _config = config;
@@ -29,7 +29,7 @@ namespace Magus.Bot.Modules
         public async Task About()
         {
             var author = await Context.Client.GetUserAsync(240463688627126278);
-            var latestPatchNote = _db.GetLatestPatch();
+            var latestPatchNote = await _db.GetLatestPatch();
             var latestPatch = $"[{latestPatchNote.PatchNumber}](https://www.dota2.com/patches/{latestPatchNote.PatchNumber}) - <t:{latestPatchNote.Timestamp}:R>";
             var response = new EmbedBuilder()
             {

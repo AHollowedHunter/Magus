@@ -11,10 +11,10 @@ namespace Magus.Bot.Modules
     [ModuleRegistration(Location.GLOBAL)]
     public class PatchNoteModule : ModuleBase
     {
-        private readonly IDatabaseService _db;
+        private readonly IAsyncDataService _db;
         private readonly IServiceProvider _services;
 
-        public PatchNoteModule(IDatabaseService db, IServiceProvider services)
+        public PatchNoteModule(IAsyncDataService db, IServiceProvider services)
         {
             _db = db;
             _services = services;
@@ -23,7 +23,7 @@ namespace Magus.Bot.Modules
         [SlashCommand("notes", "Knowledge 📚")]
         public async Task PatchNotes([Autocomplete(typeof(PatchAutocompleteHandler))] string number)
         {
-            var patchNote = _db.GetGeneralPatchNote(number);
+            var patchNote = await _db.GetGeneralPatchNote(number);
             if (patchNote == null)
             {
                 await RespondAsync($"Could not find a patch note numbered {number}");
@@ -41,11 +41,11 @@ namespace Magus.Bot.Modules
             IEnumerable<ItemPatchNoteEmbed> patchNotes;
             if (patch == null)
             {
-                patchNotes = _db.GetPatchNotes<ItemPatchNoteEmbed>(name, Context.Interaction.UserLocale, limit: 3, orderByDesc: true);
+                patchNotes = await _db.GetPatchNotes<ItemPatchNoteEmbed>(name, Context.Interaction.UserLocale, limit: 3, orderByDesc: true);
             }
             else
             {
-                patchNotes = new List<ItemPatchNoteEmbed> { _db.GetPatchNote<ItemPatchNoteEmbed>(patch, name, Context.Interaction.UserLocale) };
+                patchNotes = new List<ItemPatchNoteEmbed> { await _db.GetPatchNote<ItemPatchNoteEmbed>(patch, name, Context.Interaction.UserLocale) };
             }
 
             if (patchNotes == null || patchNotes.Any(x => x == null) || patchNotes.Count() == 0)
@@ -70,12 +70,12 @@ namespace Magus.Bot.Modules
             IEnumerable<HeroPatchNoteEmbed> patchNotes;
             if (patch == null)
             {
-                patchNotes = _db.GetPatchNotes<HeroPatchNoteEmbed>(name, Context.Interaction.UserLocale, limit: 1, orderByDesc: true);
+                patchNotes = await _db.GetPatchNotes<HeroPatchNoteEmbed>(name, Context.Interaction.UserLocale, limit: 1, orderByDesc: true);
             }
             else
             {
                 var patchNote = new List<HeroPatchNoteEmbed>();
-                patchNote.Add(_db.GetPatchNote<HeroPatchNoteEmbed>(patch, name, Context.Interaction.UserLocale));
+                patchNote.Add(await _db.GetPatchNote<HeroPatchNoteEmbed>(patch, name, Context.Interaction.UserLocale));
                 patchNotes = patchNote;
             }
 
