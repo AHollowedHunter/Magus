@@ -7,9 +7,6 @@ using MongoDB.Driver.Linq;
 using System.Security.Authentication;
 using System.Linq.Expressions;
 using MongoDB.Bson.IO;
-using MongoDB.Bson.Serialization;
-using LiteDB;
-using System.Linq;
 
 namespace Magus.Data
 {
@@ -167,11 +164,6 @@ namespace Magus.Data
             return await result.ToListAsync();
         }
 
-        //public async Task<IEnumerable<T>> GetRecords<T>(ulong id, int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord
-        //{
-        //    throw new NotImplementedException();
-        //}
-
         public async Task<IEnumerable<T>> GetRecords<T>(string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord
         {
             var collection = GetCollection<T>();
@@ -182,11 +174,6 @@ namespace Magus.Data
                 query.OrderByDescending(x => x.Id);
             return await query.Take(limit).ToListAsync();
         }
-
-        //public async Task<IEnumerable<T>> GetRecords<T>(ulong id, string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord
-        //{
-        //    throw new NotImplementedException();
-        //}
 
         public async Task InsertRecord<T>(T record) where T : ISnowflakeRecord
         {
@@ -220,10 +207,6 @@ namespace Magus.Data
         {
             var collection = GetCollection<T>();
             await collection.BulkWriteAsync(GetBulkReplaceRequest(records, true));
-            //var tasks = new List<Task>();
-            //foreach (var record in records)
-            //    tasks.Add(collection.ReplaceOneAsync(x => x.Id == record.Id, record, new ReplaceOptions() { IsUpsert = true }));
-            //await Task.WhenAll(tasks);
         }
 
         public async Task ReplaceRecord<T>(T record) where T : ISnowflakeRecord
@@ -236,12 +219,6 @@ namespace Magus.Data
         {
             var collection = GetCollection<T>();
             await collection.BulkWriteAsync(GetBulkReplaceRequest(records));
-
-            //var tasks = new List<Task>();
-
-            //foreach (var record in records)
-            //    tasks.Add(collection.ReplaceOneAsync(x => x.Id == record.Id, record));
-            //await Task.WhenAll(tasks);
         }
 
         private static FilterDefinition<T> FilterLocaleEntityName<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : INamedEntity, ILocaleRecord
