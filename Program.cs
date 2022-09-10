@@ -36,7 +36,7 @@ namespace Magus.DataBuilder
                 .AddSingleton(x => new Configuration(configuration))
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new HttpClient())
-                .AddSingleton<DotaUpdater>()
+                .AddTransient<DotaUpdater>()
                 .AddTransient<PatchNoteUpdater>()
                 .AddTransient<EntityUpdater>()
                 .AddTransient<PatchListUpdater>()
