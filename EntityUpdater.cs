@@ -544,8 +544,8 @@ namespace Magus.DataBuilder
                                                         Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
                 }
                 ability.Description = escapedPercentage.Replace(ability.Description, "");
-                ability.Description = CleanSimple(ability.Description);
             }
+            ability.Description = CleanSimple(ability.Description);
 
             foreach (var value in ability.DisplayedValues)
             {
