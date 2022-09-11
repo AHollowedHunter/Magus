@@ -108,9 +108,9 @@ namespace Magus.Data
             var collection = GetCollection<Patch>();
             var query = collection.AsQueryable().Where(x => x.PatchNumber.StartsWith(patch));
             if (!orderByDesc)
-                query.OrderBy(x => x.Timestamp);
+                query = query.OrderBy(x => x.Timestamp);
             else
-                query.OrderByDescending(x => x.Timestamp);
+                query = query.OrderByDescending(x => x.Timestamp);
             return await query.Take(limit).ToListAsync();
         }
 
@@ -133,9 +133,9 @@ namespace Magus.Data
             var collection = GetCollection<T>();
             var query = collection.AsQueryable().Where(x => x.Locale == locale && x.EntityId == entityId);
             if (!orderByDesc)
-                query.OrderBy(x => x.Timestamp);
+                query = query.OrderBy(x => x.Timestamp);
             else
-                query.OrderByDescending(x => x.Timestamp);
+                query = query.OrderByDescending(x => x.Timestamp);
             return await query.Take(limit).ToListAsync();
         }
 
@@ -169,9 +169,9 @@ namespace Magus.Data
             var collection = GetCollection<T>();
             var query = collection.AsQueryable().Where(x => x.Locale == locale);
             if (!orderByDesc)
-                query.OrderBy(x => x.Id);
+                query = query.OrderBy(x => x.Id);
             else
-                query.OrderByDescending(x => x.Id);
+                query = query.OrderByDescending(x => x.Id);
             return await query.Take(limit).ToListAsync();
         }
 
