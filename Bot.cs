@@ -5,7 +5,7 @@ using Magus.Bot.Attributes;
 using Magus.Bot.Services;
 using Magus.Common;
 using Magus.Data;
-using Magus.DataBuilder;
+//using Magus.DataBuilder;
 using Serilog;
 
 namespace Magus.Bot
@@ -14,8 +14,8 @@ namespace Magus.Bot
     {
         private static IConfiguration configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables(prefix: "MAGUS_")
-                .AddJsonFile("appsettings.json", optional: true)
                 .AddUserSecrets<Bot>()
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .Build();
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -50,12 +50,13 @@ namespace Magus.Bot
             await client.StartAsync();
 
             await client.SetGameAsync(name: "\"/magus help\"", type: ActivityType.Playing);
-
+            
             await Task.Delay(Timeout.Infinite);
         }
 
         static async Task RegisterModules()
         {
+            _logger.LogInformation("Registering Modules");
             var modules = new Dictionary<ModuleInfo, Location>();
             foreach (var module in _interactionService.Modules)
                 modules.Add(module, ((ModuleRegistration)module.Attributes.First(x => typeof(ModuleRegistration).IsAssignableFrom(x.GetType()))).Location);
@@ -72,10 +73,10 @@ namespace Magus.Bot
             //    await _interactionService.AddModulesToGuildAsync(guild, true, modules: modules.Where(x => x.Value == Location.TESTING).Select(x => x.Key).ToArray());
 
             // Register MANAGEMENT commands
-            foreach (var guild in configuration.GetSection("ManagementGuilds").Get<ulong[]>())
-                await _interactionService.AddModulesToGuildAsync(guild, true, modules: modules.Where(x => x.Value == Location.MANAGEMENT).Select(x => x.Key).ToArray());
+            //foreach (var guild in configuration.GetSection("ManagementGuilds").Get<ulong[]>())
+            //    await _interactionService.AddModulesToGuildAsync(guild, true, modules: modules.Where(x => x.Value == Location.MANAGEMENT).Select(x => x.Key).ToArray());
 
-            return;
+            _logger.LogInformation("Complete Module Registration");
         }
 
         static Task LogAsync(LogMessage message)
@@ -105,10 +106,10 @@ namespace Magus.Bot
                 .AddSingleton<CommandHandler>()
                 .AddSingleton(x => new HttpClient())
                 .AddSingleton<Services.IWebhook>(x => new DiscordWebhook())
-                .AddTransient<DotaUpdater>()
-                .AddTransient<PatchListUpdater>()
-                .AddTransient<EntityUpdater>()
-                .AddTransient<PatchNoteUpdater>()
+                //.AddTransient<DotaUpdater>()
+                //.AddTransient<PatchListUpdater>()
+                //.AddTransient<EntityUpdater>()
+                //.AddTransient<PatchNoteUpdater>()
                 .BuildServiceProvider();
 
         static bool IsDebug()

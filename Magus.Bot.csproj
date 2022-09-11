@@ -28,7 +28,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Magus.DataBuilder\Magus.DataBuilder.csproj" />
 		<ProjectReference Include="..\Magus.Data\Magus.Data.csproj" />
 	</ItemGroup>
 

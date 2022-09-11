@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Bot.Attributes;
+using Magus.Common;
 using Magus.Data;
 using System.Reflection;
 
@@ -11,21 +12,19 @@ namespace Magus.Bot.Modules
     public class MetaModule : ModuleBase
     {
         private readonly IAsyncDataService _db;
-        private readonly IConfiguration _config;
+        private readonly Configuration _config;
         private readonly ILogger<MetaModule> _logger;
 
         readonly string version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
 
-        string InviteLink => _config["BotInvite"];
-
-        public MetaModule(IAsyncDataService db, IConfiguration config, ILogger<MetaModule> logger)
+        public MetaModule(IAsyncDataService db, Configuration config, ILogger<MetaModule> logger)
         {
             _db = db;
             _config = config;
             _logger = logger;
         }
 
-        [SlashCommand("about", "About Me!")]
+        [SlashCommand("about", "Face the Magus!")]
         public async Task About()
         {
             var author = await Context.Client.GetUserAsync(240463688627126278);
@@ -43,7 +42,7 @@ namespace Magus.Bot.Modules
             response.AddField(new EmbedFieldBuilder() { Name = "Latest Patch", Value = latestPatch, IsInline = true });
             response.AddField(new EmbedFieldBuilder() { Name = "Total Guilds", Value = Context.Client.Guilds.Count(), IsInline = false });
 
-            var links = $"[Invite Link]({InviteLink})\n[MagusBot.xyz](https://magusbot.xyz)\n";
+            var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n";
             response.AddField(new EmbedFieldBuilder() { Name = "Links", Value = links, IsInline = false });
 
             await RespondAsync(embed: response.Build(), ephemeral: true);
@@ -52,7 +51,7 @@ namespace Magus.Bot.Modules
         [SlashCommand("invite", "Where shall I go next? Ultimyr University? Yama Raskav? Hmm.")]
         public async Task Invite()
         {
-            await RespondAsync(text: "Share me with your friends (or server admin) with my invite link!\n" + InviteLink);
+            await RespondAsync(text: "Share me with your friends (or server admin) with my invite link!\n" + _config.BotInvite);
         }
     }
 }
