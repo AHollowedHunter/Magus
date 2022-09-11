@@ -227,16 +227,17 @@ namespace Magus.DataBuilder
         private async Task StorePatchNoteEmbeds()
         {
             _logger.LogInformation("Converting Patch Notes to Embed records");
-            var generalPatchNotes = new List<GeneralPatchNoteEmbed>();
-            var heroPatchNotes    = new List<HeroPatchNoteEmbed>();
-            var itemPatchNotes    = new List<ItemPatchNoteEmbed>();
 
             // Following will need tweaking to use collections representing localised entity data from Magus.Data.Models.Dota
             // For now, while hero, ability, item etc. data is not procesed, use existing ...Info stored
 
+            EnsureIndexes();
             foreach (var localeMap in _sourceLocaleMappings)
                 foreach (var locale in localeMap.Value)
                 {
+                    var generalPatchNotes = new List<GeneralPatchNoteEmbed>();
+                    var heroPatchNotes    = new List<HeroPatchNoteEmbed>();
+                    var itemPatchNotes    = new List<ItemPatchNoteEmbed>();
                     var heroInfo = await _db.GetRecords<HeroInfoEmbed>(locale);
                     var abilityInfo = await _db.GetRecords<AbilityInfoEmbed>(locale);
                     var itemInfo = await _db.GetRecords<ItemInfoEmbed>(locale);
@@ -249,13 +250,11 @@ namespace Magus.DataBuilder
                         heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, _abilityValues, _sourceLocaleMappings));
                         itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, _sourceLocaleMappings));
                     }
+                    _logger.LogInformation("Updating Patch Notes in Database for {0}", locale);
+                    await _db.UpsertRecords(generalPatchNotes);
+                    await _db.UpsertRecords(heroPatchNotes);
+                    await _db.UpsertRecords(itemPatchNotes);
                 }
-
-            _logger.LogInformation("Updating Patch Notes in Database");
-            EnsureIndexes();
-            await _db.UpsertRecords(generalPatchNotes);
-            await _db.UpsertRecords(heroPatchNotes);
-            await _db.UpsertRecords(itemPatchNotes);
         }
 
         private void EnsureIndexes()

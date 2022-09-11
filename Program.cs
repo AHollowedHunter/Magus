@@ -9,8 +9,8 @@ namespace Magus.DataBuilder
     {
         private static IConfiguration configuration = new ConfigurationBuilder()
             .AddEnvironmentVariables(prefix: "MAGUS_")
-            .AddJsonFile("appsettings.json", optional: true)
             .AddUserSecrets<Program>()
+            .AddJsonFile("appsettings.json", optional: true)
             .Build();
 
         private static readonly ServiceProvider services = ConfigureServices();
