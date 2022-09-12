@@ -4,7 +4,6 @@
 		<Version>1.0.0-beta</Version>
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net6.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<UserSecretsId>b29c3c92-b66f-48b1-8c91-a83e5abdd038</UserSecretsId>
 	</PropertyGroup>

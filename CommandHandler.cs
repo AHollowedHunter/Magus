@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
+using System.Linq;
 using System.Reflection;
 
 namespace Magus.Bot
@@ -34,7 +35,7 @@ namespace Magus.Bot
             _interactions.ComponentCommandExecuted += ComponentCommandExecuted;
             _interactions.ModalCommandExecuted     += ModalCommandExecuted;
 
-            _logger.LogInformation("CommandHandler Initialised");
+            _logger.LogInformation("CommandHandler Initialised, {0} Modules registered: {1}", _interactions.Modules.Count, string.Join(", ", _interactions.Modules.Select(x => x.Name)));
         }
 
         private List<TypeInfo> GetEnabledModules()
