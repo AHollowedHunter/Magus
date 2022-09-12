@@ -25,6 +25,9 @@ namespace Magus.Data
         public static string TurnRateIcon        => BaseUrl + "images/dota_react/heroes/stats/icon_turn_rate.png";
         public static string VisionIcon          => BaseUrl + "images/dota_react/heroes/stats/icon_vision.png";
 
+        public static string DotaColourLogo => "https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/footer_logo.png";
+        public static string DotaWhiteLogo  => "https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/global/dota2_logo_horiz.png";
+
         public static string GetHeroUrl(string heroName)          => $"https://www.dota2.com/hero/{Regex.Replace(heroName.ToLower(), @"[^a-zA-Z0-9-']", string.Empty)}";
         public static string GetHeroImage(string internalName)    => $"{Hero}{internalName[14..]}.png";
         public static string GetAbilityImage(string internalName) => $"{Ability}{internalName}.png";
