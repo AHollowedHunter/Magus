@@ -49,7 +49,7 @@ namespace Magus.Bot.Modules
 
             var embed = new EmbedBuilder()
             {
-                Title = "/" + command.Name,
+                Title = "/" + command!.Name,
                 Description = command.Description,
                 Color = Color.DarkGreen,
                 Timestamp = versionDate,
