@@ -27,14 +27,12 @@ namespace Magus.Bot.Modules
         [SlashCommand("about", "Face the Magus!")]
         public async Task About()
         {
-            var author = await Context.Client.GetUserAsync(240463688627126278);
             var latestPatchNote = await _db.GetLatestPatch();
             var latestPatch = $"[{latestPatchNote.PatchNumber}](https://www.dota2.com/patches/{latestPatchNote.PatchNumber}) - <t:{latestPatchNote.Timestamp}:R>";
             var response = new EmbedBuilder()
             {
                 Title = "MagusBot",
                 Description = "A DotA 2 Discord bot",
-                //Author = new EmbedAuthorBuilder() { Name = "AHollowedHunter", Url = $"https://github.com/AHollowedHunter", IconUrl = "https://avatars.githubusercontent.com/u/45659989?v=4&s=48" },
                 Color = Color.Purple,
                 Footer = new() { Text = "Hot Damn!", IconUrl = Context.Client.CurrentUser.GetAvatarUrl() },
             };
@@ -52,6 +50,12 @@ namespace Magus.Bot.Modules
         public async Task Invite()
         {
             await RespondAsync(text: "Share me with your friends (or server admin) with my invite link!\n" + _config.BotInvite);
+        }
+
+        [SlashCommand("privacy", "Privacy Policy for MagusBot")]
+        public async Task Privacy()
+        {
+            await RespondAsync(text: "To view the privacy policy for MagusBot, please follow the link below:\n" + _config.BotPrivacyPolicy);
         }
     }
 }
