@@ -102,9 +102,9 @@ namespace Magus.DataBuilder.Extensions
                     name = Discord.Format.Bold(name);
 
                 if (ability.AbilityIsGrantedByScepter)
-                    name = Emotes.ScepterIcon + name;
+                    name = $"{Emotes.ScepterIcon}\u00A0{name}";
                 else if (ability.AbilityIsGrantedByShard)
-                    name = Emotes.ShardIcon + name;
+                    name = $"{Emotes.ShardIcon}\u00A0{name}";
 
                 abilityValues.Add(name);
             }
