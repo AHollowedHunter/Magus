@@ -992,7 +992,7 @@ namespace Magus.DataBuilder
             item.ItemInitialCharges   = kvItem.ParseChildValue<byte>("ItemInitialCharges");
             item.ItemInitialStockTime = kvItem.ParseChildValue<float>("ItemInitialStockTime");
             item.ItemIsNeutralDrop    = kvItem.ParseChildValue<bool>("ItemIsNeutralDrop");
-            item.ItemNeutralTier      = kvItem.ParseChildValue<byte>("ItemNeutralTier");
+            item.ItemNeutralTier      = _neutralItemTiers.FirstOrDefault(x => x.Key == item.InternalName).Value;
             item.ItemPurchasable      = kvItem.ParseChildValue<bool>("ItemPurchasable", true);
             item.ItemRecipe           = kvItem.ParseChildValue<bool>("ItemRecipe");
             //item.ItemRequirements   = kvItem.ParseChildValueList<string[]>("ItemRequirements");
@@ -1143,21 +1143,21 @@ namespace Magus.DataBuilder
         {
             _db.CreateCollection<HeroInfoEmbed>();
             await _db.EnsureIndex<HeroInfoEmbed>(x => x.Locale);
-            await _db.EnsureIndex<HeroInfoEmbed>(x => x.InternalName);
-            await _db.EnsureIndex<HeroInfoEmbed>(x => x.Name);
-            await _db.EnsureIndex<HeroInfoEmbed>(x => x.RealName!);
-            await _db.EnsureIndex<HeroInfoEmbed>(x => x.Aliases!);
+            await _db.EnsureIndex<HeroInfoEmbed>(x => x.InternalName, caseSensitive: false);
+            await _db.EnsureIndex<HeroInfoEmbed>(x => x.Name, caseSensitive: false);
+            await _db.EnsureIndex<HeroInfoEmbed>(x => x.RealName!, caseSensitive: false);
+            await _db.EnsureIndex<HeroInfoEmbed>(x => x.Aliases!, caseSensitive: false);
             Thread.Sleep(2000);
             _db.CreateCollection<AbilityInfoEmbed>();
             await _db.EnsureIndex<AbilityInfoEmbed>(x => x.Locale);
-            await _db.EnsureIndex<AbilityInfoEmbed>(x => x.InternalName);
-            await _db.EnsureIndex<AbilityInfoEmbed>(x => x.Name);
+            await _db.EnsureIndex<AbilityInfoEmbed>(x => x.InternalName, caseSensitive: false);
+            await _db.EnsureIndex<AbilityInfoEmbed>(x => x.Name, caseSensitive: false);
             Thread.Sleep(1000);
             _db.CreateCollection<ItemInfoEmbed>();
             await _db.EnsureIndex<ItemInfoEmbed>(x => x.Locale);
-            await _db.EnsureIndex<ItemInfoEmbed>(x => x.InternalName);
-            await _db.EnsureIndex<ItemInfoEmbed>(x => x.Name);
-            await _db.EnsureIndex<ItemInfoEmbed>(x => x.Aliases!);
+            await _db.EnsureIndex<ItemInfoEmbed>(x => x.InternalName, caseSensitive: false);
+            await _db.EnsureIndex<ItemInfoEmbed>(x => x.Name, caseSensitive: false);
+            await _db.EnsureIndex<ItemInfoEmbed>(x => x.Aliases!, caseSensitive: false);
         }
     }
 }

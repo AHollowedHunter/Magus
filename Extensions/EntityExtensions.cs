@@ -283,6 +283,8 @@ namespace Magus.DataBuilder.Extensions
 
             if (item.ItemPurchasable)
                 embed.Description = $"{Emotes.GoldIcon}\u00A0{Discord.Format.Bold(item.ItemCost.ToString())}\n\n";
+            if (item.ItemIsNeutralDrop)
+                embed.Description = $"**Tier {item.ItemNeutralTier}** Neutral Item\n\n";
             embed.Description += String.Join("\n", item.DisplayedValues.Select(x => x.Value));
 
             // Ability Properties

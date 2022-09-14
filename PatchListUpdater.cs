@@ -54,7 +54,7 @@ namespace Magus.DataBuilder
         {
             _logger.LogInformation("Saving Patch List in database");
             _db.CreateCollection<Patch>();
-            await _db.EnsureIndex<Patch>(x => x.PatchNumber, true);
+            await _db.EnsureIndex<Patch>(x => x.PatchNumber, true, caseSensitive: false);
             await _db.EnsureIndex<Patch>(x => x.Timestamp, true);
             await _db.UpsertRecords(patchList);
         }

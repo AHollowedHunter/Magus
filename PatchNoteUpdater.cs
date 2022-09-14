@@ -262,15 +262,15 @@ namespace Magus.DataBuilder
             _db.CreateCollection<GeneralPatchNoteEmbed>();
             _db.CreateCollection<HeroPatchNoteEmbed>();
             _db.CreateCollection<ItemPatchNoteEmbed>();
-            _db.EnsureIndex<GeneralPatchNoteEmbed>(x => x.PatchNumber);
-            _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.PatchNumber);
+            _db.EnsureIndex<GeneralPatchNoteEmbed>(x => x.PatchNumber, caseSensitive: false);
+            _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.PatchNumber, caseSensitive: false);
             _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.EntityId);
-            _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.Name);
-            _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.Aliases!);
-            _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.RealName!);
-            _db.EnsureIndex<ItemPatchNoteEmbed>(x => x.PatchNumber);
-            _db.EnsureIndex<ItemPatchNoteEmbed>(x => x.Name);
-            _db.EnsureIndex<ItemPatchNoteEmbed>(x => x.Aliases!);
+            _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.Name, caseSensitive: false);
+            _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.Aliases!, caseSensitive: false);
+            _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.RealName!, caseSensitive: false);
+            _db.EnsureIndex<ItemPatchNoteEmbed>(x => x.PatchNumber, caseSensitive: false);
+            _db.EnsureIndex<ItemPatchNoteEmbed>(x => x.Name, caseSensitive: false);
+            _db.EnsureIndex<ItemPatchNoteEmbed>(x => x.Aliases!, caseSensitive: false);
         }
 
         private PatchNote.Note MakeNote(KVObject kvObject, string language)
