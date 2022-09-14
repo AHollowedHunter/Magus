@@ -22,6 +22,7 @@ namespace Magus.Common
 
         public string BotInvite { get; set; }
         public string BotServer { get; set; }
+        public string BotPrivacyPolicy { get; set; }
 
         public class LocalisationConfig
         {
