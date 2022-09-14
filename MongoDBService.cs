@@ -237,16 +237,16 @@ namespace Magus.Data
         //                                  Builders<T>.Filter.ElemMatch(entity => entity.Aliases, alias => alias.StartsWith(entityName))));
 
         private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : INamedEntity, ILocaleRecord
-            => entity => entity.Locale == locale && (entity.Name!.Contains(entityName)
+            => entity => entity.Locale == locale && (entity.Name.ToLower().Contains(entityName.ToLower())
                                                                        || entity.RealName!.StartsWith(entityName)
                                                                        //|| entity.Aliases!.Any(alias => alias.StartsWith(entityName, StringComparison.InvariantCultureIgnoreCase))
-                                                                       || entity.InternalName!.Contains(entityName));
+                                                                       || entity.InternalName.Contains(entityName.ToLower()));
 
         private static Expression<Func<T, bool>> QueryPatchNoteEntityName<T>(string entityName, string patchNumber, string locale = IDatabaseService.DEFAULT_LOCALE) where T : EntityPatchNoteEmbed
-            => entity => entity.PatchNumber == patchNumber && entity.Locale == locale && (entity.Name!.Contains(entityName)
+            => entity => entity.PatchNumber == patchNumber && entity.Locale == locale && (entity.Name.ToLower().Contains(entityName.ToLower())
                                                                                           || entity.RealName!.StartsWith(entityName)
                                                                                           //|| entity.Aliases!.Any(alias => alias.StartsWith(entityName, StringComparison.InvariantCultureIgnoreCase))
-                                                                                          || entity.InternalName!.Contains(entityName));
+                                                                                          || entity.InternalName.Contains(entityName.ToLower()));
 
         private IEnumerable<WriteModel<T>> GetBulkReplaceRequest<T>(IEnumerable<T> records, bool isUpsert = false) where T : ISnowflakeRecord
         {
