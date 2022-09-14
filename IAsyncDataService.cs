@@ -10,7 +10,7 @@ namespace Magus.Data
         void CreateCollection<T>() where T : ISnowflakeRecord;
         Task DeleteCollection<T>() where T : ISnowflakeRecord;
         Task<bool> DeleteRecord<T>(ulong id) where T : ISnowflakeRecord;
-        Task<string> EnsureIndex<T>(Expression<Func<T, object>> field, bool unique = false) where T : ISnowflakeRecord;
+        Task<string> EnsureIndex<T>(Expression<Func<T, object>> field, bool unique = false, bool caseSensitive = true) where T : ISnowflakeRecord;
         Task<T> GetEntityInfo<T>(int entityId, string locale = "en-GB") where T : EntityInfoEmbed;
         Task<IEnumerable<T>> GetEntityInfo<T>(string entityName, string locale = "en-GB", int limit = int.MaxValue) where T : EntityInfoEmbed;
         Task<GeneralPatchNoteEmbed> GetGeneralPatchNote(string patchNumber, string locale = "en-GB");

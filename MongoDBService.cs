@@ -60,11 +60,17 @@ namespace Magus.Data
             return result.IsAcknowledged && result.DeletedCount == 1;
         }
 
-        public async Task<string> EnsureIndex<T>(Expression<Func<T, object>> field, bool unique = false) where T : ISnowflakeRecord
+        public async Task<string> EnsureIndex<T>(Expression<Func<T, object>> field, bool unique = false, bool caseSensitive = true) where T : ISnowflakeRecord
         {
             var collection = GetCollection<T>();
             var indexKeysDefinition = Builders<T>.IndexKeys.Ascending(field);
-            return await collection.Indexes.CreateOneAsync(new CreateIndexModel<T>(indexKeysDefinition, new() { Unique = unique }));
+            return await collection.Indexes.CreateOneAsync(new CreateIndexModel<T>(indexKeysDefinition,
+                                                                                   new()
+                                                                                   {
+                                                                                       Unique = unique,
+                                                                                       Collation = new Collation("simple",
+                                                                                                                 strength: caseSensitive ? CollationStrength.Tertiary : CollationStrength.Secondary)
+                                                                                   }));
         }
 
         public async Task<T> GetEntityInfo<T>(int entityId, string locale = "en-GB") where T : EntityInfoEmbed
