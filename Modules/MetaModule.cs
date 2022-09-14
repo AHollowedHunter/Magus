@@ -32,15 +32,16 @@ namespace Magus.Bot.Modules
             var response = new EmbedBuilder()
             {
                 Title = "MagusBot",
-                Description = "A DotA 2 Discord bot",
+                Description = "A DotA 2 focused Discord bot, providing distinct patch notes and information regarding DotA 2 heroes, abilities, and items.\n"
+                              + "New and improved features are constantly in development.",
                 Color = Color.Purple,
                 Footer = new() { Text = "Hot Damn!", IconUrl = Context.Client.CurrentUser.GetAvatarUrl() },
             };
             response.AddField(new EmbedFieldBuilder() { Name = "Version", Value = version, IsInline = true });
             response.AddField(new EmbedFieldBuilder() { Name = "Latest Patch", Value = latestPatch, IsInline = true });
-            response.AddField(new EmbedFieldBuilder() { Name = "Total Guilds", Value = Context.Client.Guilds.Count(), IsInline = false });
-
-            var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n";
+            response.AddField(new EmbedFieldBuilder() { Name = "Total Guilds", Value = Context.Client.Guilds.Count(), IsInline = true });
+            
+            var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n[Privacy Policy]({_config.BotPrivacyPolicy})\n";
             response.AddField(new EmbedFieldBuilder() { Name = "Links", Value = links, IsInline = false });
 
             await RespondAsync(embed: response.Build(), ephemeral: true);
