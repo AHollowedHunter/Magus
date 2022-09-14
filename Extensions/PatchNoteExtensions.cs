@@ -20,7 +20,7 @@ namespace Magus.DataBuilder.Extensions
                 Url          = _patchUrlBase + patch.PatchName,
                 ColorRaw     = Color.DarkRed,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
-                ThumbnailUrl = $"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/footer_logo.png",
+                ThumbnailUrl = DotaUrls.DotaColourLogo,
                 Footer       = new() { Text = "Patch " + patch.PatchName },
             };
             var fields = new List<Field>();
