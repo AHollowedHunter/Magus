@@ -49,7 +49,7 @@ namespace Magus.Bot
             await client.LoginAsync(TokenType.Bot, configuration["BotToken"]);
             await client.StartAsync();
 
-            await client.SetGameAsync(name: "\"/magus help\"", type: ActivityType.Playing);
+            await client.SetGameAsync(name: "/magus invite", type: ActivityType.Playing);
             
             await Task.Delay(Timeout.Infinite);
         }
