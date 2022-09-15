@@ -12,7 +12,7 @@ namespace Magus.Bot.Modules
     public abstract class ModuleBase : InteractionModuleBase<SocketInteractionContext> // InteractionService will log a warning "not public" (as of v3.8) as the class is abstract. Ignore
     {
         readonly string version             = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
-        readonly DateTimeOffset versionDate = DateTimeOffset.UtcNow;
+        readonly DateTimeOffset versionDate = DateTimeOffset.Parse("2022-09-15T21:15:00Z"); // improve this
 
         protected ModuleBase()
         {
@@ -72,6 +72,8 @@ namespace Magus.Bot.Modules
                     if (option.Type == ApplicationCommandOptionType.SubCommand)
                     {
                         value += $"Try it: </{command.Name} {option.Name}:{command.Id}>\n";
+                        foreach (var parameter in option.Options)
+                            value += $"`{parameter.Name}` - {parameter.Description}\n";
                     }
                     else
                     {
@@ -81,6 +83,8 @@ namespace Magus.Bot.Modules
                             {
                                 var fullCommand = $"{command.Name} {option.Name} {optionLevelTwo.Name}";
                                 value += $"**/{fullCommand}**\n*{optionLevelTwo.Description}*\nTry it: </{fullCommand}:{command.Id}>\n";
+                                foreach (var parameter in optionLevelTwo.Options)
+                                    value += $"`{parameter.Name}` - {parameter.Description}\n";
                             }
                         }
                     }
