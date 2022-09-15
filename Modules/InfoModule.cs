@@ -19,8 +19,8 @@ namespace Magus.Bot.Modules
         }
 
         [SlashCommand("hero", "🎶 I need a hero 🎶")]
-        public async Task InfoHero([Autocomplete(typeof(HeroAutocompleteHandler))] string name,
-                                   [Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
+        public async Task InfoHero([Summary(description: "The heroes name to lookup")][Autocomplete(typeof(HeroAutocompleteHandler))] string name,
+                                   [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).First();
 
@@ -28,8 +28,8 @@ namespace Magus.Bot.Modules
         }
 
         [SlashCommand("ability", "Ahh. How does this one work?")]
-        public async Task InfoAbility([Autocomplete(typeof(AbilityAutocompleteHandler))] string name,
-                                      [Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
+        public async Task InfoAbility([Summary(description: "The abilities name to lookup")][Autocomplete(typeof(AbilityAutocompleteHandler))] string name,
+                                      [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             var abilityInfo = (await _db.GetEntityInfo<AbilityInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).First();
 
@@ -37,8 +37,8 @@ namespace Magus.Bot.Modules
         }
 
         [SlashCommand("item", "Living in a material world")]
-        public async Task InfoItem([Autocomplete(typeof(ItemAutocompleteHandler))] string name,
-                                   [Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
+        public async Task InfoItem([Summary(description: "The items name to lookup")][Autocomplete(typeof(ItemAutocompleteHandler))] string name,
+                                   [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             var itemInfo = (await _db.GetEntityInfo < ItemInfoEmbed >(name, locale ?? Context.Interaction.UserLocale, 1)).First();
 

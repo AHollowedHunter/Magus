@@ -21,8 +21,8 @@ namespace Magus.Bot.Modules
         }
 
         [SlashCommand("notes", "Knowledge 📚")]
-        public async Task PatchNotes([Autocomplete(typeof(PatchAutocompleteHandler))] string number,
-                                     [Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
+        public async Task PatchNotes([Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string number,
+                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             var patchNote = await _db.GetGeneralPatchNote(number, locale ?? Context.Interaction.UserLocale);
             if (patchNote == null)
@@ -34,9 +34,9 @@ namespace Magus.Bot.Modules
         }
 
         [SlashCommand("item", "NullReferenceException Talisman")]
-        public async Task PatchItem([Autocomplete(typeof(ItemAutocompleteHandler))] string name,
-                                    [Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
-                                    [Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
+        public async Task PatchItem([Summary(description: "The item's name to lookup")][Autocomplete(typeof(ItemAutocompleteHandler))] string name,
+                                    [Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
+                                    [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             var embeds = new List<Discord.Embed>();
             IEnumerable<ItemPatchNoteEmbed> patchNotes;
@@ -64,9 +64,9 @@ namespace Magus.Bot.Modules
         }
 
         [SlashCommand("hero", "🎶 I need a hero 🎶")]
-        public async Task PatchHero([Autocomplete(typeof(HeroAutocompleteHandler))] string name,
-                                    [Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
-                                    [Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
+        public async Task PatchHero([Summary(description: "The heroes name to lookup")][Autocomplete(typeof(HeroAutocompleteHandler))] string name,
+                                    [Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
+                                    [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             IEnumerable<HeroPatchNoteEmbed> patchNotes;
             if (patch == null)
