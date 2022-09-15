@@ -605,7 +605,9 @@ namespace Magus.DataBuilder
                 foreach (var valueKey in shardValueKeys.AsEnumerable())
                 {
                     var value = ability.ShardValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                    value ??= ability.ShardValues.FirstOrDefault(x => x.Name == valueKey.Value.Replace("bonus_", "", StringComparison.OrdinalIgnoreCase))?.Values;
                     value ??= GetAbilityProperty(valueKey.Value, ability);
+                    value ??= GetAbilityProperty(valueKey.Value.Replace("bonus_", "", StringComparison.OrdinalIgnoreCase), ability);
                     if (value == null || value?.Count == 0)
                         value = ability.ShardValues.FirstOrDefault(x => x.Name.Equals(valueKey.Value, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().ToList();
                     if (value != null)
@@ -637,7 +639,9 @@ namespace Magus.DataBuilder
                 foreach (var valueKey in scepterValueKeys.AsEnumerable())
                 {
                     var value = ability.ScepterValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                    value ??= ability.ScepterValues.FirstOrDefault(x => x.Name == valueKey.Value.Replace("bonus_", "", StringComparison.OrdinalIgnoreCase))?.Values;
                     value ??= GetAbilityProperty(valueKey.Value, ability);
+                    value ??= GetAbilityProperty(valueKey.Value.Replace("bonus_", "", StringComparison.OrdinalIgnoreCase), ability);
                     if (value == null || value?.Count == 0)
                         value = ability.ScepterValues.FirstOrDefault(x => x.Name.Equals(valueKey.Value, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().ToList();
                     if (value != null)
