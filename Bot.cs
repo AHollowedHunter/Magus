@@ -56,15 +56,12 @@ namespace Magus.Bot
 
             // Here we can initialize the service that will register and execute our commands
             await services.GetRequiredService<CommandHandler>().InitializeAsync();
+            await services.GetRequiredService<TIService>().Initialise();
+            await host.StartAsync(); // Start now, after initial scheduled tasks have had a chance to be registered, for RunOnceAtStart
 
             await client.LoginAsync(TokenType.Bot, configuration["BotToken"]);
             await client.StartAsync();
-
             await client.SetGameAsync(name: "/magus invite", type: ActivityType.Playing);
-
-            services.GetRequiredService<TIService>().Initialise();
-
-            await host.StartAsync(); // Start now, after initial scheduled tasks have had a chance to be registered, for RunOnceAtStart
             await Task.Delay(Timeout.Infinite);
         }
 
