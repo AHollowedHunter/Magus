@@ -8,6 +8,7 @@ using Magus.Data.Models.Embeds;
 using Magus.Data.Models.OpenDota;
 using SteamWebAPI2.Utilities;
 using SteamWebAPI2.Interfaces;
+using System.Text.Json.Serialization;
 
 namespace Magus.Bot.Services
 {
@@ -39,6 +40,8 @@ namespace Magus.Bot.Services
 
         public IEnumerable<Match> LongestMatches { get; private set; }
         public IEnumerable<Match> ShortestMatches { get; private set; }
+
+        public IDictionary<string, (int Kills, int Deaths, int Assists)> HeroTotalKDA { get; private set; }
 
         public TIService(IAsyncDataService db, IScheduler scheduler, HttpClient httpClient, ILogger<TIService> logger, Configuration config)
         {
@@ -81,7 +84,7 @@ namespace Magus.Bot.Services
         }
 
         private void ScheduleUpdateStats() => _scheduler.ScheduleAsync(UpdateStats)
-                                                        .EveryFifteenMinutes()
+                                                        .EveryFiveMinutes()
                                                         .RunOnceAtStart();
 
         public async Task UpdateStats()
@@ -89,7 +92,22 @@ namespace Magus.Bot.Services
             try
             {
                 //var matches = await _httpClient.GetFromJsonAsync<List<Match>>($"https://api.opendota.com/api/leagues/{TI2022_ID}/matches");
-                var matches = await _httpClient.GetFromJsonAsync<List<Match>>($"https://api.opendota.com/api/leagues/{arlingtonMajorID}/matches");
+                //var matches = await _httpClient.GetFromJsonAsync<List<Match>>($"https://api.opendota.com/api/leagues/{arlingtonMajorID}/matches");
+                var leagueMatchIdQuery = $"SELECT+match_id+FROM+matches+WHERE+leagueid+%3D+{arlingtonMajorID}";
+                var matchList = await _httpClient.GetFromJsonAsync<MatchList>($"https://api.opendota.com/api/explorer?sql={leagueMatchIdQuery}");
+                // Need to parse match IDs and retrieve + store each. Remove any stored if not in recent check
+                var matches = await _db.GetRecords<Match>() as List<Match>;
+                var newMatches = new List<Match>();
+                foreach (var match in matchList.Rows.Where(x => !matches?.Any(match => match.MatchId == x.MatchId) ?? true).Take(10))
+                {
+                    _logger.LogDebug("Adding matchid {0}", match.MatchId);
+                    newMatches.Add(await _httpClient.GetFromJsonAsync<Match>($"https://api.opendota.com/api/matches/{match.MatchId}"));
+                }
+                if (newMatches.Count > 0)
+                {
+                    await _db.InsertRecords(newMatches);
+                    matches.AddRange(newMatches);
+                }
 
                 HeroPickCount = GetTotalPicksBans(matches);
                 HeroBanCount  = GetTotalPicksBans(matches, false);
@@ -102,7 +120,7 @@ namespace Magus.Bot.Services
                 var leastBanned = HeroBanCount.Where(x => x.Value == HeroBanCount.Values.Min() && !IgnoredHeroes.Contains(x.Key));
 
                 MostPickedHero  = new HeroesCount(mostPicked.Select(x=> x.Key).ToArray(), mostPicked.First().Value);
-                LeastPickedHero = new HeroesCount(leastPicked.Select(x=> x.Key).ToArray(), leastPicked.First().Value);
+                LeastPickedHero = new HeroesCount(leastPicked.Select(x => x.Key).ToArray(), leastPicked.First().Value);
                 MostBannedHero  = new HeroesCount(mostBanned.Select(x => x.Key).ToArray(), mostBanned.First().Value);
                 LeastBannedHero = new HeroesCount(leastBanned.Select(x => x.Key).ToArray(), leastBanned.First().Value);
 
@@ -125,9 +143,25 @@ namespace Magus.Bot.Services
                 foreach (var player in mostKills)
                     mostKillsPlayer += player.AccountId + " ";
 
-                var heroDeathCounts = matches.SelectMany(x=> x.Teamfights)
-                                         .SelectMany(x => x.Players)
-                                         .Select(x => x.Deaths);
+
+                var heroKDA = new Dictionary<string, (int Kills, int Deaths, int Assists)>();
+                foreach (var hero in HeroNames)
+                {
+                    var kills = matches.SelectMany(x => x.Players)
+                                   .Where(x => x.HeroId == hero.Key)
+                                   .Select(x => x.Kills)
+                                   .Sum();
+                    var deaths = matches.SelectMany(x => x.Players)
+                                   .Where(x => x.HeroId == hero.Key)
+                                   .Select(x => x.Deaths)
+                                   .Sum();
+                    var assists = matches.SelectMany(x => x.Players)
+                                   .Where(x => x.HeroId == hero.Key)
+                                   .Select(x => x.Assists)
+                                   .Sum();
+                    heroKDA.Add(hero.Value, (kills, deaths, assists));
+                }
+                HeroTotalKDA = heroKDA;
 
                 _logger.LogDebug("Updated TI Match Stats");
             }
@@ -177,6 +211,18 @@ namespace Magus.Bot.Services
                 public int prize_pool { get; set; }
                 public int league_id { get; set; }
                 public int status { get; set; }
+            }
+        }
+
+        public struct MatchList
+        {
+            [JsonPropertyName("rows")]
+            public IList<Match> Rows { get; set; }
+
+            public struct Match
+            {
+                [JsonPropertyName("match_id")]
+                public ulong MatchId { get; set; }
             }
         }
 
