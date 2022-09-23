@@ -83,7 +83,7 @@ namespace Magus.Data
         public async Task<IEnumerable<T>> GetEntityInfo<T>(string entityName, string locale = "en-GB", int limit = int.MaxValue) where T : EntityInfoEmbed
         {
             var collection = GetCollection<T>();
-            return await collection.AsQueryable().Where(QueryLocaleEntityName<T>(entityName, locale)).Take(limit).ToListAsync();
+            return await collection.AsQueryable().Where(QueryLocaleEntityName<T>(entityName, locale)).OrderBy(x => x.InternalName).Take(limit).ToListAsync();
             //var query = QueryLocaleEntityNamex<T>(entityName, locale);
             //var result = await collection.FindAsync(query);
             //return await result.ToListAsync();
@@ -148,7 +148,7 @@ namespace Magus.Data
         public async Task<IEnumerable<T>> GetPatchNotes<T>(string entityName, string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
         {
             var collection = GetCollection<T>();
-            var query = collection.AsQueryable().Where(QueryLocaleEntityName<T>(entityName, locale));
+            var query = collection.AsQueryable().Where(QueryLocaleEntityName<T>(entityName, locale)).OrderBy(x => x.InternalName);
             if (!orderByDesc)
                 query = query.OrderBy(x => x.Timestamp);
             else
@@ -237,15 +237,15 @@ namespace Magus.Data
         //                                  Builders<T>.Filter.ElemMatch(entity => entity.Aliases, alias => alias.StartsWith(entityName))));
 
         private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : INamedEntity, ILocaleRecord
-            => entity => entity.Locale == locale && (entity.Name.ToLower().Contains(entityName.ToLower())
-                                                                       || entity.RealName!.StartsWith(entityName)
-                                                                       //|| entity.Aliases!.Any(alias => alias.StartsWith(entityName, StringComparison.InvariantCultureIgnoreCase))
-                                                                       || entity.InternalName.Contains(entityName.ToLower()));
+            => entity => entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
+                                                     || entity.Name.ToLower().Contains(entityName.ToLower())
+                                                     || entity.RealName!.ToLower().StartsWith(entityName.ToLower())
+                                                     || entity.InternalName.Contains(entityName.ToLower()));
 
         private static Expression<Func<T, bool>> QueryPatchNoteEntityName<T>(string entityName, string patchNumber, string locale = IDatabaseService.DEFAULT_LOCALE) where T : EntityPatchNoteEmbed
-            => entity => entity.PatchNumber == patchNumber && entity.Locale == locale && (entity.Name.ToLower().Contains(entityName.ToLower())
-                                                                                          || entity.RealName!.StartsWith(entityName)
-                                                                                          //|| entity.Aliases!.Any(alias => alias.StartsWith(entityName, StringComparison.InvariantCultureIgnoreCase))
+            => entity => entity.PatchNumber == patchNumber && entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
+                                                                                          || entity.Name.ToLower().Contains(entityName.ToLower())
+                                                                                          || entity.RealName!.ToLower().StartsWith(entityName.ToLower())
                                                                                           || entity.InternalName.Contains(entityName.ToLower()));
 
         private IEnumerable<WriteModel<T>> GetBulkReplaceRequest<T>(IEnumerable<T> records, bool isUpsert = false) where T : ISnowflakeRecord
