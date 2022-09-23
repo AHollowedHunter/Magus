@@ -669,6 +669,10 @@ namespace Magus.DataBuilder
                 {
                     var value = ability.AbilityValues.FirstOrDefault(x => x.Name == bonusValueKey.Value)?.Values;
                     value ??= GetAbilityProperty(bonusValueKey.Value, ability);
+                    if (value == null && ability.AbilityIsGrantedByScepter)
+                        value = ability.ScepterValues.FirstOrDefault(x => x.Name == bonusValueKey.Value)?.Values;
+                    if (value == null && ability.AbilityIsGrantedByShard)
+                        value = ability.ShardValues.FirstOrDefault(x => x.Name == bonusValueKey.Value)?.Values;
                     if (value != null)
                     {
                         var formattedValue = Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
