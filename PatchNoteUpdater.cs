@@ -64,15 +64,15 @@ namespace Magus.DataBuilder
                 _logger.LogDebug("Processing values for {0}", language.Key);
                 var localePatchNotes = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetPatchNotes(language.Key), _httpClient);
                 foreach (var note in localePatchNotes)
-                    _patchNoteValues.Add((language.Key, note.Name), CleanLocaleValue(note.Value.ToString() ?? ""));
+                    _patchNoteValues.TryAdd((language.Key, note.Name), CleanLocaleValue(note.Value.ToString() ?? ""));
 
                 var dota = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetDota(language.Key), _httpClient);
                 foreach (var note in dota.Children.First(x => x.Name == "Tokens"))
-                    _dotaValues.Add((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
+                    _dotaValues.TryAdd((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
 
                 var abilities = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetAbilities(language.Key), _httpClient);
                 foreach (var note in abilities.Children.First(x => x.Name == "Tokens"))
-                    _abilityValues.Add((language.Key, note.Name.ToLower()), note.Value.ToString() ?? "");
+                    _abilityValues.TryAdd((language.Key, note.Name.ToLower()), note.Value.ToString() ?? "");
             }
 
             _logger.LogInformation("Finished setting Patch Note values");

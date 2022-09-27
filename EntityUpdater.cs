@@ -88,13 +88,13 @@ namespace Magus.DataBuilder
                 var heroLore  = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetHeroLore(language.Key), _httpClient);
 
                 foreach (var note in abilities.Children.First(x => x.Name == "Tokens"))
-                    _abilityValues.Add((language.Key, note.Name.ToLower()), note.Value.ToString() ?? "");
+                    _abilityValues.TryAdd((language.Key, note.Name.ToLower()), note.Value.ToString() ?? "");
 
                 foreach (var note in dota.Children.First(x => x.Name == "Tokens"))
-                    _dotaValues.Add((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
+                    _dotaValues.TryAdd((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
 
                 foreach (var note in heroLore.Children.First(x => x.Name == "Tokens"))
-                    _heroLoreValues.Add((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
+                    _heroLoreValues.TryAdd((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
             }
             _logger.LogInformation("Finished setting Entity values");
         }
