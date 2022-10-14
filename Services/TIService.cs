@@ -100,7 +100,7 @@ namespace Magus.Bot.Services
                 var liveTIGames     = liveLeagueGames.Data.Where(x => x.LeagueId == TI2022_ID).ToList();
 
                 var liveGameList = new List<LiveGame>();
-                foreach (var game in liveGames)
+                foreach (var game in liveTIGames)
                 {
                     if (game.Scoreboard == null)
                         continue;

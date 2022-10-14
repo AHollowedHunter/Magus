@@ -54,6 +54,7 @@ namespace Magus.Bot.Modules
                 Color        = Color.Gold,
                 ThumbnailUrl = DotaUrls.DotaColourLogo,
             };
+
             foreach (var game in _tiService.LiveGames)
             {
                 var gameField = new EmbedFieldBuilder();
@@ -67,12 +68,14 @@ namespace Magus.Bot.Modules
                 gameField.Value = value;
                 embed.AddField(gameField);
             }
+            if (!_tiService.LiveGames.Any())
+                embed.Description = "No live games right now.\nCheck the schedule here: https://www.dota2.com/esports/ti11/schedule";
 
             await RespondAsync(embed: embed.Build());
         }
 
 
-        [SlashCommand("match-stats", "Get current TI Match Stats")]
+        //[SlashCommand("match-stats", "Get current TI Match Stats")]
         public async Task MatchStats()
         {
             var longMatches = string.Empty;
@@ -98,7 +101,7 @@ namespace Magus.Bot.Modules
             await RespondAsync(embed: embed.Build());
         }
 
-        [SlashCommand("hero-stats", "Get current TI Match Stats")]
+        //[SlashCommand("hero-stats", "Get current TI Match Stats")]
         public async Task HeroStats()
         {
             var mostKillsHero   = _tiService.HeroTotalKDA.First(x => x.Value.Kills == _tiService.HeroTotalKDA.Select(x => x.Value.Kills).Max());
