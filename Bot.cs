@@ -1,10 +1,13 @@
-﻿using Discord;
+﻿using Coravel;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
 using Magus.Common;
 using Magus.Data;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 //using Magus.DataBuilder;
 using Serilog;
 
@@ -14,7 +17,7 @@ namespace Magus.Bot
     {
         private static IConfiguration configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables(prefix: "MAGUS_")
-                .AddUserSecrets<Bot>()
+                .AddUserSecrets<Bot>(optional: true, reloadOnChange: true)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .Build();
 
@@ -25,12 +28,17 @@ namespace Magus.Bot
 
         static void Main(string[] args)
         {
-            RunAsync().GetAwaiter().GetResult();
+            using IHost host = Host.CreateDefaultBuilder()
+                .ConfigureLogging((context, logging) => logging.ClearProviders())
+                .ConfigureServices((_, serviceCollection) => ConfigureServices(serviceCollection))
+                .Build();
+
+            RunAsync(host).GetAwaiter().GetResult();
         }
 
-        static async Task RunAsync()
+        static async Task RunAsync(IHost host)
         {
-            using var services  = ConfigureServices();
+            var services        = host.Services;
             var client          = services.GetRequiredService<DiscordSocketClient>();
             _interactionService = services.GetRequiredService<InteractionService>();
             _logger             = services.GetRequiredService<ILogger<Bot>>();
@@ -43,14 +51,17 @@ namespace Magus.Bot
             else
                 client.Ready += RegisterModules;
 
+            client.JoinedGuild += async (SocketGuild guild) => await JoinedGuild(guild);
+            client.LeftGuild   += async (SocketGuild guild) => await LeftGuild(guild);
+
             // Here we can initialize the service that will register and execute our commands
             await services.GetRequiredService<CommandHandler>().InitializeAsync();
+            await services.GetRequiredService<TIService>().Initialise();
+            await host.StartAsync(); // Start now, after initial scheduled tasks have had a chance to be registered, for RunOnceAtStart
 
             await client.LoginAsync(TokenType.Bot, configuration["BotToken"]);
             await client.StartAsync();
-
-            await client.SetGameAsync(name: "/magus invite", type: ActivityType.Playing);
-            
+            await client.SetGameAsync(name: "/ti live ", type: ActivityType.Competing);
             await Task.Delay(Timeout.Infinite);
         }
 
@@ -79,6 +90,16 @@ namespace Magus.Bot
             _logger.LogInformation("Complete Module Registration");
         }
 
+        static async Task JoinedGuild(SocketGuild guild)
+        {
+            _logger.LogInformation("Added to guild Name: {0} ID: {1} Members: {3}, at {4}", guild.Name, guild.Id, guild.MemberCount, guild.CurrentUser.JoinedAt);
+        }
+
+        static async Task LeftGuild(SocketGuild guild)
+        {
+            _logger.LogInformation("Removed from guild Name: {0} ID: {1} Members: {3}, at {4}", guild.Name, guild.Id, guild.MemberCount, DateTimeOffset.UtcNow);
+        }
+
         static Task LogAsync(LogMessage message)
         {
             var severity = message.Severity switch
@@ -95,22 +116,24 @@ namespace Magus.Bot
             return Task.CompletedTask;
         }
 
-        static ServiceProvider ConfigureServices()
-            => new ServiceCollection()
+        static IServiceCollection ConfigureServices(IServiceCollection serviceCollection)
+            => serviceCollection
                 .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
                 .AddSingleton(configuration)
                 .AddSingleton(x => new Configuration(configuration))
                 .AddSingleton<IAsyncDataService, MongoDBService>()
-                .AddSingleton(new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GatewayIntents.AllUnprivileged }))
+                .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GatewayIntents.AllUnprivileged }))
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .AddSingleton<CommandHandler>()
                 .AddSingleton(x => new HttpClient())
+                //.AddHttpClient()
                 .AddSingleton<Services.IWebhook>(x => new DiscordWebhook())
                 //.AddTransient<DotaUpdater>()
                 //.AddTransient<PatchListUpdater>()
                 //.AddTransient<EntityUpdater>()
                 //.AddTransient<PatchNoteUpdater>()
-                .BuildServiceProvider();
+                .AddScheduler()
+                .AddSingleton<TIService>();
 
         static bool IsDebug()
         {
