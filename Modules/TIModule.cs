@@ -12,7 +12,7 @@ using System.Net.Http.Json;
 namespace Magus.Bot.Modules
 {
     [Group("ti", "The International commands")]
-    [ModuleRegistration(Location.TESTING)]
+    [ModuleRegistration(Location.GLOBAL)]
     public sealed class TIModule : ModuleBase
     {
         private readonly IAsyncDataService _db;
