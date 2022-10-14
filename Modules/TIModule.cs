@@ -6,6 +6,7 @@ using Magus.Common;
 using Magus.Data;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.OpenDota;
+using Steam.Models;
 using System.Net.Http.Json;
 
 namespace Magus.Bot.Modules
@@ -42,6 +43,34 @@ namespace Magus.Bot.Modules
             };
             await RespondAsync(embed: embed.Build());
         }
+
+        [SlashCommand("live", "Get live games")]
+        public async Task LiveGames()
+        {
+            var embed = new EmbedBuilder()
+            {
+                Title        = "The International 2022 Live Games",
+                Timestamp    = DateTimeOffset.UtcNow,
+                Color        = Color.Gold,
+                ThumbnailUrl = DotaUrls.DotaColourLogo,
+            };
+            foreach (var game in _tiService.LiveGames)
+            {
+                var gameField = new EmbedFieldBuilder();
+                gameField.Name = $"{game.RadiantTeam?.TeamName ?? "[UNKNOWN]"} vs {game.DireTeam?.TeamName ?? "[UNKNOWN]"}";
+
+                var value = $"Duration:\u2007**{game.Duration.ToString(@"mm\:ss")}**{Emotes.Spacer}*(Stream Delay:\u2007{game.StreamDelaySeconds.TotalSeconds}s)*\n"
+                            + $"Score:\u2007||**{game.Scores.Radiant}\u00A0-\u00A0{game.Scores.Dire}**||{Emotes.Spacer}"
+                            + (game.SeriesWins.Radiant > 0 || game.SeriesWins.Dire > 0 ? $"Series Wins:\u2007**||{game.SeriesWins.Radiant}\u00A0-\u00A0{game.SeriesWins.Dire}||**\n" : "\n")
+                            + $"Match ID:\u2007{game.MatchId}";
+
+                gameField.Value = value;
+                embed.AddField(gameField);
+            }
+
+            await RespondAsync(embed: embed.Build());
+        }
+
 
         [SlashCommand("match-stats", "Get current TI Match Stats")]
         public async Task MatchStats()
@@ -89,7 +118,7 @@ namespace Magus.Bot.Modules
             await RespondAsync(embed: embed.Build());
         }
 
-        [SlashCommand("test", "testing")]
+        //[SlashCommand("test", "testing")]
         public async Task test()
         {
             await RespondAsync("Processing...");
