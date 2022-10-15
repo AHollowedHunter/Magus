@@ -84,7 +84,7 @@ namespace Magus.Data.Models.OpenDota
         [JsonPropertyName("dire_team")]
         public Team DireTeam { get; set; }
         [JsonPropertyName("players")]
-        public Player[] Players { get; set; }
+        public MatchPlayer[] Players { get; set; }
         [JsonPropertyName("patch")]
         public long Patch { get; set; }
         [JsonPropertyName("region")]

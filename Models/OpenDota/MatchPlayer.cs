@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.OpenDota
 {
-    public sealed record Player
+    public sealed record MatchPlayer
     {
         [JsonPropertyName("match_id")]
         public long MatchId { get; set; }
@@ -140,7 +140,7 @@ namespace Magus.Data.Models.OpenDota
         [JsonPropertyName("pred_vict")]
         public bool PredVict { get; set; }
         [JsonPropertyName("purchase")]
-        public Dictionary<string, long> Purchase { get; set; }
+        public Dictionary<string, int> Purchase { get; set; }
         [JsonPropertyName("purchase_log")]
         public PurchaseLog[] PurchaseLog { get; set; }
         [JsonPropertyName("randomed")]
