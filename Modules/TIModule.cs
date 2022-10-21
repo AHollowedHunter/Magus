@@ -60,7 +60,7 @@ namespace Magus.Bot.Modules
                 var gameField = new EmbedFieldBuilder();
                 gameField.Name = $"{game.RadiantTeam?.TeamName ?? "[UNKNOWN]"} vs {game.DireTeam?.TeamName ?? "[UNKNOWN]"}";
 
-                var value = $"Duration:\u2007**{game.Duration.ToString(@"mm\:ss")}**{Emotes.Spacer}*(Stream Delay:\u2007{game.StreamDelaySeconds.TotalSeconds}s)*\n"
+                var value = $"Duration:\u2007**{game.Duration.ToString(@"h\:mm\:ss")}**{Emotes.Spacer}*(Stream Delay:\u2007{game.StreamDelaySeconds.TotalSeconds}s)*\n"
                             + $"Score:\u2007||**{game.Scores.Radiant}\u00A0-\u00A0{game.Scores.Dire}**||{Emotes.Spacer}"
                             + (game.SeriesWins.Radiant > 0 || game.SeriesWins.Dire > 0 ? $"Series Wins:\u2007**||{game.SeriesWins.Radiant}\u00A0-\u00A0{game.SeriesWins.Dire}||**\n" : "\n")
                             + $"Match ID:\u2007{game.MatchId}";
