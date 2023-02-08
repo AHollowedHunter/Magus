@@ -711,7 +711,7 @@ namespace Magus.DataBuilder
             hero.InternalName = kvhero.Name;
             hero.Language     = language;
             hero.Id           = kvhero.ParseChildValue<int>("HeroID");
-            hero.Name         = GetHeroValue(language, hero.InternalName);
+            hero.Name         = GetHeroValue(language, hero.InternalName, isName: true);
             hero.NameAliases  = kvhero.ParseChildValueList<string>("NameAliases");
             hero.Bio          = GetHeroValue(language, hero.InternalName, "bio");
             hero.Hype         = GetHeroValue(language, hero.InternalName, "hype");
@@ -873,22 +873,23 @@ namespace Magus.DataBuilder
             return notes;
         }
 
-        private string GetHeroValue(string language, string internalName, string? postfix = null)
+        private string GetHeroValue(string language, string internalName, string? postfix = null, bool isName = false)
         {
-            var key = (language, Key: $"{internalName}{(postfix != null ? $"_{postfix}" : "")}".ToLower());
-            if (_dotaValues.ContainsKey(key))
+            var key = $"{internalName}{(postfix != null ? $"_{postfix}" : "")}{(isName ? ":n" : null)}".ToLower();
+            var localeKey = (language, Key:key);
+            if (_dotaValues.ContainsKey(localeKey))
             {
-                return _dotaValues[key];
+                return _dotaValues[localeKey];
             }
-            else if (_heroLoreValues.ContainsKey(key))
+            else if (_heroLoreValues.ContainsKey(localeKey))
             {
-                return _heroLoreValues[key];
+                return _heroLoreValues[localeKey];
             }
             else
             {
-                if (!_dotaValues.TryGetValue((_sourceDefaultLanguage, key.Key), out var value))
+                if (!_dotaValues.TryGetValue((_sourceDefaultLanguage, localeKey.Key), out var value))
                 {
-                    _heroLoreValues.TryGetValue((_sourceDefaultLanguage, key.Key), out value);
+                    _heroLoreValues.TryGetValue((_sourceDefaultLanguage, localeKey.Key), out value);
                 }
                 return value ?? "";
             }
