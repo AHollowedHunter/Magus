@@ -6,7 +6,6 @@ using Magus.Bot.Attributes;
 using Magus.Bot.Services;
 using Magus.Common;
 using Magus.Data;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 //using Magus.DataBuilder;
 using Serilog;
@@ -20,6 +19,8 @@ namespace Magus.Bot
                 .AddUserSecrets<Bot>(optional: true, reloadOnChange: true)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .Build();
+
+        private static GatewayIntents GATEWAY_INTENTS = GatewayIntents.Guilds;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private static ILogger<Bot> _logger;
@@ -39,6 +40,7 @@ namespace Magus.Bot
         static async Task RunAsync(IHost host)
         {
             var services        = host.Services;
+            var config          = services.GetRequiredService<Configuration>();
             var client          = services.GetRequiredService<DiscordSocketClient>();
             _interactionService = services.GetRequiredService<InteractionService>();
             _logger             = services.GetRequiredService<ILogger<Bot>>();
@@ -47,7 +49,7 @@ namespace Magus.Bot
             _interactionService.Log += LogAsync;
 
             if (IsDebug())
-                client.Ready += async () => await _interactionService.RegisterCommandsToGuildAsync(configuration.GetValue<ulong>("DevGuild"), true);
+                client.Ready += async () => await _interactionService.RegisterCommandsToGuildAsync(config.DevGuild, true);
             else
                 client.Ready += RegisterModules;
 
@@ -59,9 +61,9 @@ namespace Magus.Bot
             await services.GetRequiredService<TIService>().Initialise();
             await host.StartAsync(); // Start now, after initial scheduled tasks have had a chance to be registered, for RunOnceAtStart
 
-            await client.LoginAsync(TokenType.Bot, configuration["BotToken"]);
+            await client.LoginAsync(TokenType.Bot, config.BotToken);
             await client.StartAsync();
-            await client.SetGameAsync(name: "/ti live ", type: ActivityType.Competing);
+            await client.SetGameAsync(name: config.Status.Title, type: (ActivityType)config.Status.Type);
             await Task.Delay(Timeout.Infinite);
         }
 
@@ -122,7 +124,7 @@ namespace Magus.Bot
                 .AddSingleton(configuration)
                 .AddSingleton(x => new Configuration(configuration))
                 .AddSingleton<IAsyncDataService, MongoDBService>()
-                .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GatewayIntents.AllUnprivileged }))
+                .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .AddSingleton<CommandHandler>()
                 .AddSingleton(x => new HttpClient())
