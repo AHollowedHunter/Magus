@@ -6,6 +6,7 @@ using Magus.Common;
 using Magus.Data;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.OpenDota;
+using Microsoft.Extensions.Options;
 using Steam.Models;
 using System.Net.Http.Json;
 
@@ -16,16 +17,16 @@ namespace Magus.Bot.Modules
     public sealed class TIModule : ModuleBase
     {
         private readonly IAsyncDataService _db;
-        private readonly Configuration _config;
+        private readonly BotSettings _config;
         private readonly HttpClient _httpClient;
         private readonly TIService _tiService;
 
         private static readonly uint TI2022_ID = 14268;
 
-        public TIModule(IAsyncDataService db, Configuration config, HttpClient httpClient, TIService tiService)
+        public TIModule(IAsyncDataService db, IOptions<BotSettings> config, HttpClient httpClient, TIService tiService)
         {
             _db         = db;
-            _config     = config;
+            _config     = config.Value;
             _httpClient = httpClient;
             _tiService  = tiService;
         }

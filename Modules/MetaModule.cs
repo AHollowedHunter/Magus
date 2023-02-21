@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Common;
 using Magus.Data;
+using Microsoft.Extensions.Options;
 using System.Reflection;
 
 namespace Magus.Bot.Modules
@@ -12,15 +13,15 @@ namespace Magus.Bot.Modules
     public class MetaModule : ModuleBase
     {
         private readonly IAsyncDataService _db;
-        private readonly Configuration _config;
+        private readonly BotSettings _config;
         private readonly ILogger<MetaModule> _logger;
 
         readonly string version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
 
-        public MetaModule(IAsyncDataService db, Configuration config, ILogger<MetaModule> logger)
+        public MetaModule(IAsyncDataService db, IOptions<BotSettings> config, ILogger<MetaModule> logger)
         {
             _db = db;
-            _config = config;
+            _config = config.Value;
             _logger = logger;
         }
 

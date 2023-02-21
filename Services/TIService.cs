@@ -9,6 +9,7 @@ using SteamWebAPI2.Interfaces;
 using System.Text.Json.Serialization;
 using System.Collections.Immutable;
 using Steam.Models.DOTA2;
+using Microsoft.Extensions.Options;
 
 namespace Magus.Bot.Services
 {
@@ -18,7 +19,7 @@ namespace Magus.Bot.Services
         private readonly IScheduler _scheduler;
         private readonly HttpClient _httpClient;
         private readonly ILogger<TIService> _logger;
-        private readonly Configuration _config;
+        private readonly BotSettings _config;
 
         private static readonly uint TI2022_ID = 14268;
         private static readonly uint arlingtonMajorID = 14417; // Temporary using Arligngton Major, as TI isn't on yet
@@ -45,13 +46,13 @@ namespace Magus.Bot.Services
 
         public IDictionary<string, KDA> HeroTotalKDA { get; private set; }
 
-        public TIService(IAsyncDataService db, IScheduler scheduler, HttpClient httpClient, ILogger<TIService> logger, Configuration config)
+        public TIService(IAsyncDataService db, IScheduler scheduler, HttpClient httpClient, ILogger<TIService> logger, IOptions<BotSettings> config)
         {
             _db = db;
             _scheduler = scheduler;
             _httpClient = httpClient;
             _logger = logger;
-            _config = config;
+            _config = config.Value;
             webInterfaceFactory = new(_config.Steam.SteamKey);
         }
 

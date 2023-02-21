@@ -1,16 +1,17 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Common;
+using Microsoft.Extensions.Options;
 
 namespace Magus.Bot.AutocompleteHandlers
 {
     public class LocaleAutocompleteHandler : AutocompleteHandler
     {
-        private readonly Configuration _config;
+        private readonly BotSettings _config;
 
-        public LocaleAutocompleteHandler(Configuration config)
+        public LocaleAutocompleteHandler(IOptions<BotSettings> config)
         {
-            _config = config;
+            _config = config.Value;
         }
 
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(

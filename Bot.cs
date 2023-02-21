@@ -7,31 +7,24 @@ using Magus.Bot.Services;
 using Magus.Common;
 using Magus.Data;
 using Microsoft.Extensions.Hosting;
-//using Magus.DataBuilder;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 namespace Magus.Bot
 {
     class Bot
     {
-        private static IConfiguration configuration = new ConfigurationBuilder()
-                .AddEnvironmentVariables(prefix: "MAGUS_")
-                .AddUserSecrets<Bot>(optional: true, reloadOnChange: true)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .Build();
-
         private static GatewayIntents GATEWAY_INTENTS = GatewayIntents.Guilds;
-
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private static ILogger<Bot> _logger;
-        private static InteractionService _interactionService;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         static void Main(string[] args)
         {
-            using IHost host = Host.CreateDefaultBuilder()
-                .ConfigureLogging((context, logging) => logging.ClearProviders())
-                .ConfigureServices((_, serviceCollection) => ConfigureServices(serviceCollection))
+            using IHost host = Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration(x => x.AddEnvironmentVariables(prefix: "MAGUS_"))
+                .ConfigureServices((context, serviceCollection) => ConfigureServices(context.Configuration, serviceCollection))
+                .UseSerilog((hostingContext, services, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration))
                 .Build();
 
             RunAsync(host).GetAwaiter().GetResult();
@@ -39,43 +32,42 @@ namespace Magus.Bot
 
         static async Task RunAsync(IHost host)
         {
-            var services        = host.Services;
-            var config          = services.GetRequiredService<Configuration>();
-            var client          = services.GetRequiredService<DiscordSocketClient>();
-            _interactionService = services.GetRequiredService<InteractionService>();
-            _logger             = services.GetRequiredService<ILogger<Bot>>();
+            var services           = host.Services;
+            _logger                = services.GetRequiredService<ILogger<Bot>>();
+            var botSettings        = services.GetRequiredService<IOptions<BotSettings>>().Value;
+            var client             = services.GetRequiredService<DiscordSocketClient>();
+            var interactionService = services.GetRequiredService<InteractionService>();
 
-            client.Log              += LogAsync;
-            _interactionService.Log += LogAsync;
+            client.Log             += LogDiscord;
+            interactionService.Log += LogDiscord;
 
             if (IsDebug())
-                client.Ready += async () => await _interactionService.RegisterCommandsToGuildAsync(config.DevGuild, true);
+                client.Ready += async () => await interactionService.RegisterCommandsToGuildAsync(botSettings.DevGuild, true);
             else
-                client.Ready += RegisterModules;
+                client.Ready += async () => await RegisterModules(interactionService);
 
             client.JoinedGuild += async (SocketGuild guild) => await JoinedGuild(guild);
             client.LeftGuild   += async (SocketGuild guild) => await LeftGuild(guild);
 
-            // Here we can initialize the service that will register and execute our commands
             await services.GetRequiredService<CommandHandler>().InitializeAsync();
             await services.GetRequiredService<TIService>().Initialise();
-            await host.StartAsync(); // Start now, after initial scheduled tasks have had a chance to be registered, for RunOnceAtStart
 
-            await client.LoginAsync(TokenType.Bot, config.BotToken);
+            await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
             await client.StartAsync();
-            await client.SetGameAsync(name: config.Status.Title, type: (ActivityType)config.Status.Type);
-            await Task.Delay(Timeout.Infinite);
+            await client.SetGameAsync(name: botSettings.Status.Title, type: (ActivityType)botSettings.Status.Type);
+
+            await host.RunAsync();
         }
 
-        static async Task RegisterModules()
+        static async Task RegisterModules(InteractionService interactionService)
         {
             _logger.LogInformation("Registering Modules");
             var modules = new Dictionary<ModuleInfo, Location>();
-            foreach (var module in _interactionService.Modules)
+            foreach (var module in interactionService.Modules)
                 modules.Add(module, ((ModuleRegistration)module.Attributes.First(x => typeof(ModuleRegistration).IsAssignableFrom(x.GetType()))).Location);
 
             // Register GLOBAL commands
-            await _interactionService.AddModulesGloballyAsync(true, modules: modules.Where(x => x.Value == Location.GLOBAL).Select(x => x.Key).ToArray());
+            await interactionService.AddModulesGloballyAsync(true, modules: modules.Where(x => x.Value == Location.GLOBAL).Select(x => x.Key).ToArray());
 
             // Disabled, need to fix registering to the same guild multiple times. Either create logic to remove commands separately, or get all modules applicable to a guild 
             // What happens when removing a guild? need to de-register the commands
@@ -92,17 +84,19 @@ namespace Magus.Bot
             _logger.LogInformation("Complete Module Registration");
         }
 
-        static async Task JoinedGuild(SocketGuild guild)
+        static Task JoinedGuild(SocketGuild guild)
         {
             _logger.LogInformation("Added to guild Name: {0} ID: {1} Members: {3}, at {4}", guild.Name, guild.Id, guild.MemberCount, guild.CurrentUser.JoinedAt);
+            return Task.CompletedTask;
         }
 
-        static async Task LeftGuild(SocketGuild guild)
+        static Task LeftGuild(SocketGuild guild)
         {
             _logger.LogInformation("Removed from guild Name: {0} ID: {1} Members: {3}, at {4}", guild.Name, guild.Id, guild.MemberCount, DateTimeOffset.UtcNow);
+            return Task.CompletedTask;
         }
 
-        static Task LogAsync(LogMessage message)
+        static Task LogDiscord(LogMessage message)
         {
             var severity = message.Severity switch
             {
@@ -118,22 +112,16 @@ namespace Magus.Bot
             return Task.CompletedTask;
         }
 
-        static IServiceCollection ConfigureServices(IServiceCollection serviceCollection)
+        static IServiceCollection ConfigureServices(IConfiguration config, IServiceCollection serviceCollection)
             => serviceCollection
-                .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
-                .AddSingleton(configuration)
-                .AddSingleton(x => new Configuration(configuration))
+                .Configure<BotSettings>(settings => config.GetSection("BotSettings").Bind(settings))
+                .Configure<DataSettings>(settings => config.GetSection("DataSettings").Bind(settings))
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .AddSingleton<CommandHandler>()
                 .AddSingleton(x => new HttpClient())
-                //.AddHttpClient()
                 .AddSingleton<Services.IWebhook>(x => new DiscordWebhook())
-                //.AddTransient<DotaUpdater>()
-                //.AddTransient<PatchListUpdater>()
-                //.AddTransient<EntityUpdater>()
-                //.AddTransient<PatchNoteUpdater>()
                 .AddScheduler()
                 .AddSingleton<TIService>();
 
