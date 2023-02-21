@@ -1,32 +1,32 @@
-﻿using Magus.Common;
-using Magus.Data.Models;
+﻿using Magus.Data.Models;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
+using Microsoft.Extensions.Options;
+using MongoDB.Bson.IO;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
-using System.Security.Authentication;
 using System.Linq.Expressions;
-using MongoDB.Bson.IO;
+using System.Security.Authentication;
 
 namespace Magus.Data
 {
     public class MongoDBService : IAsyncDataService
     {
-        private readonly Configuration _config;
+        private readonly DataSettings _config;
         private MongoClient _client;
         private IMongoDatabase _db;
         private bool _disposed;
 
-        public MongoDBService(Configuration config)
+        public MongoDBService(IOptions<DataSettings> config)
         {
-            _config = config;
+            _config = config.Value;
 
             BsonChunkPool.Default = new BsonChunkPool(1024, 64 * 1024);
 
-            MongoClientSettings settings = MongoClientSettings.FromUrl(new MongoUrl(_config.DatabaseService.ConnectionString));
+            MongoClientSettings settings = MongoClientSettings.FromUrl(new MongoUrl(_config.ConnectionString));
             settings.SslSettings = new SslSettings() { EnabledSslProtocols = SslProtocols.Tls12 };
             _client = new MongoClient(settings);
-            _db = _client.GetDatabase(_config.DatabaseService.DatabaseName);
+            _db = _client.GetDatabase(_config.DatabaseName);
         }
 
         public void Dispose()
