@@ -4,7 +4,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
-using Magus.Common;
 using Magus.Data;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
