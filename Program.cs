@@ -31,9 +31,9 @@ namespace Magus.DataBuilder
 
         static ServiceProvider ConfigureServices()
             => new ServiceCollection()
+                .Configure<DataSettings>(settings => configuration.GetSection("DataSettings").Bind(settings))
                 .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
                 .AddSingleton(configuration)
-                .AddSingleton(x => new Configuration(configuration))
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new HttpClient())
                 .AddTransient<DotaUpdater>()
