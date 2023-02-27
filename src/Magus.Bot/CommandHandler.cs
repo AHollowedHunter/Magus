@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
-using System.Linq;
 using System.Reflection;
 
 namespace Magus.Bot
@@ -35,7 +34,7 @@ namespace Magus.Bot
             _interactions.ComponentCommandExecuted += ComponentCommandExecuted;
             _interactions.ModalCommandExecuted     += ModalCommandExecuted;
 
-            _logger.LogInformation("CommandHandler Initialised, {0} Modules registered: {1}", _interactions.Modules.Count, string.Join(", ", _interactions.Modules.Select(x => x.Name)));
+            _logger.LogInformation("CommandHandler Initialised, {count} Modules registered: {moudleList}", _interactions.Modules.Count, string.Join(", ", _interactions.Modules.Select(x => x.Name)));
         }
 
         private List<TypeInfo> GetEnabledModules()
@@ -51,7 +50,7 @@ namespace Magus.Bot
                 if (moduleTypeInfo.IsAssignableFrom(definedType))
                     result.Add(definedType);
                 else
-                    _logger.LogWarning("Class {0} is marked with ModuleRegistration, but it does not implement IInteractionModuleBase", definedType.FullName);
+                    _logger.LogWarning("Class {name} is marked with ModuleRegistration, but it does not implement IInteractionModuleBase", definedType.FullName);
             }
             return result;
         }

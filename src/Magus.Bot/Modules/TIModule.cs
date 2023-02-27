@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
-using Magus.Common;
 using Magus.Data;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.OpenDota;
@@ -58,10 +57,12 @@ namespace Magus.Bot.Modules
 
             foreach (var game in _tiService.LiveGames)
             {
-                var gameField = new EmbedFieldBuilder();
-                gameField.Name = $"{game.RadiantTeam?.TeamName ?? "[UNKNOWN]"} vs {game.DireTeam?.TeamName ?? "[UNKNOWN]"}";
+                var gameField = new EmbedFieldBuilder
+                {
+                    Name = $"{game.RadiantTeam?.TeamName ?? "[UNKNOWN]"} vs {game.DireTeam?.TeamName ?? "[UNKNOWN]"}"
+                };
 
-                var value = $"Duration:\u2007**{game.Duration.ToString(@"h\:mm\:ss")}**{Emotes.Spacer}*(Stream Delay:\u2007{game.StreamDelaySeconds.TotalSeconds}s)*\n"
+                var value = $"Duration:\u2007**{game.Duration:h\\:mm\\:ss}**{Emotes.Spacer}*(Stream Delay:\u2007{game.StreamDelaySeconds.TotalSeconds}s)*\n"
                             + $"Score:\u2007||**{game.Scores.Radiant}\u00A0-\u00A0{game.Scores.Dire}**||{Emotes.Spacer}"
                             + (game.SeriesWins.Radiant > 0 || game.SeriesWins.Dire > 0 ? $"Series Wins:\u2007**||{game.SeriesWins.Radiant}\u00A0-\u00A0{game.SeriesWins.Dire}||**\n" : "\n")
                             + $"Match ID:\u2007{game.MatchId}";
@@ -81,10 +82,10 @@ namespace Magus.Bot.Modules
         {
             var longMatches = string.Empty;
             foreach (var match in _tiService.LongestMatches)
-                longMatches += $"Longest Game: **{TimeSpan.FromSeconds(match.Duration).ToString("c")} - {_tiService.Teams.Where(x => x.TeamId == match.RadiantTeamId).First().Name}** vs **{_tiService.Teams.Where(x => x.TeamId == match.DireTeamId).First().Name}**\n";
+                longMatches += $"Longest Game: **{TimeSpan.FromSeconds(match.Duration):c} - {_tiService.Teams.Where(x => x.TeamId == match.RadiantTeamId).First().Name}** vs **{_tiService.Teams.Where(x => x.TeamId == match.DireTeamId).First().Name}**\n";
             var shortMatches = string.Empty;
             foreach (var match in _tiService.ShortestMatches)
-                shortMatches += $"Shortest Game: **{TimeSpan.FromSeconds(match.Duration).ToString("c")} - {_tiService.Teams.Where(x => x.TeamId == match.RadiantTeamId).First().Name}** vs **{_tiService.Teams.Where(x => x.TeamId == match.DireTeamId).First().Name}**\n";
+                shortMatches += $"Shortest Game: **{TimeSpan.FromSeconds(match.Duration):c} - {_tiService.Teams.Where(x => x.TeamId == match.RadiantTeamId).First().Name}** vs **{_tiService.Teams.Where(x => x.TeamId == match.DireTeamId).First().Name}**\n";
             var embed = new EmbedBuilder()
             {
                 Title        = "The International 2022 Match Stats",
@@ -123,7 +124,7 @@ namespace Magus.Bot.Modules
         }
 
         //[SlashCommand("test", "testing")]
-        public async Task test()
+        public async Task Test()
         {
             await RespondAsync("Processing...");
             //var matches = await _httpClient.GetFromJsonAsync<List<Match>>($"https://api.opendota.com/api/leagues/{TI2022_ID}/matches");

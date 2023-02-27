@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Bot.Attributes;
-using Magus.Common;
 using Magus.Data;
 using Microsoft.Extensions.Options;
 using System.Reflection;
@@ -14,15 +13,13 @@ namespace Magus.Bot.Modules
     {
         private readonly IAsyncDataService _db;
         private readonly BotSettings _config;
-        private readonly ILogger<MetaModule> _logger;
 
         readonly string version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
 
-        public MetaModule(IAsyncDataService db, IOptions<BotSettings> config, ILogger<MetaModule> logger)
+        public MetaModule(IAsyncDataService db, IOptions<BotSettings> config)
         {
             _db = db;
             _config = config.Value;
-            _logger = logger;
         }
 
         [SlashCommand("about", "Face the Magus!")]
@@ -40,7 +37,7 @@ namespace Magus.Bot.Modules
             };
             response.AddField(new EmbedFieldBuilder() { Name = "Version", Value = version, IsInline = true });
             response.AddField(new EmbedFieldBuilder() { Name = "Latest Patch", Value = latestPatch, IsInline = true });
-            response.AddField(new EmbedFieldBuilder() { Name = "Total Guilds", Value = Context.Client.Guilds.Count(), IsInline = true });
+            response.AddField(new EmbedFieldBuilder() { Name = "Total Guilds", Value = Context.Client.Guilds.Count, IsInline = true });
             response.AddField(new EmbedFieldBuilder() { Name = "Acknowledgements", Value = "SteamDB for various libraries + Gametracking-Dota2\nDiscord.NET library", IsInline = false });
             
             var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n[Privacy Policy]({_config.BotPrivacyPolicy})\n";

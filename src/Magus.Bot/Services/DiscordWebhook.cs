@@ -12,8 +12,10 @@
 
         public async Task<bool> SendMessage(string message, string webhook)
         {
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, webhook);
-            requestMessage.Content = new StringContent(message, encoding: Encoding.UTF8, "application/json");
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, webhook)
+            {
+                Content = new StringContent(message, encoding: Encoding.UTF8, "application/json")
+            };
             var response = await httpClient.SendAsync(requestMessage);
             return response.IsSuccessStatusCode;
         }

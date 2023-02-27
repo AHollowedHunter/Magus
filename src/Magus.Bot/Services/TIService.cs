@@ -293,6 +293,7 @@ namespace Magus.Bot.Services
             }
         }
 
+#pragma warning disable IDE1006 // Naming Styles
         public struct PrizePoolReponse
         {
             public Result result { get; set; }
@@ -303,6 +304,7 @@ namespace Magus.Bot.Services
                 public int status { get; set; }
             }
         }
+#pragma warning restore IDE1006 // Naming Styles
 
         public struct MatchList
         {

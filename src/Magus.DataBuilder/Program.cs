@@ -1,5 +1,4 @@
-﻿using Magus.Common;
-using Magus.Data;
+﻿using Magus.Data;
 using Serilog;
 using System.Diagnostics;
 
@@ -7,7 +6,7 @@ namespace Magus.DataBuilder
 {
     class Program
     {
-        private static IConfiguration configuration = new ConfigurationBuilder()
+        private static readonly IConfiguration configuration = new ConfigurationBuilder()
             .AddEnvironmentVariables(prefix: "MAGUS_")
             .AddUserSecrets<Program>()
             .AddJsonFile("appsettings.json", optional: true)
