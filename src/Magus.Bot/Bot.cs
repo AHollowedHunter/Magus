@@ -121,7 +121,6 @@ namespace Magus.Bot
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .AddSingleton<CommandHandler>()
                 .AddSingleton(x => new HttpClient())
-                .AddSingleton<Services.IWebhook>(x => new DiscordWebhook())
                 .AddSingleton<TIService>();
 
         static bool IsDebug()
