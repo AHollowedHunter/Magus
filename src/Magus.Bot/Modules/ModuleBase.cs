@@ -9,9 +9,13 @@ namespace Magus.Bot.Modules
     /// 
     /// Any single root commands will need a separate root "help" command if desired
     /// </summary>
+    /// <remarks>
+    /// Will cause issues if not used inconjunction with Group Attribute
+    /// See https://github.com/AHollowedHunter/Magus/issues/1
+    /// </remarks>
     public abstract class ModuleBase : InteractionModuleBase<SocketInteractionContext> // InteractionService will log a warning "not public" (as of v3.8) as the class is abstract. Ignore
     {
-        readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString();
+        static readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString();
 
         protected ModuleBase()
         {
@@ -21,26 +25,25 @@ namespace Magus.Bot.Modules
         [SlashCommand("help", "Get help with these commands")]
         public async Task Help()
         {
-            await RespondAsync(embed: await CreateHelpEmbed(), ephemeral: true);
+            await RespondAsync(embed: await CreateHelpEmbed(Context, GetType()), ephemeral: true);
         }
 
-        private async Task<Embed> CreateHelpEmbed()
+        internal static async Task<Embed> CreateHelpEmbed(SocketInteractionContext context, Type type)
         {
             List<IApplicationCommand> commands = new();
-            commands.AddRange(await Context.Client.Rest.GetGlobalApplicationCommands());
-            if (!Context.Interaction.IsDMInteraction)
-                commands.AddRange(await Context.Guild.GetApplicationCommandsAsync());
+            commands.AddRange(await context.Client.Rest.GetGlobalApplicationCommands());
+            if (!context.Interaction.IsDMInteraction)
+                commands.AddRange(await context.Guild.GetApplicationCommandsAsync());
 
             var embeds = new List<Embed>();
 
-            var groupAttribute = GetType().GetCustomAttributes(typeof(GroupAttribute), true)
-                                          .FirstOrDefault() as GroupAttribute;
+            var groupAttribute = type.GetCustomAttribute<GroupAttribute>();
             var command = commands.FirstOrDefault(x => x.Name == groupAttribute?.Name);
 
             // If used in a subcommand class this will need to reflect the declaring type for the command name
             if (command == null)
             {
-                var declaringType = GetType().DeclaringType;
+                var declaringType = type.DeclaringType;
                 var baseAttribute = declaringType?.GetCustomAttributes(typeof(GroupAttribute), true)
                                           .FirstOrDefault() as GroupAttribute;
                 command = commands.FirstOrDefault(x => x.Name == baseAttribute?.Name);
