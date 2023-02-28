@@ -14,7 +14,7 @@ namespace Magus.Bot.Modules
         private readonly IAsyncDataService _db;
         private readonly BotSettings _config;
 
-        readonly string version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
+        readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString();
 
         public MetaModule(IAsyncDataService db, IOptions<BotSettings> config)
         {
@@ -35,14 +35,14 @@ namespace Magus.Bot.Modules
                 Color = Color.Purple,
                 Footer = new() { Text = "Hot Damn!", IconUrl = Context.Client.CurrentUser.GetAvatarUrl() },
             };
-            response.AddField(new EmbedFieldBuilder() { Name = "Version", Value = version, IsInline = true });
-            response.AddField(new EmbedFieldBuilder() { Name = "Latest Patch", Value = latestPatch, IsInline = true });
-            response.AddField(new EmbedFieldBuilder() { Name = "Total Guilds", Value = Context.Client.Guilds.Count, IsInline = true });
-            response.AddField(new EmbedFieldBuilder() { Name = "Acknowledgements", Value = "SteamDB for various libraries + Gametracking-Dota2\nDiscord.NET library", IsInline = false });
-            
+            response.AddField("Version", version, true);
+            response.AddField("Latest Patch", latestPatch, true);
+            response.AddField("Total Guilds", Context.Client.Guilds.Count, true);
+            response.AddField("Acknowledgements", "SteamDB for various libraries + Gametracking-Dota2\nDiscord.NET library", false);
+
             var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n[Privacy Policy]({_config.BotPrivacyPolicy})\n";
-            response.AddField(new EmbedFieldBuilder() { Name = "Links", Value = links, IsInline = false });
-            response.AddField(new EmbedFieldBuilder() { Name = Emotes.Spacer.ToString(), Value="Dota and the Dota Logo are trademarks and/or registered trademarks of Valve Corporation" });
+            response.AddField("Links", links, false);
+            response.AddField(Emotes.Spacer.ToString(), "Dota and the Dota Logo are trademarks and/or registered trademarks of Valve Corporation");
 
             await RespondAsync(embed: response.Build(), ephemeral: true);
         }

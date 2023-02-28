@@ -57,18 +57,13 @@ namespace Magus.Bot.Modules
 
             foreach (var game in _tiService.LiveGames)
             {
-                var gameField = new EmbedFieldBuilder
-                {
-                    Name = $"{game.RadiantTeam?.TeamName ?? "[UNKNOWN]"} vs {game.DireTeam?.TeamName ?? "[UNKNOWN]"}"
-                };
+                var name = $"{game.RadiantTeam?.TeamName ?? "[UNKNOWN]"} vs {game.DireTeam?.TeamName ?? "[UNKNOWN]"}";
 
                 var value = $"Duration:\u2007**{game.Duration:h\\:mm\\:ss}**{Emotes.Spacer}*(Stream Delay:\u2007{game.StreamDelaySeconds.TotalSeconds}s)*\n"
                             + $"Score:\u2007||**{game.Scores.Radiant}\u00A0-\u00A0{game.Scores.Dire}**||{Emotes.Spacer}"
                             + (game.SeriesWins.Radiant > 0 || game.SeriesWins.Dire > 0 ? $"Series Wins:\u2007**||{game.SeriesWins.Radiant}\u00A0-\u00A0{game.SeriesWins.Dire}||**\n" : "\n")
                             + $"Match ID:\u2007{game.MatchId}";
-
-                gameField.Value = value;
-                embed.AddField(gameField);
+                embed.AddField(name, value);
             }
             if (!_tiService.LiveGames.Any())
                 embed.Description = "No live games right now.\nCheck the schedule here: https://www.dota2.com/esports/ti11/schedule";
@@ -199,7 +194,7 @@ namespace Magus.Bot.Modules
             //await ModifyOriginalResponseAsync(x => x.Content = JsonSerializer.Serialize(matches.First())[..1500]);
         }
 
-        private async Task<string> GetHeroNames(IEnumerable<KeyValuePair<int,int>> values, string locale = "en-GB")
+        private async Task<string> GetHeroNames(IEnumerable<KeyValuePair<int, int>> values, string locale = "en-GB")
         {
             var names = string.Empty;
             foreach (var value in values)
