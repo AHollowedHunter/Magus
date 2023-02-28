@@ -116,11 +116,11 @@ namespace Magus.Bot
                 .Configure<BotSettings>(settings => config.GetSection("BotSettings").Bind(settings))
                 .Configure<DataSettings>(settings => config.GetSection("DataSettings").Bind(settings))
                 .AddScheduler()
+                .AddSingleton<HttpClient>()
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
-                .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
+                .AddSingleton<InteractionService>()
                 .AddSingleton<CommandHandler>()
-                .AddSingleton(x => new HttpClient())
                 .AddSingleton<TIService>();
 
         static bool IsDebug()

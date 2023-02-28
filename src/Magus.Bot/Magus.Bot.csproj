@@ -9,6 +9,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <EmbeddedResource Include="appsettings.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Coravel" Version="4.1.2" />
 		<PackageReference Include="Discord.Net" Version="3.8.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
@@ -32,12 +38,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Magus.Data\Magus.Data.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Update="appsettings.json">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
 	</ItemGroup>
 
 </Project>
