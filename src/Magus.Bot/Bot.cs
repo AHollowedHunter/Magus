@@ -48,7 +48,7 @@ namespace Magus.Bot
             client.JoinedGuild += async (SocketGuild guild) => await JoinedGuild(guild);
             client.LeftGuild   += async (SocketGuild guild) => await LeftGuild(guild);
 
-            await services.GetRequiredService<CommandHandler>().InitializeAsync();
+            await services.GetRequiredService<InteractionHandler>().InitializeAsync();
             await services.GetRequiredService<TIService>().Initialise();
 
             await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
@@ -120,7 +120,7 @@ namespace Magus.Bot
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
                 .AddSingleton<InteractionService>()
-                .AddSingleton<CommandHandler>()
+                .AddSingleton<InteractionHandler>()
                 .AddSingleton<TIService>();
 
         static bool IsDebug()

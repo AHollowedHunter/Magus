@@ -6,14 +6,14 @@ using System.Reflection;
 
 namespace Magus.Bot
 {
-    public class CommandHandler
+    public class InteractionHandler
     {
         private readonly DiscordSocketClient _client;
         private readonly InteractionService _interactions;
         private readonly IServiceProvider _services;
-        private readonly ILogger<CommandHandler> _logger;
+        private readonly ILogger<InteractionHandler> _logger;
 
-        public CommandHandler(DiscordSocketClient client, InteractionService interactions, ILogger<CommandHandler> logger, IServiceProvider services)
+        public InteractionHandler(DiscordSocketClient client, InteractionService interactions, ILogger<InteractionHandler> logger, IServiceProvider services)
         {
             _client       = client;
             _interactions = interactions;
@@ -34,7 +34,7 @@ namespace Magus.Bot
             _interactions.ComponentCommandExecuted += ComponentCommandExecuted;
             _interactions.ModalCommandExecuted     += ModalCommandExecuted;
 
-            _logger.LogInformation("CommandHandler Initialised, {count} Modules registered: {moudleList}", _interactions.Modules.Count, string.Join(", ", _interactions.Modules.Select(x => x.Name)));
+            _logger.LogInformation("InteractionHandler Initialised, {count} Modules registered: {moudleList}", _interactions.Modules.Count, string.Join(", ", _interactions.Modules.Select(x => x.Name)));
         }
 
         private List<TypeInfo> GetEnabledModules()
