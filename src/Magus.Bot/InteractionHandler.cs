@@ -27,6 +27,8 @@ namespace Magus.Bot
                 await _interactions.AddModuleAsync(module, _services);
 
             _client.InteractionCreated += HandleInteraction;
+            //_client.ButtonExecuted
+            //_client.SelectMenuExecuted
 
             // Process the command execution results 
             _interactions.SlashCommandExecuted     += SlashCommandExecuted;
