@@ -86,9 +86,23 @@ namespace Magus.Bot.Modules
             [ComponentInteraction("announcements:GET:*")]
             public async Task AnnouncementsGet(Topic topic)
             {
+                var announcement = (await _db.GetGuild(Context.Guild)).Announcements.FirstOrDefault(x => x.Topic == topic);
+                RestWebhook? webhook = null;
+                SocketTextChannel? channel = null;
+                if (announcement != null)
+                {
+                    webhook = await Context.Guild.GetWebhookAsync(announcement.WebhookId);
+                    channel = Context.Guild.GetTextChannel(webhook.ChannelId);
+                }
                 var message = new StringBuilder()
                     .AppendFormat("Choose a channel to recieve **{0}** related news and updates.", topic)
+                    .AppendLine();
+                if (webhook != null && channel != null)
+                    message
                     .AppendLine()
+                    .AppendFormat("Currently receiving **{0}** announcments in **{1} {2}**", topic, channel.GetChannelTypeIcon(), channel.Name);
+
+                var fieldValue = new StringBuilder()
                     .AppendFormat("• You may choose an {0} Topic or {1} Text Channel.", Emotes.AnnouncementChannel.ToString(), Emotes.TextChannel.ToString())
                     .AppendLine()
                     .AppendLine("• MagusBot requies the `Manage Webhooks` permission is enabled for the server or selected channel to create or remove webhooks required to send messages.")
@@ -99,6 +113,7 @@ namespace Magus.Bot.Modules
                     .WithTitle($"Configure {topic} announcements")
                     .WithDescription(message.ToString())
                     .WithColor(Color.Green)
+                    .WithFields(new EmbedFieldBuilder().WithName("Notes").WithValue(fieldValue.ToString()))
                     .Build();
 
                 var dotaUpdatesMenu = new SelectMenuBuilder()
@@ -129,22 +144,34 @@ namespace Magus.Bot.Modules
                 await DeferAsync();
                 var channel = channels[0];
 
-                // Do something
                 var guild = await _db.GetGuild(Context.Guild);
 
                 RestWebhook webhook;
                 var announcement = guild.Announcements.FirstOrDefault(x => x.Topic == topic);
-                var name = $"{topic} Announcements";
-                var avatar = new MemoryStream(Images.DotaAvatar);
+                var name = $"{topic} Announcments";
+                if (topic == Topic.Dota)
+                    name += " via MagusBot";
+
+                var image = topic == Topic.Dota ? Images.DotaAvatar : Images.MagusAvatar;
+                var avatar = new MemoryStream(image);
                 if (announcement != null)
                 {
                     webhook = await Context.Guild.GetWebhookAsync(announcement.WebhookId);
-                    await webhook.ModifyAsync(w =>
+                    if (webhook != null)
                     {
-                        w.Name = name;
-                        w.Channel = channel;
-                        w.Image = new Image(avatar);
-                    });
+                        await webhook.ModifyAsync(w =>
+                        {
+                            w.Name = name;
+                            w.Channel = channel;
+                            w.Image = new Image(avatar);
+                        });
+                    }
+                    else
+                    {
+                        webhook = await channel.CreateWebhookAsync(name, avatar);
+                        guild.Announcements.Add(new(topic, webhook.Id));
+                        await _db.UpsertRecord(guild);
+                    }
                 }
                 else
                 {
@@ -152,7 +179,6 @@ namespace Magus.Bot.Modules
                     guild.Announcements.Add(new(topic, webhook.Id));
                     await _db.UpsertRecord(guild);
                 }
-
                 await FollowupAsync($"**{channel.GetChannelTypeIcon()}\u00A0{channel.Name}** will now receive {topic} updates!", ephemeral: true);
             }
 
@@ -164,16 +190,20 @@ namespace Magus.Bot.Modules
                 var guild = await _db.GetGuild(Context.Guild);
                 RestWebhook webhook;
                 var announcement = guild.Announcements.FirstOrDefault(x => x.Topic == topic);
-                if (announcement != null)
+                if (announcement == null)
+                {
+                    await FollowupAsync($"Not currently subscribed to **{topic}** announcements.", ephemeral: true);
+                }
+                else
                 {
                     webhook = await Context.Guild.GetWebhookAsync(announcement.WebhookId);
-                    await webhook.DeleteAsync();
+                    if (webhook != null)
+                        await webhook.DeleteAsync();
                     guild.Announcements.Remove(announcement);
                     await _db.UpsertRecord(guild);
-                    // Add some error logic here and above in case the webhook is manually removed / updated, or database fails to update
-                }
 
-                await FollowupAsync($"Removed **{topic}** announcements from this server.", ephemeral: true);
+                    await FollowupAsync($"Removed **{topic}** announcements from this server.", ephemeral: true);
+                }
             }
         }
     }

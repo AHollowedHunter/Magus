@@ -1,7 +1,6 @@
 ﻿using Discord.WebSocket;
 using Magus.Data.Enums;
 using Magus.Data.Models.Discord;
-using System.Runtime.CompilerServices;
 
 namespace Magus.Data.Extensions
 {
@@ -20,6 +19,7 @@ namespace Magus.Data.Extensions
             guildRecord.CurrentName       = guild.Name;
             guildRecord.OwnerId           = guild.OwnerId;
             guildRecord.LatestMemberCount = guild.MemberCount;
+            guildRecord.LastUpdated       = DateTime.UtcNow;
 
             if (action == DiscordAction.Joined)
             {

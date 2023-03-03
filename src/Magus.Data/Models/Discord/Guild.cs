@@ -12,6 +12,7 @@ namespace Magus.Data.Models.Discord
         public ulong OwnerId { get; set; }
         public int LatestMemberCount { get; set; }
         public bool IsCurrentMember { get; set; } = true;
+        public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
 
         public IList<Snapshot> JoinedInfo { get; init; } = new List<Snapshot>();
         public IList<Snapshot> LeftInfo { get; init; } = new List<Snapshot>();

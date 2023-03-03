@@ -79,5 +79,15 @@ namespace Magus.Common {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] MagusAvatar {
+            get {
+                object obj = ResourceManager.GetObject("MagusAvatar", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }
