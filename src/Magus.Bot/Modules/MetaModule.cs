@@ -22,7 +22,7 @@ namespace Magus.Bot.Modules
             _config = config.Value;
         }
 
-        [SlashCommand("about", "Face the Magus!")]
+        [SlashCommand("about", "What is MagusBot?")]
         public async Task About()
         {
             var latestPatchNote = await _db.GetLatestPatch();

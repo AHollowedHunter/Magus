@@ -55,6 +55,32 @@ namespace Magus.Bot
             return result;
         }
 
+        # region Execution
+
+        private async Task HandleInteraction(SocketInteraction interaction)
+        {
+            if (interaction.Type == InteractionType.MessageComponent)
+                _logger.LogDebug("CustomId: {id}", ((SocketMessageComponent)interaction).Data.CustomId);
+
+            try
+            {
+                var ctx = new SocketInteractionContext(_client, interaction);
+
+                await _interactions.ExecuteCommandAsync(ctx, _services);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling interaction");
+
+                // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
+                // response, or at least let the user know that something went wrong during the command execution.
+                if (interaction.Type == InteractionType.ApplicationCommand)
+                    await interaction.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+            }
+        }
+
+        # endregion
+
         # region Error Handling
 
         private Task ComponentCommandExecuted(ComponentCommandInfo arg1, IInteractionContext arg2, IResult arg3)
@@ -131,7 +157,7 @@ namespace Magus.Bot
                         // implement
                         break;
                     case InteractionCommandError.Exception:
-                        // implement
+                        _logger.LogError("Error handling slash command");
                         break;
                     case InteractionCommandError.Unsuccessful:
                         // implement
@@ -172,29 +198,6 @@ namespace Magus.Bot
 
             return Task.CompletedTask;
         }
-        # endregion
-
-        # region Execution
-
-        private async Task HandleInteraction(SocketInteraction interaction)
-        {
-            try
-            {
-                var ctx = new SocketInteractionContext(_client, interaction);
-
-                await _interactions.ExecuteCommandAsync(ctx, _services);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling interaction");
-
-                // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
-                // response, or at least let the user know that something went wrong during the command execution.
-                if (interaction.Type == InteractionType.ApplicationCommand)
-                    await interaction.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
-            }
-        }
-
         # endregion
     }
 }
