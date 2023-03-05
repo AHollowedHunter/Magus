@@ -21,7 +21,7 @@ namespace Magus.Bot
             _services     = services;
         }
 
-        public async Task InitializeAsync()
+        public async Task InitialiseAsync()
         {
             foreach (var module in GetEnabledModules())
                 await _interactions.AddModuleAsync(module, _services);

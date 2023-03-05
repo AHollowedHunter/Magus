@@ -42,7 +42,7 @@ namespace Magus.Bot
             var client             = services.GetRequiredService<DiscordSocketClient>();
             var interactionService = services.GetRequiredService<InteractionService>();
 
-            client.Log += LogDiscord;
+            client.Log             += LogDiscord;
             interactionService.Log += LogDiscord;
 
             if (IsDebug())
@@ -53,7 +53,7 @@ namespace Magus.Bot
             client.JoinedGuild += async (SocketGuild guild) => await JoinedGuild(guild);
             client.LeftGuild   += async (SocketGuild guild) => await LeftGuild(guild);
 
-            await services.GetRequiredService<InteractionHandler>().InitializeAsync();
+            await services.GetRequiredService<InteractionHandler>().InitialiseAsync();
             await services.GetRequiredService<TIService>().Initialise();
 
             await client.LoginAsync(TokenType.Bot, botSettings.BotToken);

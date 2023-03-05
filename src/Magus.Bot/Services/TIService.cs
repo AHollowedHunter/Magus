@@ -1,7 +1,6 @@
 ﻿using Coravel.Scheduling.Schedule.Interfaces;
 using Magus.Data;
 using System.Net.Http.Json;
-using Magus.Common;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.OpenDota;
 using SteamWebAPI2.Utilities;
