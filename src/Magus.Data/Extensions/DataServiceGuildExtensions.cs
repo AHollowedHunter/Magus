@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using Magus.Common.Enums;
 using Magus.Data.Enums;
 using Magus.Data.Models.Discord;
 

@@ -1,4 +1,6 @@
-﻿using Magus.Data.Models;
+﻿using Magus.Common.Enums;
+using Magus.Data.Models;
+using Magus.Data.Models.Discord;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Microsoft.Extensions.Options;
@@ -10,7 +12,7 @@ using System.Security.Authentication;
 
 namespace Magus.Data
 {
-    public class MongoDBService : IAsyncDataService
+    public sealed class MongoDBService : IAsyncDataService
     {
         private readonly DataSettings _config;
         private readonly MongoClient _client;
@@ -245,6 +247,18 @@ namespace Magus.Data
             foreach (var record in records)
                 request.Add(new ReplaceOneModel<T>(Builders<T>.Filter.Where(x => x.Id == record.Id), record) { IsUpsert = isUpsert });
             return request;
+        }
+
+        public async Task<IEnumerable<Guild>> GetSubscribedGuilds(Topic topic)
+        {
+            var collection = GetCollection<Guild>();
+            return await collection.AsQueryable().Where(g => g.Announcements.Any(a => a.Topic == topic)).ToListAsync();
+        }
+
+        public async Task<Announcement?> GetLatestPublishedAnnouncement(Topic topic)
+        {
+            var collection = GetCollection<Announcement>();
+            return await collection.AsQueryable().OrderByDescending(a => a.Date).FirstOrDefaultAsync(a => a.IsPublished);
         }
     }
 }

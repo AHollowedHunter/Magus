@@ -1,4 +1,6 @@
-﻿using Magus.Data.Models;
+﻿using Magus.Common.Enums;
+using Magus.Data.Models;
+using Magus.Data.Models.Discord;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using System.Linq.Expressions;
@@ -15,6 +17,7 @@ namespace Magus.Data
         Task<IEnumerable<T>> GetEntityInfo<T>(string entityName, string locale = "en-GB", int limit = int.MaxValue) where T : EntityInfoEmbed;
         Task<GeneralPatchNoteEmbed> GetGeneralPatchNote(string patchNumber, string locale = "en-GB");
         Task<Patch> GetLatestPatch();
+        Task<Announcement?> GetLatestPublishedAnnouncement(Topic topic);
         Task<Patch> GetPatch(string patch);
         Task<IEnumerable<Patch>> GetPatches(string patch, int limit = int.MaxValue, bool orderByDesc = false);
         Task<T> GetPatchNote<T>(string patchNumber, int entityId, string locale = "en-GB") where T : EntityPatchNoteEmbed;
@@ -24,6 +27,7 @@ namespace Magus.Data
         Task<T> GetRecord<T>(ulong id) where T : ISnowflakeRecord;
         Task<IEnumerable<T>> GetRecords<T>(int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord;
         Task<IEnumerable<T>> GetRecords<T>(string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord;
+        Task<IEnumerable<Guild>> GetSubscribedGuilds(Topic topic);
         Task InsertRecord<T>(T record) where T : ISnowflakeRecord;
         Task InsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord;
         Task ReplaceRecord<T>(T record) where T : ISnowflakeRecord;
