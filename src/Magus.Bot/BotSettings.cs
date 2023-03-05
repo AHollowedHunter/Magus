@@ -14,6 +14,7 @@
         public StatusConfig Status { get; set; }
         public LocalisationConfig Localisation { get; set; }
         public SteamConfig Steam { get; set; }
+        public AnnouncementConfig Announcements { get; set; }
 
         public class StatusConfig
         {
@@ -33,6 +34,12 @@
         public class SteamConfig
         {
             public string SteamKey { get; set; } = string.Empty;
+        }
+
+        public class AnnouncementConfig
+        {
+            public ulong DotaSource { get; set; }
+            public ulong MagusSource { get; set; }
         }
     }
 }

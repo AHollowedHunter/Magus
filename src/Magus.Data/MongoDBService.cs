@@ -1,4 +1,6 @@
-﻿using Magus.Data.Models;
+﻿using Magus.Common.Enums;
+using Magus.Data.Models;
+using Magus.Data.Models.Discord;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Microsoft.Extensions.Options;
@@ -10,11 +12,11 @@ using System.Security.Authentication;
 
 namespace Magus.Data
 {
-    public class MongoDBService : IAsyncDataService
+    public sealed class MongoDBService : IAsyncDataService
     {
         private readonly DataSettings _config;
-        private MongoClient _client;
-        private IMongoDatabase _db;
+        private readonly MongoClient _client;
+        private readonly IMongoDatabase _db;
         private bool _disposed;
 
         public MongoDBService(IOptions<DataSettings> config)
@@ -227,15 +229,6 @@ namespace Magus.Data
             await collection.BulkWriteAsync(GetBulkReplaceRequest(records));
         }
 
-        private static FilterDefinition<T> FilterLocaleEntityName<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : INamedEntity, ILocaleRecord
-            => Builders<T>.Filter.And(Builders<T>.Filter.Where(x => x.Locale == locale),
-                                      Builders<T>.Filter.Where(x => x.InternalName.StartsWith(entityName) || x.Name.StartsWith(entityName) || x.RealName!.StartsWith(entityName)));
-        //private static FilterDefinition<T> QueryLocaleEntityNamex<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : INamedEntity, ILocaleRecord
-        //    => Builders<T>.Filter.And(Builders<T>.Filter.Where(x => x.Locale == locale),
-        //                              Builders<T>.Filter.Or(
-        //                                  Builders<T>.Filter.Where(x => x.InternalName.StartsWith(entityName) || x.Name.StartsWith(entityName) || x.RealName!.StartsWith(entityName)),
-        //                                  Builders<T>.Filter.ElemMatch(entity => entity.Aliases, alias => alias.StartsWith(entityName))));
-
         private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : INamedEntity, ILocaleRecord
             => entity => entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
                                                      || entity.Name.ToLower().Contains(entityName.ToLower())
@@ -248,12 +241,24 @@ namespace Magus.Data
                                                                                           || entity.RealName!.ToLower().StartsWith(entityName.ToLower())
                                                                                           || entity.InternalName.Contains(entityName.ToLower()));
 
-        private IEnumerable<WriteModel<T>> GetBulkReplaceRequest<T>(IEnumerable<T> records, bool isUpsert = false) where T : ISnowflakeRecord
+        private static IEnumerable<WriteModel<T>> GetBulkReplaceRequest<T>(IEnumerable<T> records, bool isUpsert = false) where T : ISnowflakeRecord
         {
             var request = new List<WriteModel<T>>();
             foreach (var record in records)
                 request.Add(new ReplaceOneModel<T>(Builders<T>.Filter.Where(x => x.Id == record.Id), record) { IsUpsert = isUpsert });
             return request;
+        }
+
+        public async Task<IEnumerable<Guild>> GetSubscribedGuilds(Topic topic)
+        {
+            var collection = GetCollection<Guild>();
+            return await collection.AsQueryable().Where(g => g.Announcements.Any(a => a.Topic == topic)).ToListAsync();
+        }
+
+        public async Task<Announcement?> GetLatestPublishedAnnouncement(Topic topic)
+        {
+            var collection = GetCollection<Announcement>();
+            return await collection.AsQueryable().OrderByDescending(a => a.Date).FirstOrDefaultAsync(a => a.IsPublished);
         }
     }
 }

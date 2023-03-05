@@ -1,7 +1,6 @@
 ﻿using Coravel.Scheduling.Schedule.Interfaces;
 using Magus.Data;
 using System.Net.Http.Json;
-using Magus.Common;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.OpenDota;
 using SteamWebAPI2.Utilities;
@@ -293,6 +292,7 @@ namespace Magus.Bot.Services
             }
         }
 
+#pragma warning disable IDE1006 // Naming Styles
         public struct PrizePoolReponse
         {
             public Result result { get; set; }
@@ -303,6 +303,7 @@ namespace Magus.Bot.Services
                 public int status { get; set; }
             }
         }
+#pragma warning restore IDE1006 // Naming Styles
 
         public struct MatchList
         {

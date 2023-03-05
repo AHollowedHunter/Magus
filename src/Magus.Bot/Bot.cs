@@ -5,6 +5,9 @@ using Discord.WebSocket;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
 using Magus.Data;
+using Magus.Data.Enums;
+using Magus.Data.Extensions;
+using Magus.Data.Models.Discord;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -13,9 +16,10 @@ namespace Magus.Bot
 {
     class Bot
     {
-        private static GatewayIntents GATEWAY_INTENTS = GatewayIntents.Guilds;
+        private static readonly GatewayIntents GATEWAY_INTENTS = GatewayIntents.Guilds;
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private static ILogger<Bot> _logger;
+        private static IAsyncDataService _db;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         static void Main(string[] args)
@@ -26,13 +30,14 @@ namespace Magus.Bot
                 .UseSerilog((hostingContext, services, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration))
                 .Build();
 
+            _logger = host.Services.GetRequiredService<ILogger<Bot>>();
+            _db     = host.Services.GetRequiredService<IAsyncDataService>();
             RunAsync(host).GetAwaiter().GetResult();
         }
 
         static async Task RunAsync(IHost host)
         {
             var services           = host.Services;
-            _logger                = services.GetRequiredService<ILogger<Bot>>();
             var botSettings        = services.GetRequiredService<IOptions<BotSettings>>().Value;
             var client             = services.GetRequiredService<DiscordSocketClient>();
             var interactionService = services.GetRequiredService<InteractionService>();
@@ -48,8 +53,9 @@ namespace Magus.Bot
             client.JoinedGuild += async (SocketGuild guild) => await JoinedGuild(guild);
             client.LeftGuild   += async (SocketGuild guild) => await LeftGuild(guild);
 
-            await services.GetRequiredService<CommandHandler>().InitializeAsync();
+            await services.GetRequiredService<InteractionHandler>().InitialiseAsync();
             await services.GetRequiredService<TIService>().Initialise();
+            await services.GetRequiredService<AnnouncementService>().Initialise();
 
             await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
             await client.StartAsync();
@@ -83,16 +89,16 @@ namespace Magus.Bot
             _logger.LogInformation("Complete Module Registration");
         }
 
-        static Task JoinedGuild(SocketGuild guild)
+        static async Task JoinedGuild(SocketGuild guild)
         {
-            _logger.LogInformation("Added to guild Name: {0} ID: {1} Members: {3}, at {4}", guild.Name, guild.Id, guild.MemberCount, guild.CurrentUser.JoinedAt);
-            return Task.CompletedTask;
+            _logger.LogInformation("Added to guild Name: {name} ID: {id} Members: {count}, at {joined}", guild.Name, guild.Id, guild.MemberCount, guild.CurrentUser.JoinedAt);
+            await _db.UpsertGuildRecord(guild, DiscordAction.Joined);
         }
 
-        static Task LeftGuild(SocketGuild guild)
+        static async Task LeftGuild(SocketGuild guild)
         {
-            _logger.LogInformation("Removed from guild Name: {0} ID: {1} Members: {3}, at {4}", guild.Name, guild.Id, guild.MemberCount, DateTimeOffset.UtcNow);
-            return Task.CompletedTask;
+            _logger.LogInformation("Removed from guild Name: {name} ID: {id} Members: {count}, at {joined}", guild.Name, guild.Id, guild.MemberCount, DateTimeOffset.UtcNow);
+            await _db.UpsertGuildRecord(guild, DiscordAction.Left);
         }
 
         static Task LogDiscord(LogMessage message)
@@ -107,7 +113,7 @@ namespace Magus.Bot
                 LogSeverity.Debug    => LogLevel.Trace,
                 _                    => LogLevel.Information
             };
-            _logger.Log(severity, message.Exception, $"[{{0}}] {message.Message ?? message.Exception.Message}", message.Source);
+            _logger.Log(severity, message.Exception, "[{source}] {message}", message.Source, message.Message ?? message.Exception.Message);
             return Task.CompletedTask;
         }
 
@@ -115,14 +121,15 @@ namespace Magus.Bot
             => serviceCollection
                 .Configure<BotSettings>(settings => config.GetSection("BotSettings").Bind(settings))
                 .Configure<DataSettings>(settings => config.GetSection("DataSettings").Bind(settings))
+                .AddScheduler()
+                .AddSingleton<HttpClient>()
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
-                .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
-                .AddSingleton<CommandHandler>()
-                .AddSingleton(x => new HttpClient())
-                .AddSingleton<Services.IWebhook>(x => new DiscordWebhook())
-                .AddScheduler()
-                .AddSingleton<TIService>();
+                .AddSingleton(x => new InteractionServiceConfig() { InteractionCustomIdDelimiters = new char[] { Constants.CustomIdGroupDelimiter }, UseCompiledLambda = true })
+                .AddSingleton<InteractionService>()
+                .AddSingleton<InteractionHandler>()
+                .AddSingleton<TIService>()
+                .AddSingleton<AnnouncementService>();
 
         static bool IsDebug()
         {

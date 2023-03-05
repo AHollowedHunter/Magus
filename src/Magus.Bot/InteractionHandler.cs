@@ -2,19 +2,18 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
-using System.Linq;
 using System.Reflection;
 
 namespace Magus.Bot
 {
-    public class CommandHandler
+    public class InteractionHandler
     {
         private readonly DiscordSocketClient _client;
         private readonly InteractionService _interactions;
         private readonly IServiceProvider _services;
-        private readonly ILogger<CommandHandler> _logger;
+        private readonly ILogger<InteractionHandler> _logger;
 
-        public CommandHandler(DiscordSocketClient client, InteractionService interactions, ILogger<CommandHandler> logger, IServiceProvider services)
+        public InteractionHandler(DiscordSocketClient client, InteractionService interactions, ILogger<InteractionHandler> logger, IServiceProvider services)
         {
             _client       = client;
             _interactions = interactions;
@@ -22,12 +21,14 @@ namespace Magus.Bot
             _services     = services;
         }
 
-        public async Task InitializeAsync()
+        public async Task InitialiseAsync()
         {
             foreach (var module in GetEnabledModules())
                 await _interactions.AddModuleAsync(module, _services);
 
             _client.InteractionCreated += HandleInteraction;
+            //_client.ButtonExecuted
+            //_client.SelectMenuExecuted
 
             // Process the command execution results 
             _interactions.SlashCommandExecuted     += SlashCommandExecuted;
@@ -35,7 +36,7 @@ namespace Magus.Bot
             _interactions.ComponentCommandExecuted += ComponentCommandExecuted;
             _interactions.ModalCommandExecuted     += ModalCommandExecuted;
 
-            _logger.LogInformation("CommandHandler Initialised, {0} Modules registered: {1}", _interactions.Modules.Count, string.Join(", ", _interactions.Modules.Select(x => x.Name)));
+            _logger.LogInformation("InteractionHandler Initialised, {count} Modules registered: {moudleList}", _interactions.Modules.Count, string.Join(", ", _interactions.Modules.Select(x => x.Name)));
         }
 
         private List<TypeInfo> GetEnabledModules()
@@ -51,10 +52,36 @@ namespace Magus.Bot
                 if (moduleTypeInfo.IsAssignableFrom(definedType))
                     result.Add(definedType);
                 else
-                    _logger.LogWarning("Class {0} is marked with ModuleRegistration, but it does not implement IInteractionModuleBase", definedType.FullName);
+                    _logger.LogWarning("Class {name} is marked with ModuleRegistration, but it does not implement IInteractionModuleBase", definedType.FullName);
             }
             return result;
         }
+
+        # region Execution
+
+        private async Task HandleInteraction(SocketInteraction interaction)
+        {
+            if (interaction.Type == InteractionType.MessageComponent)
+                _logger.LogDebug("CustomId: {id}", ((SocketMessageComponent)interaction).Data.CustomId);
+
+            try
+            {
+                var ctx = new SocketInteractionContext(_client, interaction);
+
+                await _interactions.ExecuteCommandAsync(ctx, _services);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling interaction");
+
+                // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
+                // response, or at least let the user know that something went wrong during the command execution.
+                if (interaction.Type == InteractionType.ApplicationCommand)
+                    await interaction.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+            }
+        }
+
+        # endregion
 
         # region Error Handling
 
@@ -132,7 +159,7 @@ namespace Magus.Bot
                         // implement
                         break;
                     case InteractionCommandError.Exception:
-                        // implement
+                        _logger.LogError("Error handling slash command");
                         break;
                     case InteractionCommandError.Unsuccessful:
                         // implement
@@ -173,29 +200,6 @@ namespace Magus.Bot
 
             return Task.CompletedTask;
         }
-        # endregion
-
-        # region Execution
-
-        private async Task HandleInteraction(SocketInteraction interaction)
-        {
-            try
-            {
-                var ctx = new SocketInteractionContext(_client, interaction);
-
-                await _interactions.ExecuteCommandAsync(ctx, _services);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling interaction");
-
-                // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
-                // response, or at least let the user know that something went wrong during the command execution.
-                if (interaction.Type == InteractionType.ApplicationCommand)
-                    await interaction.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
-            }
-        }
-
         # endregion
     }
 }

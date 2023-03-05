@@ -12,12 +12,10 @@ namespace Magus.Bot.Modules
     public class PatchNoteModule : ModuleBase
     {
         private readonly IAsyncDataService _db;
-        private readonly IServiceProvider _services;
 
-        public PatchNoteModule(IAsyncDataService db, IServiceProvider services)
+        public PatchNoteModule(IAsyncDataService db)
         {
             _db = db;
-            _services = services;
         }
 
         [SlashCommand("notes", "Knowledge 📚")]
@@ -49,7 +47,7 @@ namespace Magus.Bot.Modules
                 patchNotes = new List<ItemPatchNoteEmbed> { await _db.GetPatchNote<ItemPatchNoteEmbed>(patch, name, locale ?? Context.Interaction.UserLocale) };
             }
 
-            if (patchNotes == null || patchNotes.Any(x => x == null) || patchNotes.Count() == 0)
+            if (patchNotes == null || patchNotes.Any(x => x == null) || !patchNotes.Any())
             {
                 await RespondAsync($"No changes for this item in patch {patch}", ephemeral: true);
                 return;
@@ -75,12 +73,14 @@ namespace Magus.Bot.Modules
             }
             else
             {
-                var patchNote = new List<HeroPatchNoteEmbed>();
-                patchNote.Add(await _db.GetPatchNote<HeroPatchNoteEmbed>(patch, name, locale ?? Context.Interaction.UserLocale));
+                var patchNote = new List<HeroPatchNoteEmbed>
+                {
+                    await _db.GetPatchNote<HeroPatchNoteEmbed>(patch, name, locale ?? Context.Interaction.UserLocale)
+                };
                 patchNotes = patchNote;
             }
 
-            if (patchNotes == null || patchNotes.Any(x => x == null) || patchNotes.Count() == 0)
+            if (patchNotes == null || patchNotes.Any(x => x == null) || !patchNotes.Any())
             {
                 await RespondAsync("Could not find any changes for this hero.", ephemeral: true);
                 return;

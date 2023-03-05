@@ -50,7 +50,7 @@ namespace Magus.DataBuilder
             stopwatch.Stop();
             var timeTaken = stopwatch.Elapsed.TotalSeconds;
             _logger.LogInformation("Finished Patch Note Update");
-            _logger.LogInformation("Time Taken: {0:0.#}s", timeTaken);
+            _logger.LogInformation("Time Taken: {time:0.#}s", timeTaken);
         }
 
         private async Task SetPatchNoteValues()
@@ -61,7 +61,7 @@ namespace Magus.DataBuilder
             _abilityValues.Clear();
             foreach (var language in _sourceLocaleMappings)
             {
-                _logger.LogDebug("Processing values for {0}", language.Key);
+                _logger.LogDebug("Processing values for {key}", language.Key);
                 var localePatchNotes = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetPatchNotes(language.Key), _httpClient);
                 foreach (var note in localePatchNotes)
                     _patchNoteValues.TryAdd((language.Key, note.Name), CleanLocaleValue(note.Value.ToString() ?? ""));
@@ -101,7 +101,7 @@ namespace Magus.DataBuilder
             // Checks
             if (patch.Children.Where(x => x.Name == "items").First().Any(x => !x.Name.Contains("item_")))
             {
-                _logger.LogWarning(patch["patch_name"] + "Contains items issue");
+                _logger.LogWarning("{patch} Contains items issue", patch["patch_name"]);
             }
             // End Checks
 
@@ -171,7 +171,7 @@ namespace Magus.DataBuilder
                         generalNotes.Add(MakeNote(note, language));
                     }
                 }
-                foreach (var ability in hero.Children.Where(x => x.Name.StartsWith(hero.Name.Substring(14 /* because heroname includes full "npc_dota_hero_" */))))
+                foreach (var ability in hero.Children.Where(x => x.Name.StartsWith(hero.Name[14..])))/* because heroname includes full "npc_dota_hero_" */
                 {
                     var notes = new List<PatchNote.Note>();
                     foreach (var note in ability.Children.Where(x => x.Name == "note"))
@@ -217,11 +217,11 @@ namespace Magus.DataBuilder
                 });
             }
 
-            _logger.LogDebug("Processed patch note for {0,-5} in {1}", patchNote.PatchName, language);
+            _logger.LogDebug("Processed patch note for {name,-5} in {lang}", patchNote.PatchName, language);
             return patchNote;
         }
 
-        private ulong GetPatchTimestamp(KVObject patch)
+        private static ulong GetPatchTimestamp(KVObject patch)
             => (ulong)DateTimeOffset.Parse(patch.Children.First(x => x.Name == "patch_date").Value.ToString()!).ToUnixTimeSeconds();
 
         private async Task StorePatchNoteEmbeds()
@@ -244,13 +244,13 @@ namespace Magus.DataBuilder
 
                     foreach (var patch in _patchNotes.Where(x => x.Language == localeMap.Key))
                     {
-                        _logger.LogDebug("Processing patch embeds {0,-5} in {1}", patch.PatchName, patch.Language);
+                        _logger.LogDebug("Processing patch embeds {name,-5} in {lang}", patch.PatchName, patch.Language);
 
                         generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_sourceLocaleMappings));
                         heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, _abilityValues, _sourceLocaleMappings));
                         itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, _sourceLocaleMappings));
                     }
-                    _logger.LogInformation("Updating Patch Notes in Database for {0}", locale);
+                    _logger.LogInformation("Updating Patch Notes in Database for {locale}", locale);
                     await _db.UpsertRecords(generalPatchNotes);
                     await _db.UpsertRecords(heroPatchNotes);
                     await _db.UpsertRecords(itemPatchNotes);
@@ -275,7 +275,7 @@ namespace Magus.DataBuilder
 
         private PatchNote.Note MakeNote(KVObject kvObject, string language)
         {
-            if (kvObject.Children.Count() == 0)
+            if (!kvObject.Children.Any())
             {
                 return new() { Value = _patchNoteValues[(language, kvObject.Value.ToString()!)] };
             }
@@ -284,10 +284,10 @@ namespace Magus.DataBuilder
                 var info = kvObject.Children.FirstOrDefault(x => x.Name == "info")?.Value.ToString();
                 if (info != null)
                 {
-                    var valueKey = (language, info.Substring(1));
+                    var valueKey = (language, info[1..]);
                     info = GetLanguageValueOrDefault(valueKey);
                 }
-                var noteKey = (language, kvObject.Children.First(x => x.Name == "note").Value.ToString()!.Substring(1));
+                var noteKey = (language, kvObject.Children.First(x => x.Name == "note").Value.ToString() ![1 ..]);
                 return new()
                 {
                     Value  = GetLanguageValueOrDefault(noteKey)!,

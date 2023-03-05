@@ -1,16 +1,26 @@
-﻿namespace Magus.Data.Models.Discord
+﻿using Magus.Common.Enums;
+
+namespace Magus.Data.Models.Discord
 {
     public record Guild : ISnowflakeRecord
     {
+        public Guild() { }
+        public Guild(ulong id) => Id = id;
+
         public ulong Id { get; set; }
-        public string Name { get; set; }
+        public string CurrentName { get; set; }
         public ulong OwnerId { get; set; }
-        public DateTimeOffset JoinedAt { get; init; }
-        public bool? Large { get; set; }
-        public int MemberCount { get; set; }
-        /// <summary>
-        /// See <see href="https://discord.com/developers/docs/reference#locales"></see>
-        /// </summary>
-        public string PreferredLocale { get; set; }
+        public int LatestMemberCount { get; set; }
+        public bool IsCurrentMember { get; set; } = true;
+        public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
+
+        public IList<Snapshot> JoinedInfo { get; init; } = new List<Snapshot>();
+        public IList<Snapshot> LeftInfo { get; init; } = new List<Snapshot>();
+
+        public record Snapshot(DateTimeOffset Date, int MemberCount, string Name, ulong OwnerId);
+
+        public IList<Announcement> Announcements { get; init; } = new List<Announcement>();
+
+        public record Announcement(Topic Topic, ulong WebhookId);
     }
 }
