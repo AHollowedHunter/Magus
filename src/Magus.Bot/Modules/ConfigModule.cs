@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 namespace Magus.Bot.Modules
 {
     [Group(GroupName, "Configure MAGUS features")]
-    [ModuleRegistration(Location.TESTING)]
+    [ModuleRegistration(Location.GLOBAL)]
     public class ConfigModule : ModuleBase
     {
         const string GroupName = "config";
