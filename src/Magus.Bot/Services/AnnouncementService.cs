@@ -95,7 +95,9 @@ namespace Magus.Bot.Services
         {
             ulong sourceId    = _botSettings.Announcements.DotaSource;
             var sourceChannel = await _discord.GetChannelAsync(sourceId) as INewsChannel;
-            var content = announcement.Content.Length < 512 ? announcement.Content : announcement.Content[..512] + " ***...***";
+            var content = announcement.Content.Length < 512
+                ? announcement.Content
+                : announcement.Content[..(512+announcement.Content[512..].IndexOf(" "))] + " ***...***";
 
             var description = new StringBuilder()
                 .AppendLine(content)
