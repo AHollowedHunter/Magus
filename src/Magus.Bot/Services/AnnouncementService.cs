@@ -93,8 +93,9 @@ namespace Magus.Bot.Services
 
         private async Task SendDotaAnnouncement(Announcement announcement)
         {
-            ulong sourceId    = _botSettings.Announcements.DotaSource;
+            var sourceId      = _botSettings.Announcements.DotaSource;
             var sourceChannel = await _discord.GetChannelAsync(sourceId) as INewsChannel;
+            
             var content = announcement.Content.Length < 512
                 ? announcement.Content
                 : announcement.Content[..(512+announcement.Content[512..].IndexOf(" "))] + " ***...***";
@@ -109,6 +110,7 @@ namespace Magus.Bot.Services
                 .WithTitle(announcement.Title)
                 .WithDescription(description)
                 .WithImageUrl(announcement.ImageUrl)
+                .WithColor(Color.DarkRed)
                 .Build();
 
             var sentMessage = await sourceChannel!.SendMessageAsync(embed: embed);
