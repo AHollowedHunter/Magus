@@ -179,7 +179,6 @@ namespace Magus.Bot.Modules
             await DeferAsync();
 
             var guild = await _db.GetGuild(Context.Guild);
-            RestWebhook webhook;
             var announcement = guild.Announcements.FirstOrDefault(x => x.Topic == topic);
             if (announcement == null)
             {
@@ -187,9 +186,16 @@ namespace Magus.Bot.Modules
             }
             else
             {
-                webhook = await Context.Guild.GetWebhookAsync(announcement.WebhookId);
-                if (webhook != null)
-                    await webhook.DeleteAsync();
+                var webhook = await Context.Guild.GetWebhookAsync(announcement.WebhookId);
+                try
+                {
+                    if (webhook != null)
+                        await webhook.DeleteAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Exception trying to delete webhook {webhookId} that appears to have been already removed. Continue to remove from database", announcement.WebhookId);
+                }
                 guild.Announcements.Remove(announcement);
                 await _db.UpsertRecord(guild);
 

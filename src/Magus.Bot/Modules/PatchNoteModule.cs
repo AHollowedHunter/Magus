@@ -23,12 +23,10 @@ namespace Magus.Bot.Modules
                                      [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             var patchNote = await _db.GetGeneralPatchNote(number, locale ?? Context.Interaction.UserLocale);
-            if (patchNote == null)
-            {
-                await RespondAsync($"Could not find a patch note numbered {number}");
-                return;
-            }
-            await RespondAsync(embed: patchNote.Embed.CreateDiscordEmbed());
+            if (patchNote != null)
+                await RespondAsync(embed: patchNote.Embed.CreateDiscordEmbed());
+            else
+                await RespondAsync($"Could not find a patch note numbered **{number}**");
         }
 
         [SlashCommand("item", "NullReferenceException Talisman")]
@@ -36,29 +34,13 @@ namespace Magus.Bot.Modules
                                     [Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
-            var embeds = new List<Discord.Embed>();
-            IEnumerable<ItemPatchNoteEmbed> patchNotes;
-            if (patch == null)
+            var embeds = await GetEntityPatchNotesEmbeds<ItemPatchNoteEmbed>(name, patch, locale, 3);
+            if (!embeds.Any())
             {
-                patchNotes = await _db.GetPatchNotes<ItemPatchNoteEmbed>(name, locale ?? Context.Interaction.UserLocale, limit: 3, orderByDesc: true);
-            }
-            else
-            {
-                patchNotes = new List<ItemPatchNoteEmbed> { await _db.GetPatchNote<ItemPatchNoteEmbed>(patch, name, locale ?? Context.Interaction.UserLocale) };
-            }
-
-            if (patchNotes == null || patchNotes.Any(x => x == null) || !patchNotes.Any())
-            {
-                await RespondAsync($"No changes for this item in patch {patch}", ephemeral: true);
+                await RespondAsync($"No changes for this item in Patch **{patch}**", ephemeral: true);
                 return;
             }
-            foreach (var patchNote in patchNotes)
-            {
-                embeds.Add(patchNote.Embed.CreateDiscordEmbed());
-            }
-            embeds.Reverse();
-
-            await RespondAsync(embeds: embeds.ToArray());
+            await RespondAsync(embeds: embeds.Reverse().ToArray());
         }
 
         [SlashCommand("hero", "🎶 I need a hero 🎶")]
@@ -66,33 +48,33 @@ namespace Magus.Bot.Modules
                                     [Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
-            IEnumerable<HeroPatchNoteEmbed> patchNotes;
+            var embeds = await GetEntityPatchNotesEmbeds<HeroPatchNoteEmbed>(name, patch, locale);
+            if (!embeds.Any())
+            {
+                await RespondAsync($"No changes for this hero in Patch **{patch}**", ephemeral: true);
+                return;
+            }
+            await RespondAsync(embeds: embeds.ToArray());
+        }
+
+        private async Task<IEnumerable<Discord.Embed>> GetEntityPatchNotesEmbeds<T>(string name, string? patch = null, string? locale = null, int limit = 1) where T : EntityPatchNoteEmbed
+        {
+            var patchNotes = new List<T>();
             if (patch == null)
             {
-                patchNotes = await _db.GetPatchNotes<HeroPatchNoteEmbed>(name, locale ?? Context.Interaction.UserLocale, limit: 1, orderByDesc: true);
+                patchNotes.AddRange(await _db.GetPatchNotes<T>(name, locale ?? Context.Interaction.UserLocale, limit: limit, orderByDesc: true));
             }
             else
             {
-                var patchNote = new List<HeroPatchNoteEmbed>
-                {
-                    await _db.GetPatchNote<HeroPatchNoteEmbed>(patch, name, locale ?? Context.Interaction.UserLocale)
-                };
-                patchNotes = patchNote;
+                var patchnote = await _db.GetPatchNote<T>(patch, name, locale ?? Context.Interaction.UserLocale);
+                if (patchnote != null)
+                    patchNotes.Add(patchnote); ;
             }
-
-            if (patchNotes == null || patchNotes.Any(x => x == null) || !patchNotes.Any())
-            {
-                await RespondAsync("Could not find any changes for this hero.", ephemeral: true);
-                return;
-            }
-
             var embeds = new List<Discord.Embed>();
             foreach (var patchNote in patchNotes)
-            {
                 embeds.Add(patchNote.Embed.CreateDiscordEmbed());
-            }
 
-            await RespondAsync(embeds: embeds.ToArray());
+            return embeds;
         }
     }
 }
