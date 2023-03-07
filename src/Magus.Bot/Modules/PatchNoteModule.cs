@@ -18,6 +18,10 @@ namespace Magus.Bot.Modules
             _db = db;
         }
 
+        [SlashCommand("when", "how long is a piece of string?")]
+        public async Task When()
+            => await RespondAsync("After a new patch is announced, it may take around ~30-60 minutes for me to fully update depending on different factors.\nIf they make breaking changes in game files it will take longer.");
+
         [SlashCommand("notes", "Knowledge 📚")]
         public async Task PatchNotes([Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string number,
                                      [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
