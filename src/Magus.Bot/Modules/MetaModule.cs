@@ -38,7 +38,7 @@ namespace Magus.Bot.Modules
             response.AddField("Version", version, true);
             response.AddField("Latest Patch", latestPatch, true);
             response.AddField("Total Guilds", Context.Client.Guilds.Count, true);
-            response.AddField("Acknowledgements", "SteamDB for various libraries + Gametracking-Dota2\nDiscord.NET library", false);
+            response.AddField("Acknowledgements", "SteamDB for various libraries\nDiscord.NET library", false);
 
             var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n[Privacy Policy]({_config.BotPrivacyPolicy})\n";
             response.AddField("Links", links, false);

@@ -1,4 +1,5 @@
-﻿using Magus.Data;
+﻿using Magus.Common.Options;
+using Magus.Data;
 using Serilog;
 using System.Diagnostics;
 
@@ -16,6 +17,8 @@ namespace Magus.DataBuilder
 
         public static async Task Main()
         {
+            Dota2GameFiles.BasePath = configuration.GetValue<string>("GameFiles") ?? "./pak01";
+
             var dotaUpdater = services.GetRequiredService<DotaUpdater>();
 
             var stopwatch = new Stopwatch();
@@ -31,10 +34,9 @@ namespace Magus.DataBuilder
         static ServiceProvider ConfigureServices()
             => new ServiceCollection()
                 .Configure<DataSettings>(settings => configuration.GetSection("DataSettings").Bind(settings))
+                .Configure<LocalisationOptions>(settings => configuration.GetSection("Localisation").Bind(settings))
                 .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
-                .AddSingleton(configuration)
                 .AddSingleton<IAsyncDataService, MongoDBService>()
-                .AddSingleton(x => new HttpClient())
                 .AddTransient<DotaUpdater>()
                 .AddTransient<PatchNoteUpdater>()
                 .AddTransient<EntityUpdater>()

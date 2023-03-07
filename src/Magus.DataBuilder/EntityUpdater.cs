@@ -1,6 +1,8 @@
-﻿using Magus.Data;
+﻿using Magus.Common.Options;
+using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -13,13 +15,10 @@ namespace Magus.DataBuilder
     public class EntityUpdater
     {
         private readonly IAsyncDataService _db;
-        private readonly IConfiguration _config;
+        private readonly LocalisationOptions _localisationOptions;
         private readonly ILogger<PatchNoteUpdater> _logger;
-        private readonly HttpClient _httpClient;
         private readonly KVSerializer _kvSerializer;
 
-        private readonly string _sourceDefaultLanguage;
-        private readonly Dictionary<string, string[]> _sourceLocaleMappings;
         private readonly Dictionary<(string Language, string Key), string> _abilityValues;
         private readonly Dictionary<(string Language, string Key), string> _dotaValues;
         private readonly Dictionary<(string Language, string Key), string> _heroLoreValues;
@@ -33,16 +32,13 @@ namespace Magus.DataBuilder
 
         private static readonly string ValueSeparator = "\u00A0/\u00A0";
 
-        public EntityUpdater(IAsyncDataService db, IConfiguration config, ILogger<PatchNoteUpdater> logger, HttpClient httpClient)
+        public EntityUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger)
         {
-            _db         = db;
-            _config     = config;
-            _logger     = logger;
-            _httpClient = httpClient;
+            _db                  = db;
+            _localisationOptions = localisationOptions.Value;
+            _logger              = logger;
 
             _kvSerializer          = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
-            _sourceDefaultLanguage = _config.GetSection("Localisation").GetValue("DefaultLanguage", "english");
-            _sourceLocaleMappings  = _config.GetSection("Localisation").GetSection("SourceLocaleMappings").Get<Dictionary<string, string[]>>();
             _abilityValues         = new();
             _dotaValues            = new();
             _heroLoreValues        = new();
@@ -79,13 +75,13 @@ namespace Magus.DataBuilder
             _dotaValues.Clear();
             _heroLoreValues.Clear();
 
-            foreach (var language in _sourceLocaleMappings)
+            foreach (var language in _localisationOptions.SourceLocaleMappings)
             {
                 _logger.LogDebug("Processing values for {0}", language.Key);
 
-                var abilities = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetAbilities(language.Key), _httpClient);
-                var dota      = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetDota(language.Key), _httpClient);
-                var heroLore  = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetHeroLore(language.Key), _httpClient);
+                var abilities = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Localization.GetAbilities(language.Key));
+                var dota      = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Localization.GetDota(language.Key));
+                var heroLore  = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Localization.GetHeroLore(language.Key));
 
                 foreach (var note in abilities.Children.First(x => x.Name == "Tokens"))
                     _abilityValues.TryAdd((language.Key, note.Name.ToLower()), note.Value.ToString() ?? "");
@@ -103,10 +99,10 @@ namespace Magus.DataBuilder
         {
             _logger.LogInformation("Setting Entities");
 
-            var mixedAbilities = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.NpcAbilities, _httpClient);
-            var heroes         = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.NpcHeroes, _httpClient);
-            var items          = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Items, _httpClient);
-            var neutralItems   = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.NeutralItems, _httpClient);
+            var mixedAbilities = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcAbilities);
+            var heroes         = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcHeroes);
+            var items          = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Items);
+            var neutralItems   = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NeutralItems);
 
             var talentRegex    = new Regex("special_bonus_\\w+");
             var mainAbilities  = new List<KVObject>();
@@ -127,7 +123,7 @@ namespace Magus.DataBuilder
                 }
 
                 _logger.LogDebug("Processing talent {0}", ability.Name);
-                foreach (var language in _sourceLocaleMappings.Keys)
+                foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
                 {
                     _talents.Add(CreateTalent(language, ability));
                 }
@@ -136,7 +132,7 @@ namespace Magus.DataBuilder
             foreach (var ability in mainAbilities)
             {
                 _logger.LogDebug("Processing ability {0}", ability.Name);
-                foreach (var language in _sourceLocaleMappings.Keys)
+                foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
                 {
                     _abilities.Add(CreateAbility(language, ability));
                 }
@@ -147,7 +143,7 @@ namespace Magus.DataBuilder
             foreach (var hero in heroes.Children.Where(x => x.Name != "Version" && x.Name != "npc_dota_hero_base" && x.Name != "npc_dota_hero_target_dummy"))
             {
                 _logger.LogDebug("Processing hero {0}", hero.Name);
-                foreach (var language in _sourceLocaleMappings.Keys)
+                foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
                 {
                     _heroes.Add(CreateHero(language, hero));
                 }
@@ -164,7 +160,7 @@ namespace Magus.DataBuilder
                     continue;
 
                 _logger.LogDebug("Processing item {0}", item.Name);
-                foreach (var language in _sourceLocaleMappings.Keys)
+                foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
                 {
                     _items.Add(CreateItem(language, item));
                 }
@@ -821,7 +817,7 @@ namespace Magus.DataBuilder
             }
             else
             {
-                _abilityValues.TryGetValue((_sourceDefaultLanguage, key.Key), out var value);
+                _abilityValues.TryGetValue((_localisationOptions.DefaultLanguage, key.Key), out var value);
                 return value ?? String.Empty;
             }
         }
@@ -854,7 +850,7 @@ namespace Magus.DataBuilder
             }
             else
             {
-                _abilityValues.TryGetValue((_sourceDefaultLanguage, key.Key), out var value);
+                _abilityValues.TryGetValue((_localisationOptions.DefaultLanguage, key.Key), out var value);
                 return value ?? String.Empty;
             }
         }
@@ -887,9 +883,9 @@ namespace Magus.DataBuilder
             }
             else
             {
-                if (!_dotaValues.TryGetValue((_sourceDefaultLanguage, localeKey.Key), out var value))
+                if (!_dotaValues.TryGetValue((_localisationOptions.DefaultLanguage, localeKey.Key), out var value))
                 {
-                    _heroLoreValues.TryGetValue((_sourceDefaultLanguage, localeKey.Key), out value);
+                    _heroLoreValues.TryGetValue((_localisationOptions.DefaultLanguage, localeKey.Key), out value);
                 }
                 return value ?? "";
             }
@@ -1126,17 +1122,17 @@ namespace Magus.DataBuilder
             foreach (var hero in _heroes)
             {
                 _logger.LogDebug("Processing hero info embeds for {0,-40} in {1}", hero.InternalName, hero.Language);
-                heroInfoEmbeds.AddRange(hero.GetHeroInfoEmbeds(_sourceLocaleMappings, latestPatch));
+                heroInfoEmbeds.AddRange(hero.GetHeroInfoEmbeds(_localisationOptions.SourceLocaleMappings, latestPatch));
             }
             foreach (var heroAbility in _heroAbilities)
             {
                 _logger.LogDebug("Processing ability info embeds for {0,-40} in {1}", heroAbility.InternalName, heroAbility.Language);
-                abilityInfoEmbeds.AddRange(heroAbility.CreateAbilityInfoEmbeds(_sourceLocaleMappings, latestPatch));
+                abilityInfoEmbeds.AddRange(heroAbility.CreateAbilityInfoEmbeds(_localisationOptions.SourceLocaleMappings, latestPatch));
             }
             foreach (var item in _items.Where(x => !x.ItemRecipe))
             {
                 _logger.LogDebug("Processing item info embeds for {0,-40} in {1}", item.InternalName, item.Language);
-                itemInfoEmbeds.AddRange(item.CreateItemInfoEmbeds(_sourceLocaleMappings, latestPatch));
+                itemInfoEmbeds.AddRange(item.CreateItemInfoEmbeds(_localisationOptions.SourceLocaleMappings, latestPatch));
             }
 
 

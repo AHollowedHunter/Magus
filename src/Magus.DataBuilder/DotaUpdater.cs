@@ -1,5 +1,4 @@
-﻿using Magus.Common;
-using Magus.Data;
+﻿using Magus.Data;
 
 namespace Magus.DataBuilder
 {
@@ -7,14 +6,12 @@ namespace Magus.DataBuilder
     {
         private readonly IAsyncDataService _db;
         private readonly ILogger<PatchNoteUpdater> _logger;
-        private readonly HttpClient _httpClient;
         private readonly IServiceProvider _services;
 
-        public DotaUpdater(IAsyncDataService db, ILogger<PatchNoteUpdater> logger, HttpClient httpClient, IServiceProvider services)
+        public DotaUpdater(IAsyncDataService db, ILogger<PatchNoteUpdater> logger, IServiceProvider services)
         {
             _db         = db;
             _logger     = logger;
-            _httpClient = httpClient;
             _services   = services;
         }
 
@@ -31,7 +28,8 @@ namespace Magus.DataBuilder
 
         private async Task UpdatePatchList()
         {
-            var patchListUpdater = new PatchListUpdater(_db, _logger, _httpClient);
+            using var scope = _services.CreateScope();
+            var patchListUpdater = scope.ServiceProvider.GetRequiredService<PatchListUpdater>();
             await patchListUpdater.Update();
         }
 

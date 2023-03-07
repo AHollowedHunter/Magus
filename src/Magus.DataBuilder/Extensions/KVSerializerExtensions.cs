@@ -1,21 +1,15 @@
-﻿using System.Net.Http.Headers;
-using ValveKeyValue;
+﻿using ValveKeyValue;
 
 namespace Magus.DataBuilder.Extensions
 {
     public static class KVSerializerExtensions
     {
-        public static async Task<KVObject> GetKVObjectFromUri(this KVSerializer serializer, string uri, HttpClient client, bool hasEscapeSequences = true)
-        {
-            var rawString = await client.GetStringAsync(uri);
-            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(rawString));
-            return serializer.Deserialize(stream, new KVSerializerOptions() { HasEscapeSequences = hasEscapeSequences });
-        }
+        public static async Task<KVObject> GetKVObjectFromLocalUri(this KVSerializer serializer, string uri, bool hasEscapeSequences = true) 
+            => await serializer.GetKVObjectFromLocalUri(uri, new KVSerializerOptions() { HasEscapeSequences = hasEscapeSequences });
 
-        public static async Task<KVObject> GetKVObjectFromUri(this KVSerializer serializer, string uri, HttpClient client, KVSerializerOptions options)
+        public static async Task<KVObject> GetKVObjectFromLocalUri(this KVSerializer serializer, string uri, KVSerializerOptions options)
         {
-            var rawString = await client.GetStringAsync(uri);
-            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(rawString));
+            using var stream = new MemoryStream(await File.ReadAllBytesAsync(uri));
             return serializer.Deserialize(stream, options);
         }
     }

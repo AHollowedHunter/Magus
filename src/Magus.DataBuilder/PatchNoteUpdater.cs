@@ -1,6 +1,8 @@
-﻿using Magus.Data;
+﻿using Magus.Common.Options;
+using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using ValveKeyValue;
@@ -10,32 +12,26 @@ namespace Magus.DataBuilder
     public class PatchNoteUpdater
     {
         private readonly IAsyncDataService _db;
-        private readonly IConfiguration _config;
+        private readonly LocalisationOptions _localisationOptions;
         private readonly ILogger<PatchNoteUpdater> _logger;
-        private readonly HttpClient _httpClient;
         private readonly KVSerializer _kvSerializer;
 
-        private readonly string _sourceDefaultLanguage;
-        private readonly Dictionary<string, string[]> _sourceLocaleMappings; // Switch to config class
         private readonly Dictionary<(string Language, string Key), string> _patchNoteValues; // this should be its own class with methods
         private readonly Dictionary<(string Language, string Key), string> _dotaValues; // this should be its own class with methods
         private readonly Dictionary<(string Language, string Key), string> _abilityValues;
         private readonly List<PatchNote> _patchNotes;
 
-        public PatchNoteUpdater(IAsyncDataService db, IConfiguration config, ILogger<PatchNoteUpdater> logger, HttpClient httpClient)
+        public PatchNoteUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger)
         {
-            _db         = db;
-            _config     = config;
-            _logger     = logger;
-            _httpClient = httpClient;
+            _db                  = db;
+            _localisationOptions = localisationOptions.Value;
+            _logger              = logger;
 
-            _kvSerializer          = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
-            _sourceDefaultLanguage = _config.GetSection("Localisation").GetValue("DefaultLanguage", "english");
-            _sourceLocaleMappings  = _config.GetSection("Localisation").GetSection("SourceLocaleMappings").Get<Dictionary<string, string[]>>();
-            _patchNoteValues       = new();
-            _dotaValues            = new();
-            _patchNotes            = new();
-            _abilityValues         = new();
+            _kvSerializer    = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+            _patchNoteValues = new();
+            _dotaValues      = new();
+            _patchNotes      = new();
+            _abilityValues   = new();
         }
 
         public async Task Update()
@@ -59,18 +55,18 @@ namespace Magus.DataBuilder
             _patchNoteValues.Clear();
             _dotaValues.Clear();
             _abilityValues.Clear();
-            foreach (var language in _sourceLocaleMappings)
+            foreach (var language in _localisationOptions.SourceLocaleMappings)
             {
                 _logger.LogDebug("Processing values for {key}", language.Key);
-                var localePatchNotes = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetPatchNotes(language.Key), _httpClient);
+                var localePatchNotes = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Localization.GetPatchNotes(language.Key));
                 foreach (var note in localePatchNotes)
                     _patchNoteValues.TryAdd((language.Key, note.Name), CleanLocaleValue(note.Value.ToString() ?? ""));
 
-                var dota = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetDota(language.Key), _httpClient);
+                var dota = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Localization.GetDota(language.Key));
                 foreach (var note in dota.Children.First(x => x.Name == "Tokens"))
                     _dotaValues.TryAdd((language.Key, note.Name.ToLower()), CleanSimple(note.Value.ToString() ?? ""));
 
-                var abilities = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.Localization.GetAbilities(language.Key), _httpClient);
+                var abilities = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Localization.GetAbilities(language.Key));
                 foreach (var note in abilities.Children.First(x => x.Name == "Tokens"))
                     _abilityValues.TryAdd((language.Key, note.Name.ToLower()), note.Value.ToString() ?? "");
             }
@@ -81,13 +77,13 @@ namespace Magus.DataBuilder
         private async Task SetPatchNotes()
         {
             _logger.LogInformation("Setting Patch Notes");
-            var patchManifest = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.PatchNotes, _httpClient);
+            var patchManifest = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.PatchNotes);
 
             _patchNotes.Clear();
 
             foreach (var patch in patchManifest.Children)
             {
-                foreach (var language in _sourceLocaleMappings.Keys)
+                foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
                 {
                     _patchNotes.Add(CreatePatchNote(language, patch));
                 }
@@ -212,8 +208,8 @@ namespace Magus.DataBuilder
                 patchNote.NeutralCreepNotes.Add(new()
                 {
                     InternalName = creep.Name,
-                    Title = creep.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
-                    Notes = notes,
+                    Title        = creep.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
+                    Notes        = notes,
                 });
             }
 
@@ -232,23 +228,23 @@ namespace Magus.DataBuilder
             // For now, while hero, ability, item etc. data is not procesed, use existing ...Info stored
 
             EnsureIndexes();
-            foreach (var localeMap in _sourceLocaleMappings)
+            foreach (var localeMap in _localisationOptions.SourceLocaleMappings)
                 foreach (var locale in localeMap.Value)
                 {
                     var generalPatchNotes = new List<GeneralPatchNoteEmbed>();
                     var heroPatchNotes    = new List<HeroPatchNoteEmbed>();
                     var itemPatchNotes    = new List<ItemPatchNoteEmbed>();
-                    var heroInfo = await _db.GetRecords<HeroInfoEmbed>(locale);
-                    var abilityInfo = await _db.GetRecords<AbilityInfoEmbed>(locale);
-                    var itemInfo = await _db.GetRecords<ItemInfoEmbed>(locale);
+                    var heroInfo          = await _db.GetRecords<HeroInfoEmbed>(locale);
+                    var abilityInfo       = await _db.GetRecords<AbilityInfoEmbed>(locale);
+                    var itemInfo          = await _db.GetRecords<ItemInfoEmbed>(locale);
 
                     foreach (var patch in _patchNotes.Where(x => x.Language == localeMap.Key))
                     {
                         _logger.LogDebug("Processing patch embeds {name,-5} in {lang}", patch.PatchName, patch.Language);
 
-                        generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_sourceLocaleMappings));
-                        heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, _abilityValues, _sourceLocaleMappings));
-                        itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, _sourceLocaleMappings));
+                        generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_localisationOptions.SourceLocaleMappings));
+                        heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, _abilityValues, _localisationOptions.SourceLocaleMappings));
+                        itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, _localisationOptions.SourceLocaleMappings));
                     }
                     _logger.LogInformation("Updating Patch Notes in Database for {locale}", locale);
                     await _db.UpsertRecords(generalPatchNotes);
@@ -290,9 +286,9 @@ namespace Magus.DataBuilder
                 var noteKey = (language, kvObject.Children.First(x => x.Name == "note").Value.ToString() ![1 ..]);
                 return new()
                 {
-                    Value  = GetLanguageValueOrDefault(noteKey)!,
+                    Value = GetLanguageValueOrDefault(noteKey)!,
                     Indent = Math.Abs(int.Parse(kvObject.Children.FirstOrDefault(x => x.Name == "indent")?.Value.ToString() ?? "0")),
-                    Info   = info,
+                    Info = info,
                 };
             }
         }
@@ -305,7 +301,7 @@ namespace Magus.DataBuilder
             }
             else
             {
-                _patchNoteValues.TryGetValue((_sourceDefaultLanguage, key.key), out var value);
+                _patchNoteValues.TryGetValue((_localisationOptions.DefaultLanguage, key.key), out var value);
                 return value;
             }
         }
@@ -314,11 +310,12 @@ namespace Magus.DataBuilder
         {
             var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*>");
             var italicsRegex = new Regex(@"(?i)<[/]?\s*i\s*>");
-            var htmlTagRegex   = new Regex(@"(?i)<[/]?\s*[^>]*>");
-            value            = value.Replace("<br>", "\n");
-            value            = boldRegex.Replace(value, "**");
-            value            = italicsRegex.Replace(value, "*");
-            value              = htmlTagRegex.Replace(value, "");
+            var htmlTagRegex = new Regex(@"(?i)<[/]?\s*[^>]*>");
+
+            value = value.Replace("<br>", "\n");
+            value = boldRegex.Replace(value, "**");
+            value = italicsRegex.Replace(value, "*");
+            value = htmlTagRegex.Replace(value, "");
 
             return value;
         }
@@ -331,15 +328,16 @@ namespace Magus.DataBuilder
             var infoRegex      = new Regex(@"(?i)<[/]?\s*info\s*/?>");
             var highlightRegex = new Regex(@"(?i)<[/]?[\s.]*(class=""(New|Reworked)"")?[^>]*>");
             var htmlTagRegex   = new Regex(@"(?i)<[/]?\s*[^>]*>");
-            patchNote          = onlyBreak.Replace(patchNote, "\n");
-            patchNote          = patchNote.Replace("<br>", "\n");
-            patchNote          = patchNote.Replace("&nbsp;", "");
-            patchNote          = patchNote.Replace("*", "\\*");
-            patchNote          = tableRegex.Replace(patchNote, "");
-            patchNote          = boldRegex.Replace(patchNote, "**");
-            patchNote          = infoRegex.Replace(patchNote, "*");
-            patchNote          = highlightRegex.Replace(patchNote, "__");
-            patchNote          = htmlTagRegex.Replace(patchNote, "");
+
+            patchNote = onlyBreak.Replace(patchNote, "\n");
+            patchNote = patchNote.Replace("<br>", "\n");
+            patchNote = patchNote.Replace("&nbsp;", "");
+            patchNote = patchNote.Replace("*", "\\*");
+            patchNote = tableRegex.Replace(patchNote, "");
+            patchNote = boldRegex.Replace(patchNote, "**");
+            patchNote = infoRegex.Replace(patchNote, "*");
+            patchNote = highlightRegex.Replace(patchNote, "__");
+            patchNote = htmlTagRegex.Replace(patchNote, "");
 
             return patchNote;
         }

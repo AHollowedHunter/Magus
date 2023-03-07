@@ -9,14 +9,12 @@ namespace Magus.DataBuilder
     {
         private readonly IAsyncDataService _db;
         private readonly ILogger<PatchNoteUpdater> _logger;
-        private readonly HttpClient _httpClient;
         private readonly KVSerializer _kvSerializer;
 
-        public PatchListUpdater(IAsyncDataService db, ILogger<PatchNoteUpdater> logger, HttpClient httpClient)
+        public PatchListUpdater(IAsyncDataService db, ILogger<PatchNoteUpdater> logger)
         {
             _db         = db;
             _logger     = logger;
-            _httpClient = httpClient;
 
             _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
         }
@@ -38,7 +36,7 @@ namespace Magus.DataBuilder
         private async Task UpdatePatchList()
         {
             _logger.LogInformation("Getting Patches");
-            var patchManifest = await _kvSerializer.GetKVObjectFromUri(Dota2GameFiles.PatchNotes, _httpClient);
+            var patchManifest = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.PatchNotes);
 
             List<Patch> patchList = new();
 
