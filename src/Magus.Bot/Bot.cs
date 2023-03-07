@@ -54,7 +54,7 @@ namespace Magus.Bot
             client.LeftGuild   += async (SocketGuild guild) => await LeftGuild(guild);
 
             await services.GetRequiredService<InteractionHandler>().InitialiseAsync();
-            await services.GetRequiredService<TIService>().Initialise();
+            //await services.GetRequiredService<TIService>().Initialise();
             await services.GetRequiredService<AnnouncementService>().Initialise();
 
             await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
