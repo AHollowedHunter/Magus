@@ -20,6 +20,7 @@ namespace Magus.Bot
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private static ILogger<Bot> _logger;
         private static IAsyncDataService _db;
+        private static IServiceProvider _services;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         static void Main(string[] args)
@@ -30,19 +31,19 @@ namespace Magus.Bot
                 .UseSerilog((hostingContext, services, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration))
                 .Build();
 
-            _logger = host.Services.GetRequiredService<ILogger<Bot>>();
-            _db     = host.Services.GetRequiredService<IAsyncDataService>();
+            _services = host.Services;
+            _logger   = _services.GetRequiredService<ILogger<Bot>>();
+            _db       = _services.GetRequiredService<IAsyncDataService>();
             RunAsync(host).GetAwaiter().GetResult();
         }
 
         static async Task RunAsync(IHost host)
         {
-            var services           = host.Services;
-            var botSettings        = services.GetRequiredService<IOptions<BotSettings>>().Value;
-            var client             = services.GetRequiredService<DiscordSocketClient>();
-            var interactionService = services.GetRequiredService<InteractionService>();
+            var botSettings        = _services.GetRequiredService<IOptions<BotSettings>>().Value;
+            var client             = _services.GetRequiredService<DiscordSocketClient>();
+            var interactionService = _services.GetRequiredService<InteractionService>();
 
-            client.Log             += LogDiscord;
+            client.Log += LogDiscord;
             interactionService.Log += LogDiscord;
 
             if (IsDebug())
@@ -51,11 +52,11 @@ namespace Magus.Bot
                 client.Ready += async () => await RegisterModules(interactionService);
 
             client.JoinedGuild += async (SocketGuild guild) => await JoinedGuild(guild);
-            client.LeftGuild   += async (SocketGuild guild) => await LeftGuild(guild);
+            client.LeftGuild += async (SocketGuild guild) => await LeftGuild(guild);
 
-            await services.GetRequiredService<InteractionHandler>().InitialiseAsync();
+            await _services.GetRequiredService<InteractionHandler>().InitialiseAsync();
             //await services.GetRequiredService<TIService>().Initialise();
-            await services.GetRequiredService<AnnouncementService>().Initialise();
+            await _services.GetRequiredService<AnnouncementService>().Initialise();
 
             await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
             await client.StartAsync();

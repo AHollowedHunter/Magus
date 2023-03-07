@@ -14,7 +14,7 @@ namespace Magus.Bot.Modules
         private readonly IAsyncDataService _db;
         private readonly BotSettings _config;
 
-        readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString();
+        readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString(3);
 
         public MetaModule(IAsyncDataService db, IOptions<BotSettings> config)
         {
