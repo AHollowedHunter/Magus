@@ -4,10 +4,10 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
+using Magus.Common.Options;
 using Magus.Data;
 using Magus.Data.Enums;
 using Magus.Data.Extensions;
-using Magus.Data.Models.Discord;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -54,7 +54,7 @@ namespace Magus.Bot
             client.LeftGuild   += async (SocketGuild guild) => await LeftGuild(guild);
 
             await services.GetRequiredService<InteractionHandler>().InitialiseAsync();
-            await services.GetRequiredService<TIService>().Initialise();
+            //await services.GetRequiredService<TIService>().Initialise();
             await services.GetRequiredService<AnnouncementService>().Initialise();
 
             await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
@@ -121,6 +121,7 @@ namespace Magus.Bot
             => serviceCollection
                 .Configure<BotSettings>(settings => config.GetSection("BotSettings").Bind(settings))
                 .Configure<DataSettings>(settings => config.GetSection("DataSettings").Bind(settings))
+                .Configure<LocalisationOptions>(settings => config.GetSection("Localisation").Bind(settings))
                 .AddScheduler()
                 .AddSingleton<HttpClient>()
                 .AddSingleton<IAsyncDataService, MongoDBService>()

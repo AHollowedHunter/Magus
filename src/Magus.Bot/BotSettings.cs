@@ -12,7 +12,6 @@
 
 
         public StatusConfig Status { get; set; }
-        public LocalisationConfig Localisation { get; set; }
         public SteamConfig Steam { get; set; }
         public AnnouncementConfig Announcements { get; set; }
 
@@ -20,15 +19,6 @@
         {
             public string Title { get; set; } = string.Empty;
             public byte Type { get; set; } = 0;
-        }
-
-        public class LocalisationConfig
-        {
-            public string DefaultLanguage { get; set; } = "english";
-            public Dictionary<string, string[]> SourceLocaleMappings { get; set; }
-
-            public IList<string> Locales
-                => SourceLocaleMappings.SelectMany(x => x.Value).ToList();
         }
 
         public class SteamConfig

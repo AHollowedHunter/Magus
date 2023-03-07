@@ -1,17 +1,18 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Common;
+using Magus.Common.Options;
 using Microsoft.Extensions.Options;
 
 namespace Magus.Bot.AutocompleteHandlers
 {
     public class LocaleAutocompleteHandler : AutocompleteHandler
     {
-        private readonly BotSettings _config;
+        private readonly LocalisationOptions _localisationOptions;
 
-        public LocaleAutocompleteHandler(IOptions<BotSettings> config)
+        public LocaleAutocompleteHandler(IOptions<LocalisationOptions> config)
         {
-            _config = config.Value;
+            _localisationOptions = config.Value;
         }
 
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -28,11 +29,11 @@ namespace Magus.Bot.AutocompleteHandlers
                     var locales = new List<string>();
                     if (string.IsNullOrEmpty(value))
                     {
-                        locales = _config.Localisation.Locales.Take(25).ToList();
+                        locales = _localisationOptions.Locales.Take(25).ToList();
                     }
                     else
                     {
-                        locales = _config.Localisation.SourceLocaleMappings.Where(x => x.Key.StartsWith(value) || x.Value.Any(x => x.StartsWith(value)))
+                        locales = _localisationOptions.SourceLocaleMappings.Where(x => x.Key.StartsWith(value) || x.Value.Any(x => x.StartsWith(value)))
                                                                            .SelectMany(x => x.Value)
                                                                            .ToList();
                     }
