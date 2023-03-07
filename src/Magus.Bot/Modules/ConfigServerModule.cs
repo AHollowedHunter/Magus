@@ -144,18 +144,23 @@ namespace Magus.Bot.Modules
 
             var announcement = guild.Announcements.FirstOrDefault(x => x.Topic == topic);
             ulong webhookId;
+            RestWebhook? webhook = null;
             if (announcement != null)
             {
                 webhookId = announcement.WebhookId;
+                webhook = await Context.Guild.GetWebhookAsync(webhookId);
             }
-            else
+            if (webhook == null)
             {
                 webhookId = await sourceChannel!.FollowAnnouncementChannelAsync(targetChannel.Id, null);
+                webhook = await Context.Guild.GetWebhookAsync(webhookId);
+                if (announcement != null)
+                {
+                    guild.Announcements.Remove(announcement);
+                }
                 guild.Announcements.Add(new(topic, webhookId));
                 await _db.UpsertRecord(guild);
             }
-
-            var webhook = await Context.Guild.GetWebhookAsync(webhookId);
             if (webhook != null)
             {
                 await webhook.ModifyAsync(w =>
