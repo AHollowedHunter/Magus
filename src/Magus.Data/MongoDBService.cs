@@ -260,5 +260,16 @@ namespace Magus.Data
             var collection = GetCollection<Announcement>();
             return await collection.AsQueryable().OrderByDescending(a => a.Date).FirstOrDefaultAsync(a => a.IsPublished);
         }
+
+        public async Task<int> GetTotalAnnouncementSubscriptions(Topic? topic = null)
+        {
+            var collection = GetCollection<Guild>();
+            var query = collection.AsQueryable();
+            if (topic != null)
+                query = query.Where(g => g.Announcements.Any(g => g.Topic == topic));
+            else
+                query = query.Where(g => g.Announcements.Any());
+            return await query.CountAsync();
+        }
     }
 }

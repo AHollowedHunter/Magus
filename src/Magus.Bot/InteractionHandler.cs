@@ -61,9 +61,6 @@ namespace Magus.Bot
 
         private async Task HandleInteraction(SocketInteraction interaction)
         {
-            if (interaction.Type == InteractionType.MessageComponent)
-                _logger.LogDebug("CustomId: {id}", ((SocketMessageComponent)interaction).Data.CustomId);
-
             try
             {
                 var ctx = new SocketInteractionContext(_client, interaction);
