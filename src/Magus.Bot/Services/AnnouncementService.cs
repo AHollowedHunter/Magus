@@ -32,7 +32,7 @@ namespace Magus.Bot.Services
             _botSettings = botSettings.Value;
         }
 
-        public async Task Initialise()
+        public async Task InitialiseAsync()
         {
             ScheduleGetDotaNews();
 

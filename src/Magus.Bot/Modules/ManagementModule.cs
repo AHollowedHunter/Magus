@@ -1,8 +1,6 @@
-﻿using AngleSharp.Io;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Magus.Bot.Attributes;
-using Magus.Bot.Extensions;
 using Magus.Common.Enums;
 using Magus.Data;
 using Magus.Data.Extensions;
@@ -125,6 +123,45 @@ namespace Magus.Bot.Modules
                 }
                 await ModifyOriginalResponseAsync(x => x.Content = "Finished updating guilds. Check logs for any errors");
             }
+        }
+
+        [Group(SubGroupName, "commands and such")]
+        public class ModulesGroup : InteractionModuleBase<SocketInteractionContext>
+        {
+            const string SubGroupName = "modules";
+
+            private readonly ILogger<InfoGroup> _logger;
+            private readonly IAsyncDataService _db;
+            private readonly BotSettings _botSettings;
+            private readonly InteractionHandler _interactionHandler;
+            private readonly InteractionService _interactionService;
+
+            public ModulesGroup(ILogger<InfoGroup> logger, IAsyncDataService db, IOptions<BotSettings> botSettings, InteractionHandler interactionHandler, InteractionService interactionService)
+            {
+                _logger = logger;
+                _db = db;
+                _botSettings = botSettings.Value;
+                _interactionHandler = interactionHandler;
+                _interactionService = interactionService;
+            }
+
+            [SlashCommand("re-register", "Re-register all commands, like when starting bot")]
+            public async Task ReRegister()
+            {
+                await DeferAsync(ephemeral: true);
+                await _interactionHandler.RegisterModulesAsync();
+                await FollowupAsync("Finished", ephemeral: true);
+            }
+
+#if DEBUG
+            [SlashCommand("remove-global", "REMOVE ALL GLOBAL COMMANDS. DEBUG ONLY")]
+            public async Task RemoveGlobal()
+            {
+                await DeferAsync(ephemeral: true);
+                await _interactionService.AddModulesGloballyAsync(true);
+                await FollowupAsync("⚠️ REMOVED ALL GLOBAL MODULES ⚠️");
+            }
+#endif
         }
     }
 }
