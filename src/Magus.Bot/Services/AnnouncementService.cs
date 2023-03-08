@@ -32,7 +32,7 @@ namespace Magus.Bot.Services
             _botSettings = botSettings.Value;
         }
 
-        public async Task Initialise()
+        public async Task InitialiseAsync()
         {
             ScheduleGetDotaNews();
 
@@ -82,7 +82,7 @@ namespace Magus.Bot.Services
                     Url      = item.Id,
                     ImageUrl = imageUrl,
                     Title    = item.Title.Text,
-                    Content  = DiscordMessageFormatter.HtmlToDiscordMarkdown(item.Summary.Text),
+                    Content  = DiscordMessageFormatter.HtmlToDiscordEmbedMarkdown(item.Summary.Text),
                     Date     = publishDate,
                     Locale   = "en",
                 };

@@ -20,13 +20,12 @@ namespace Magus.Common.Utilities
             _markdownConverter = new();
         }
 
-        public static string HtmlToDiscordMarkdown(string htmlSource)
+        public static string HtmlToDiscordEmbedMarkdown(string htmlSource)
         {
             var sanitizedSource = _sanitizer.Sanitize(htmlSource);
 
+            sanitizedSource = _rssRegex.Replace(sanitizedSource, ""); // DO this first to prevent inadverently removing markdown URLs
             sanitizedSource = _markdownConverter.Convert(sanitizedSource);
-            sanitizedSource = _rssRegex.Replace(sanitizedSource, "");
-
 
             return sanitizedSource;
         }

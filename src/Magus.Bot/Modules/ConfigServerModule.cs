@@ -19,9 +19,6 @@ namespace Magus.Bot.Modules
     {
         const string GroupName = "config-server";
 
-
-        const string SubGroupName = "server";
-
         private readonly ILogger<ConfigServerModule> _logger;
         private readonly IAsyncDataService _db;
         private readonly BotSettings _botSettings;
@@ -55,12 +52,12 @@ namespace Magus.Bot.Modules
 
             var dotaButton = new ButtonBuilder()
                     .WithLabel(Topic.Dota.ToString())
-                    .WithCustomId("announcements", GroupName, SubGroupName, CustomIdMethod.GET, Topic.Dota.ToString())
+                    .WithCustomId("announcements", GroupName, method: CustomIdMethod.GET, key: Topic.Dota.ToString())
                     .WithEmote(Emotes.DotaLogo)
                     .WithStyle(ButtonStyle.Primary);
             var magusButton = new ButtonBuilder()
                     .WithLabel(Topic.MagusBot.ToString())
-                    .WithCustomId("announcements", GroupName, SubGroupName, CustomIdMethod.GET, Topic.MagusBot.ToString())
+                    .WithCustomId("announcements", GroupName, method: CustomIdMethod.GET, key: Topic.MagusBot.ToString())
                     .WithEmote(Emotes.MagusIcon)
                     .WithStyle(ButtonStyle.Primary);
             var rows = new List<ActionRowBuilder>
@@ -110,7 +107,7 @@ namespace Magus.Bot.Modules
                     .Build();
 
             var dotaUpdatesMenu = new SelectMenuBuilder()
-                    .WithCustomId("announcements", GroupName, SubGroupName, CustomIdMethod.SET, topic.ToString())
+                    .WithCustomId("announcements", GroupName, method: CustomIdMethod.SET, key: topic.ToString())
                     .WithPlaceholder($"{topic} Updates")
                     .WithMaxValues(1)
                     .WithMinValues(1)
@@ -119,7 +116,7 @@ namespace Magus.Bot.Modules
 
             var clearButton = new ButtonBuilder()
                     .WithLabel("Remove Updates")
-                    .WithCustomId("announcements", GroupName, SubGroupName, CustomIdMethod.DEL, topic.ToString())
+                    .WithCustomId("announcements", GroupName, method: CustomIdMethod.DEL, key: topic.ToString())
                     .WithStyle(ButtonStyle.Danger)
                     .WithEmote(new Emoji("⚠️"));
 
@@ -147,18 +144,23 @@ namespace Magus.Bot.Modules
 
             var announcement = guild.Announcements.FirstOrDefault(x => x.Topic == topic);
             ulong webhookId;
+            RestWebhook? webhook = null;
             if (announcement != null)
             {
                 webhookId = announcement.WebhookId;
+                webhook = await Context.Guild.GetWebhookAsync(webhookId);
             }
-            else
+            if (webhook == null)
             {
                 webhookId = await sourceChannel!.FollowAnnouncementChannelAsync(targetChannel.Id, null);
+                webhook = await Context.Guild.GetWebhookAsync(webhookId);
+                if (announcement != null)
+                {
+                    guild.Announcements.Remove(announcement);
+                }
                 guild.Announcements.Add(new(topic, webhookId));
                 await _db.UpsertRecord(guild);
             }
-
-            var webhook = await Context.Guild.GetWebhookAsync(webhookId);
             if (webhook != null)
             {
                 await webhook.ModifyAsync(w =>
@@ -177,7 +179,6 @@ namespace Magus.Bot.Modules
             await DeferAsync();
 
             var guild = await _db.GetGuild(Context.Guild);
-            RestWebhook webhook;
             var announcement = guild.Announcements.FirstOrDefault(x => x.Topic == topic);
             if (announcement == null)
             {
@@ -185,9 +186,16 @@ namespace Magus.Bot.Modules
             }
             else
             {
-                webhook = await Context.Guild.GetWebhookAsync(announcement.WebhookId);
-                if (webhook != null)
-                    await webhook.DeleteAsync();
+                var webhook = await Context.Guild.GetWebhookAsync(announcement.WebhookId);
+                try
+                {
+                    if (webhook != null)
+                        await webhook.DeleteAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Exception trying to delete webhook {webhookId} that appears to have been already removed. Continue to remove from database", announcement.WebhookId);
+                }
                 guild.Announcements.Remove(announcement);
                 await _db.UpsertRecord(guild);
 

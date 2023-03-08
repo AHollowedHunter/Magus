@@ -11,6 +11,11 @@ namespace Magus.Data.Models.Discord
         public string CurrentName { get; set; }
         public ulong OwnerId { get; set; }
         public int LatestMemberCount { get; set; }
+        public bool IsCommunity { get; set; }
+        public bool IsDiscoverable { get; set; }
+        public bool IsFeatureable { get; set; }
+        public bool IsPartnered { get; set; }
+        public bool IsVerified { get; set; }
         public bool IsCurrentMember { get; set; } = true;
         public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
 

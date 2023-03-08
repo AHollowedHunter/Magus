@@ -2,7 +2,6 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Magus.Bot.Attributes;
 using Magus.Bot.Services;
 using Magus.Common.Options;
 using Magus.Data;
@@ -20,6 +19,7 @@ namespace Magus.Bot
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private static ILogger<Bot> _logger;
         private static IAsyncDataService _db;
+        private static IServiceProvider _services;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         static void Main(string[] args)
@@ -30,63 +30,39 @@ namespace Magus.Bot
                 .UseSerilog((hostingContext, services, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration))
                 .Build();
 
-            _logger = host.Services.GetRequiredService<ILogger<Bot>>();
-            _db     = host.Services.GetRequiredService<IAsyncDataService>();
+            _services = host.Services;
+            _logger = _services.GetRequiredService<ILogger<Bot>>();
+            _db = _services.GetRequiredService<IAsyncDataService>();
             RunAsync(host).GetAwaiter().GetResult();
         }
 
         static async Task RunAsync(IHost host)
         {
-            var services           = host.Services;
-            var botSettings        = services.GetRequiredService<IOptions<BotSettings>>().Value;
-            var client             = services.GetRequiredService<DiscordSocketClient>();
-            var interactionService = services.GetRequiredService<InteractionService>();
+            var botSettings        = _services.GetRequiredService<IOptions<BotSettings>>().Value;
+            var client             = _services.GetRequiredService<DiscordSocketClient>();
+            var interactionService = _services.GetRequiredService<InteractionService>();
+            var interactionHandler = _services.GetRequiredService<InteractionHandler>();
 
-            client.Log             += LogDiscord;
+            client.Log += LogDiscord;
             interactionService.Log += LogDiscord;
+
+            client.JoinedGuild += async (SocketGuild guild) => await JoinedGuild(guild);
+            client.LeftGuild += async (SocketGuild guild) => await LeftGuild(guild);
+
+            await interactionHandler.InitialiseAsync();
+            //await services.GetRequiredService<TIService>().Initialise();
+            await _services.GetRequiredService<AnnouncementService>().InitialiseAsync();
 
             if (IsDebug())
                 client.Ready += async () => await interactionService.RegisterCommandsToGuildAsync(botSettings.DevGuild, true);
             else
-                client.Ready += async () => await RegisterModules(interactionService);
-
-            client.JoinedGuild += async (SocketGuild guild) => await JoinedGuild(guild);
-            client.LeftGuild   += async (SocketGuild guild) => await LeftGuild(guild);
-
-            await services.GetRequiredService<InteractionHandler>().InitialiseAsync();
-            //await services.GetRequiredService<TIService>().Initialise();
-            await services.GetRequiredService<AnnouncementService>().Initialise();
+                client.Ready += interactionHandler.RegisterModulesAsync;
 
             await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
             await client.StartAsync();
             await client.SetGameAsync(name: botSettings.Status.Title, type: (ActivityType)botSettings.Status.Type);
 
             await host.RunAsync();
-        }
-
-        static async Task RegisterModules(InteractionService interactionService)
-        {
-            _logger.LogInformation("Registering Modules");
-            var modules = new Dictionary<ModuleInfo, Location>();
-            foreach (var module in interactionService.Modules)
-                modules.Add(module, ((ModuleRegistration)module.Attributes.First(x => typeof(ModuleRegistration).IsAssignableFrom(x.GetType()))).Location);
-
-            // Register GLOBAL commands
-            await interactionService.AddModulesGloballyAsync(true, modules: modules.Where(x => x.Value == Location.GLOBAL).Select(x => x.Key).ToArray());
-
-            // Disabled, need to fix registering to the same guild multiple times. Either create logic to remove commands separately, or get all modules applicable to a guild 
-            // What happens when removing a guild? need to de-register the commands
-            // Maybe a DB field with guild "CommandsLastRegistered" and whenever the bot updates cycle through? 
-            // 
-            // Register TESTING commands
-            //foreach (var guild in configuration.GetSection("TestingGuilds").Get<ulong[]>())
-            //    await _interactionService.AddModulesToGuildAsync(guild, true, modules: modules.Where(x => x.Value == Location.TESTING).Select(x => x.Key).ToArray());
-
-            // Register MANAGEMENT commands
-            //foreach (var guild in configuration.GetSection("ManagementGuilds").Get<ulong[]>())
-            //    await _interactionService.AddModulesToGuildAsync(guild, true, modules: modules.Where(x => x.Value == Location.MANAGEMENT).Select(x => x.Key).ToArray());
-
-            _logger.LogInformation("Complete Module Registration");
         }
 
         static async Task JoinedGuild(SocketGuild guild)

@@ -10,6 +10,8 @@
         public string BotServer { get; set; } = string.Empty;
         public string BotPrivacyPolicy { get; set; } = string.Empty;
 
+        public ulong[] ManagementGuilds { get; set; } = Array.Empty<ulong>();
+
 
         public StatusConfig Status { get; set; }
         public SteamConfig Steam { get; set; }

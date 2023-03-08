@@ -18,31 +18,40 @@ namespace Magus.Bot.Modules
             _db = db;
         }
 
-        [SlashCommand("hero", "🎶 I need a hero 🎶")]
+        [SlashCommand("hero", "I don't need an oracle to know you're not searching for Oracle")]
         public async Task InfoHero([Summary(description: "The heroes name to lookup")][Autocomplete(typeof(HeroAutocompleteHandler))] string name,
                                    [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
-            var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).First();
+            var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).FirstOrDefault();
 
-            await RespondAsync(embed: heroInfo.Embed.CreateDiscordEmbed());
+            if (heroInfo != null)
+                await RespondAsync(embed: heroInfo.Embed.CreateDiscordEmbed());
+            else
+                await RespondAsync($"Could not find a hero called **{name}**", ephemeral: true);
         }
 
         [SlashCommand("ability", "Ahh. How does this one work?")]
         public async Task InfoAbility([Summary(description: "The abilities name to lookup")][Autocomplete(typeof(AbilityAutocompleteHandler))] string name,
                                       [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
-            var abilityInfo = (await _db.GetEntityInfo<AbilityInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).First();
+            var abilityInfo = (await _db.GetEntityInfo<AbilityInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).FirstOrDefault();
 
-            await RespondAsync(embed: abilityInfo.Embed.CreateDiscordEmbed());
+            if (abilityInfo != null)
+                await RespondAsync(embed: abilityInfo.Embed.CreateDiscordEmbed());
+            else
+                await RespondAsync($"Could not find an ability called **{name}**", ephemeral: true);
         }
 
-        [SlashCommand("item", "Living in a material world")]
+        [SlashCommand("item", "> I need 2211 gold for this and buyback!")]
         public async Task InfoItem([Summary(description: "The items name to lookup")][Autocomplete(typeof(ItemAutocompleteHandler))] string name,
                                    [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
-            var itemInfo = (await _db.GetEntityInfo < ItemInfoEmbed >(name, locale ?? Context.Interaction.UserLocale, 1)).First();
+            var itemInfo = (await _db.GetEntityInfo<ItemInfoEmbed>(name, locale ?? Context.Interaction.UserLocale)).FirstOrDefault();
 
-            await RespondAsync(embed: itemInfo.Embed.CreateDiscordEmbed());
+            if (itemInfo != null)
+                await RespondAsync(embed: itemInfo.Embed.CreateDiscordEmbed());
+            else
+                await RespondAsync($"Could not find an item called **{name}**", ephemeral: true);
         }
     }
 }

@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
+using Microsoft.Extensions.Options;
 using System.Reflection;
 
 namespace Magus.Bot
@@ -9,34 +10,62 @@ namespace Magus.Bot
     public class InteractionHandler
     {
         private readonly DiscordSocketClient _client;
-        private readonly InteractionService _interactions;
+        private readonly InteractionService _interactionService;
         private readonly IServiceProvider _services;
         private readonly ILogger<InteractionHandler> _logger;
+        private readonly BotSettings _botSettings;
 
-        public InteractionHandler(DiscordSocketClient client, InteractionService interactions, ILogger<InteractionHandler> logger, IServiceProvider services)
+        public InteractionHandler(DiscordSocketClient client, InteractionService interactions, ILogger<InteractionHandler> logger, IServiceProvider services, IOptions<BotSettings> botSettings)
         {
-            _client       = client;
-            _interactions = interactions;
-            _logger       = logger;
-            _services     = services;
+            _client = client;
+            _interactionService = interactions;
+            _logger = logger;
+            _services = services;
+            _botSettings = botSettings.Value;
         }
 
         public async Task InitialiseAsync()
         {
             foreach (var module in GetEnabledModules())
-                await _interactions.AddModuleAsync(module, _services);
+                await _interactionService.AddModuleAsync(module, _services);
 
             _client.InteractionCreated += HandleInteraction;
-            //_client.ButtonExecuted
-            //_client.SelectMenuExecuted
 
             // Process the command execution results 
-            _interactions.SlashCommandExecuted     += SlashCommandExecuted;
-            _interactions.ContextCommandExecuted   += ContextCommandExecuted;
-            _interactions.ComponentCommandExecuted += ComponentCommandExecuted;
-            _interactions.ModalCommandExecuted     += ModalCommandExecuted;
+            _interactionService.SlashCommandExecuted += SlashCommandExecuted;
+            _interactionService.ContextCommandExecuted += ContextCommandExecuted;
+            _interactionService.ComponentCommandExecuted += ComponentCommandExecuted;
+            _interactionService.ModalCommandExecuted += ModalCommandExecuted;
 
-            _logger.LogInformation("InteractionHandler Initialised, {count} Modules registered: {moudleList}", _interactions.Modules.Count, string.Join(", ", _interactions.Modules.Select(x => x.Name)));
+            _logger.LogInformation("InteractionHandler Initialised, {count} Modules registered: {moudleList}", _interactionService.Modules.Count, string.Join(", ", _interactionService.Modules.Select(x => x.Name)));
+        }
+
+        public async Task RegisterModulesAsync()
+        {
+            _logger.LogInformation("Registering Modules");
+            var modules = new Dictionary<ModuleInfo, Location>();
+            foreach (var module in _interactionService.Modules)
+                if (module.IsTopLevelGroup || !module.IsSlashGroup) // We only need the top-level group, or non-group modules. Exclude sub-groups.
+                    modules.Add(module, ((ModuleRegistration)module.Attributes.First(x => typeof(ModuleRegistration).IsAssignableFrom(x.GetType()))).Location);
+
+            // Register GLOBAL commands
+            var globalModules = modules.Where(x => x.Value == Location.GLOBAL).Select(x => x.Key).ToArray();
+            await _interactionService.AddModulesGloballyAsync(true, modules: globalModules);
+
+            // Disabled, need to fix registering to the same guild multiple times. Either create logic to remove commands separately, or get all modules applicable to a guild 
+            // What happens when removing a guild? need to de-register the commands
+            // Maybe a DB field with guild "CommandsLastRegistered" and whenever the bot updates cycle through? 
+            // 
+            // Register TESTING commands
+            //foreach (var guild in configuration.GetSection("TestingGuilds").Get<ulong[]>())
+            //    await _interactionService.AddModulesToGuildAsync(guild, true, modules: modules.Where(x => x.Value == Location.TESTING).Select(x => x.Key).ToArray());
+
+            // Register MANAGEMENT commands
+            var managementModules = modules.Where(x => x.Value == Location.MANAGEMENT).Select(x => x.Key).ToArray();
+            foreach (var guildId in _botSettings.ManagementGuilds)
+                await _interactionService.AddModulesToGuildAsync(guildId, true, modules: managementModules);
+
+            _logger.LogInformation("Complete Module Registration");
         }
 
         private List<TypeInfo> GetEnabledModules()
@@ -61,14 +90,11 @@ namespace Magus.Bot
 
         private async Task HandleInteraction(SocketInteraction interaction)
         {
-            if (interaction.Type == InteractionType.MessageComponent)
-                _logger.LogDebug("CustomId: {id}", ((SocketMessageComponent)interaction).Data.CustomId);
-
             try
             {
                 var ctx = new SocketInteractionContext(_client, interaction);
 
-                await _interactions.ExecuteCommandAsync(ctx, _services);
+                await _interactionService.ExecuteCommandAsync(ctx, _services);
             }
             catch (Exception ex)
             {

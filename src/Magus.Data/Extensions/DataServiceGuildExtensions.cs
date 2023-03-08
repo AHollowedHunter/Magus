@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using Magus.Data.Enums;
 using Magus.Data.Models.Discord;
 
@@ -20,6 +21,13 @@ namespace Magus.Data.Extensions
             guildRecord.OwnerId           = guild.OwnerId;
             guildRecord.LatestMemberCount = guild.MemberCount;
             guildRecord.LastUpdated       = DateTime.UtcNow;
+
+            guildRecord.IsCommunity    = guild.Features.HasFeature(GuildFeature.Community);
+            guildRecord.IsDiscoverable = guild.Features.HasFeature(GuildFeature.Discoverable);
+            guildRecord.IsFeatureable  = guild.Features.HasFeature(GuildFeature.Featureable);
+            guildRecord.IsPartnered    = guild.Features.IsPartnered;
+            guildRecord.IsVerified     = guild.Features.IsVerified;
+
 
             if (action == DiscordAction.Joined)
             {

@@ -28,6 +28,7 @@ namespace Magus.Data
         Task<IEnumerable<T>> GetRecords<T>(int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord;
         Task<IEnumerable<T>> GetRecords<T>(string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord;
         Task<IEnumerable<Guild>> GetSubscribedGuilds(Topic topic);
+        Task<int> GetTotalAnnouncementSubscriptions(Topic? topic = null);
         Task InsertRecord<T>(T record) where T : ISnowflakeRecord;
         Task InsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord;
         Task ReplaceRecord<T>(T record) where T : ISnowflakeRecord;
