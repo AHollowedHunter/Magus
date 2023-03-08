@@ -6,6 +6,7 @@ using Magus.Data;
 using Magus.Data.Extensions;
 using Magus.Data.Models.Discord;
 using Microsoft.Extensions.Options;
+using System;
 
 namespace Magus.Bot.Modules
 {
@@ -153,7 +154,46 @@ namespace Magus.Bot.Modules
                 await FollowupAsync("Finished", ephemeral: true);
             }
 
+            [SlashCommand("remove-guild", "remove all guild commands from a guild")]
+            public async Task RemoveGuild(string guildId)
+            {
+                await DeferAsync(ephemeral: true);
+                if (!ulong.TryParse(guildId, out var parsedId))
+                {
+                    await FollowupAsync("That ain't a `ulong`");
+                }
+                else if (_botSettings.ManagementGuilds.Contains(parsedId))
+                {
+                    await FollowupAsync("Cannot remove a management guilds commands. Do it manually!");
+                }
+                else if (!Context.Client.Guilds.Any(g => g.Id == parsedId))
+                {
+                    await FollowupAsync($"Bot is not in any guilds with id `{guildId}`! Check and try again.");
+                }
+                else
+                {
+                    try
+                    {
+                        await _interactionService.AddModulesToGuildAsync(parsedId, true);
+                        await FollowupAsync($"Removed commands from guild `{guildId}`");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to remove commands from guild: {guildId}", guildId);
+                        await FollowupAsync("Failed to remove commands. Check logs.");
+                    }
+                }
+            }
+
 #if DEBUG
+            [SlashCommand("dev-re-register", "Re-register to dev. DEBUG ONLY")]
+            public async Task ReRegisterDevGuild()
+            {
+                await DeferAsync(ephemeral: true);
+                await _interactionService.RegisterCommandsToGuildAsync(_botSettings.DevGuild, true);
+                await FollowupAsync("Done");
+            }
+
             [SlashCommand("remove-global", "REMOVE ALL GLOBAL COMMANDS. DEBUG ONLY")]
             public async Task RemoveGlobal()
             {

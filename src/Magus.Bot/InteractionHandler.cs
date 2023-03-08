@@ -62,8 +62,8 @@ namespace Magus.Bot
 
             // Register MANAGEMENT commands
             var managementModules = modules.Where(x => x.Value == Location.MANAGEMENT).Select(x => x.Key).ToArray();
-            foreach (var guild in _botSettings.ManagementGuilds)
-                await _interactionService.AddModulesToGuildAsync(guild, true, modules: managementModules);
+            foreach (var guildId in _botSettings.ManagementGuilds)
+                await _interactionService.AddModulesToGuildAsync(guildId, true, modules: managementModules);
 
             _logger.LogInformation("Complete Module Registration");
         }
