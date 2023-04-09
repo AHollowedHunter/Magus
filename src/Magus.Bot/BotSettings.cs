@@ -9,6 +9,7 @@
         public string BotInvite { get; set; } = string.Empty;
         public string BotServer { get; set; } = string.Empty;
         public string BotPrivacyPolicy { get; set; } = string.Empty;
+        public string BotTermsOfService { get; set; } = string.Empty;
 
         public ulong[] ManagementGuilds { get; set; } = Array.Empty<ulong>();
 

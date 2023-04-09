@@ -40,7 +40,7 @@ namespace Magus.Bot.Modules
             response.AddField("Total Guilds", Context.Client.Guilds.Count, true);
             response.AddField("Acknowledgements", "SteamDB for various libraries\nDiscord.NET library", false);
 
-            var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n[Privacy Policy]({_config.BotPrivacyPolicy})\n";
+            var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n[Privacy Policy]({_config.BotPrivacyPolicy})\n[Terms of Service]({_config.BotTermsOfService})\n";
             response.AddField("Links", links, false);
             response.AddField(Emotes.Spacer.ToString(), "Dota and the Dota Logo are trademarks and/or registered trademarks of Valve Corporation");
 
@@ -57,6 +57,12 @@ namespace Magus.Bot.Modules
         public async Task Privacy()
         {
             await RespondAsync(text: "To view the privacy policy for MagusBot, please follow the link below:\n" + _config.BotPrivacyPolicy);
+        }
+
+        [SlashCommand("terms", "Terms of Service for MagusBot")]
+        public async Task Term()
+        {
+            await RespondAsync(text: "To view the terms of service for MagusBot, please follow the link below:\n" + _config.BotTermsOfService);
         }
     }
 }
