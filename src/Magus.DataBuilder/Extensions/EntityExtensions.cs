@@ -216,9 +216,12 @@ namespace Magus.DataBuilder.Extensions
                 var chargeRestoreTimes = ability.AbilityValues.FirstOrDefault(x => x.Name == "AbilityChargeRestoreTime")?.Values ?? ability.AbilityChargeRestoreTime ?? Enumerable.Empty<float>();
                 cooldownString += $"\n> Charges:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", charges))}\n> Restore:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", chargeRestoreTimes))}";
             }
-            var manaString     = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Count == 0 ? new List<float>(){0F} : ability.AbilityManaCost.Distinct()));
+            var manaString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Count == 0 ? new List<float>(){0F} : ability.AbilityManaCost.Distinct()));
+            var hpString   = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityHealthCost.Count == 0 ? new List<float>(){0F} : ability.AbilityHealthCost.Distinct()));
+
             embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.CooldownIcon}\u00A0{cooldownString}" });
             embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.ManaIcon}\u00A0{manaString}" });
+            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.HpIcon}\u00A0{hpString}" });
 
             // Do talents
 
@@ -336,10 +339,12 @@ namespace Magus.DataBuilder.Extensions
             }
             cooldownString = $"{Emotes.CooldownIcon}\u00A0{cooldownString}";
             var manaString = $"{Emotes.ManaIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityManaCost.Count == 0 ? new List<float>(){0F} : item.AbilityManaCost.Distinct()))}";
+            var hpString   = Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityHealthCost.Count == 0 ? new List<float>(){0F} : item.AbilityHealthCost.Distinct()));
 
             var cooldownAndManaFields = new List<Field>() {
                 new Field() { Name = cooldownString, IsInline = true, Value = $"{Emotes.Spacer}" },
-                new Field() { Name = manaString, IsInline = true, Value = $"{Emotes.Spacer}" }
+                new Field() { Name = manaString, IsInline = true, Value = $"{Emotes.Spacer}" },
+                new Field() { Name = hpString, IsInline = true, Value = $"{Emotes.Spacer}" },
             };
 
             if (item.Spells != null && item.Spells.Count > 0)

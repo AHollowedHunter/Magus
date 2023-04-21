@@ -342,6 +342,7 @@ namespace Magus.DataBuilder
             ability.AbilityDuration          = kvAbility.ParseChildValueList<float>("AbilityDuration");
             ability.AbilityDamage            = kvAbility.ParseChildValueList<float>("AbilityDamage");
             ability.AbilityManaCost          = kvAbility.ParseChildValueList<float>("AbilityManaCost");
+            ability.AbilityHealthCost        = kvAbility.ParseChildValueList<float>("AbilityHealthCost");
 
             ability.AbilityIsGrantedByScepter = kvAbility.ParseChildValue<bool>("IsGrantedByScepter");
             ability.AbilityIsGrantedByShard   = kvAbility.ParseChildValue<bool>("IsGrantedByShard");
@@ -604,6 +605,11 @@ namespace Magus.DataBuilder
                     value ??= ability.ShardValues.FirstOrDefault(x => x.Name == valueKey.Value.Replace("bonus_", "", StringComparison.OrdinalIgnoreCase))?.Values;
                     value ??= GetAbilityProperty(valueKey.Value, ability);
                     value ??= GetAbilityProperty(valueKey.Value.Replace("bonus_", "", StringComparison.OrdinalIgnoreCase), ability);
+                    // Added for special values that aren't tagged correctly... thanks valve
+                    value ??= ability.AbilityValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                    value ??= ability.ScepterValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                    value ??= ability.ShardValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
+                    // Final fallback attempt
                     if (value == null || value?.Count == 0)
                         value = ability.ShardValues.FirstOrDefault(x => x.Name.Equals(valueKey.Value, StringComparison.InvariantCultureIgnoreCase))?.Values.Distinct().ToList();
                     if (value != null)
@@ -690,13 +696,14 @@ namespace Magus.DataBuilder
 
             => name.ToLower() switch
             {
-                "abilitycastrange" => ability.AbilityCastRange,
+                "abilitycastrange"   => ability.AbilityCastRange,
                 "abilitychanneltime" => ability.AbilityChannelTime,
-                "abilitycooldown" => ability.AbilityCooldown,
-                "abilitydamage" => ability.AbilityDamage,
-                "abilityduration" => ability.AbilityDuration,
-                "abilitymanacost" => ability.AbilityManaCost,
-                _ => null
+                "abilitycooldown"    => ability.AbilityCooldown,
+                "abilitydamage"      => ability.AbilityDamage,
+                "abilityduration"    => ability.AbilityDuration,
+                "abilitymanacost"    => ability.AbilityManaCost,
+                "abilityhealthcost"  => ability.AbilityHealthCost,
+                _                    => null
             };
 
 
@@ -989,6 +996,7 @@ namespace Magus.DataBuilder
             item.AbilityDuration          = kvItem.ParseChildValueList<float>("AbilityDuration");
             item.AbilityDamage            = kvItem.ParseChildValueList<float>("AbilityDamage");
             item.AbilityManaCost          = kvItem.ParseChildValueList<float>("AbilityManaCost");
+            item.AbilityHealthCost        = kvItem.ParseChildValueList<float>("AbilityHealthCost");
 
             item.ItemAliases          = kvItem.ParseChildValueList<string>("ItemAliases");
             item.ItemBaseLevel        = kvItem.ParseChildValue<byte>("ItemBaseLevel");

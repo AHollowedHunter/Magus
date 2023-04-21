@@ -35,7 +35,8 @@ namespace Magus.Data
         public static Emote BreakIcon          => Emote.Parse("<:break:945836553463296050>");
         public static Emote GoldIcon           => Emote.Parse("<:gold:945836553027067964>");
         public static Emote IllusionIcon       => Emote.Parse("<:illusion:945836553073213440>");
-        public static Emote ManaIcon           => Emote.Parse("<:mana:945836552838316165>");
+        public static Emote ManaIcon           => Emote.Parse("<:mana:1098946889547796500>");
+        public static Emote HpIcon             => Emote.Parse("<:hp:1098946942802862160>");
         public static Emote BuffIcon           => Emote.Parse("<:modifier_buff:945836553106755636>");
         public static Emote DebuffIcon         => Emote.Parse("<:modifier_debuff:945836553052229632>");
         public static Emote ScepterIcon        => Emote.Parse("<:scepter:945836553161293845>");
@@ -46,7 +47,7 @@ namespace Magus.Data
         public static Emote TalentTreeIcon     => Emote.Parse("<:talent_tree:1014515342598479942>");
         public static Emote RangedIcon         => Emote.Parse("<:ranged:946541321961742388>");
         public static Emote MeleeIcon          => Emote.Parse("<:melee:946541322188238938>");
-        public static Emote CooldownIcon       => Emote.Parse("<:cooldown:945836553756880967>");
+        public static Emote CooldownIcon       => Emote.Parse("<:cooldown:1099033446359253074>");
 
         public static Emote GetAttributeEmote(this AttributePrimary attribute)
 #pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.

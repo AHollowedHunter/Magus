@@ -38,6 +38,7 @@ namespace Magus.Data.Models.Dota
         public IList<float> AbilityDuration { get; set; }
         public IList<float> AbilityDamage { get; set; }
         public IList<float> AbilityManaCost { get; set; }
+        public IList<float> AbilityHealthCost { get; set; }
 
         public IList<AbilityValue> AbilityValues { get; set; }
         public IDictionary<string, string> DisplayedValues { get; set; }
