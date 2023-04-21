@@ -1047,15 +1047,16 @@ namespace Magus.DataBuilder
                     var values  = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(key, StringComparison.InvariantCultureIgnoreCase))?.Values.Select(x => x.ToString() + postFix).ToList();
                     if (values == null || values.Count() == 0)
                         values = GetAbilityProperty(key, item)?.Select(x => x.ToString() + postFix).ToList();
+                    values ??= new() { " " };
                     var joinedValue = string.Empty;
                     if (item.InternalName.StartsWith("item_dagon"))
                     {
-                        values![item.ItemBaseLevel-1] = Discord.Format.Bold(values[item.ItemBaseLevel-1]);
-                        joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
+                        values[item.ItemBaseLevel-1] = Discord.Format.Bold(values[item.ItemBaseLevel-1]);
+                        joinedValue = string.Join(ValueSeparator, values);
                     }
                     else
                     {
-                        joinedValue = Discord.Format.Bold(string.Join(ValueSeparator, values ?? Enumerable.Empty<string>()));
+                        joinedValue = Discord.Format.Bold(string.Join(ValueSeparator, values));
                     }
                     description = Regex.Replace(description, $@"%{key}[%]{{1,3}}", joinedValue);
                 }
