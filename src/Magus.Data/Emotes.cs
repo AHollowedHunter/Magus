@@ -49,6 +49,19 @@ namespace Magus.Data
         public static Emote MeleeIcon          => Emote.Parse("<:melee:946541322188238938>");
         public static Emote CooldownIcon       => Emote.Parse("<:cooldown:1099033446359253074>");
 
+        // Filters
+        public static Emote FilterCarry      => Emote.Parse("<:f_carry:1099073806418583653>");
+        public static Emote FilterSupport    => Emote.Parse("<:f_supp:1099073805340659752>");
+        public static Emote FilterComplexity => Emote.Parse("<:f_complexity:1099073807689457664>");
+        public static Emote FilterDisabler   => Emote.Parse("<:f_disabler:1099073809782415440>");
+        public static Emote FilterDurable    => Emote.Parse("<:f_durable:1099073810591912018>");
+        public static Emote FilterEscape     => Emote.Parse("<:f_escape:1099073856662159410>");
+        public static Emote FilterInitiator  => Emote.Parse("<:f_initiator:1099073874966102077>");
+        public static Emote FilterNuker      => Emote.Parse("<:f_nuker:1099073800974372928>");
+        public static Emote FilterPusher     => Emote.Parse("<:f_pusher:1099073802337525850>");
+        public static Emote FilterMelee      => Emote.Parse("<:f_melee:1099073799401508874>");
+        public static Emote FilterRanged     => Emote.Parse("<:f_ranged:1099073803612606594>");
+
         public static Emote GetAttributeEmote(this AttributePrimary attribute)
 #pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
             => attribute switch
@@ -70,6 +83,19 @@ namespace Magus.Data
                 ChannelType.Text => TextChannel,
                 ChannelType.News => AnnouncementChannel,
                 _                => Spacer
+            };
+
+        public static Emote GetRoleEmote(this Role role)
+            => role switch
+            {
+                Role.Carry     => FilterCarry,
+                Role.Disabler  => FilterDisabler,
+                Role.Durable   => FilterDurable,
+                Role.Initiator => FilterInitiator,
+                Role.Nuker     => FilterNuker,
+                Role.Pusher    => FilterPusher,
+                Role.Support   => FilterSupport,
+                _              => Spacer
             };
     }
 }
