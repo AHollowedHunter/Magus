@@ -20,6 +20,7 @@ namespace Magus.Data
         public static Emote StrengthIcon     => Emote.Parse("<:strength:945826749118291998>");
         public static Emote AgilityIcon      => Emote.Parse("<:agility:945826748539478027>");
         public static Emote IntelligenceIcon => Emote.Parse("<:intelligence:945826748845678592>");
+        public static Emote UniversalIcon    => Emote.Parse("<:universal:1098920779674030142>");
 
         public static Emote ArmourIcon          => Emote.Parse("<:armor:945826748921167873>");
         public static Emote AttackRangeIcon     => Emote.Parse("<:attack_range:945826749084762112>");
@@ -54,6 +55,7 @@ namespace Magus.Data
                 AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => StrengthIcon,
                 AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AgilityIcon,
                 AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => IntelligenceIcon,
+                AttributePrimary.DOTA_ATTRIBUTE_ALL       => UniversalIcon,
             };
 #pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 

@@ -2,7 +2,6 @@
 using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
-using System.Text;
 
 namespace Magus.DataBuilder.Extensions
 {
@@ -18,7 +17,7 @@ namespace Magus.DataBuilder.Extensions
                 ColorRaw     = 0X00A84300,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
                 ThumbnailUrl = $"{DotaUrls.Hero}{hero.InternalName.Substring(14)}.png",
-                Footer       = new() { Text = $"Patch {latestPatch.PatchNumber}" },
+                Footer       = new() { Text = $"Patch {latestPatch.PatchNumber}", IconUrl = hero.AttributePrimary.GetAttributeIcon() },
             };
             var heroInfoFields = new List<Field>();
 

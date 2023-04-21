@@ -67,23 +67,28 @@ namespace Magus.Data.Models.Dota
         public string GetAttackType()
             => AttackCapabilities.ToString();
 
-        public int GetAttackDamageMin()
+        public double GetAttackDamageMin()
             => AttributePrimary switch
             {
                 AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AttackDamageMin + AttributeBaseAgility,
                 AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => AttackDamageMin + AttributeBaseIntelligence,
                 AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => AttackDamageMin + AttributeBaseStrength,
+                AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMin + (AttributeBaseTotal * 0.6),
                 _                                         => AttackDamageMin,
             };
 
-        public int GetAttackDamageMax()
+        public double GetAttackDamageMax()
             => AttributePrimary switch
             {
                 AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AttackDamageMax + AttributeBaseAgility,
                 AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => AttackDamageMax + AttributeBaseIntelligence,
                 AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => AttackDamageMax + AttributeBaseStrength,
-                _                                         => AttackDamageMin,
+                AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMax + (AttributeBaseTotal * 0.6),
+                _                                         => AttackDamageMax
             };
+
+        public int AttributeBaseTotal
+            => AttributeBaseStrength + AttributeBaseAgility + AttributeBaseIntelligence;
 
         public float GetAttackTime()
             => 1 / ((BaseAttackSpeed + AttributeBaseAgility) / (100 * AttackRate));
@@ -99,7 +104,9 @@ namespace Magus.Data.Models.Dota
         [Display(Name = "Agility")]
         DOTA_ATTRIBUTE_AGILITY,
         [Display(Name = "Intelligence")]
-        DOTA_ATTRIBUTE_INTELLECT
+        DOTA_ATTRIBUTE_INTELLECT,
+        [Display(Name = "Universal")]
+        DOTA_ATTRIBUTE_ALL
     }
 
     public enum Role

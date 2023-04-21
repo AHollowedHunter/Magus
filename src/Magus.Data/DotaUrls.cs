@@ -14,6 +14,8 @@ namespace Magus.Data
         public static string StrengthIcon     => BaseUrl + "images/dota_react/icons/hero_strength.png";
         public static string AgilityIcon      => BaseUrl + "images/dota_react/icons/hero_agility.png";
         public static string IntelligenceIcon => BaseUrl + "images/dota_react/icons/hero_intelligence.png";
+        //public static string UniversalIcon    => BaseUrl + "images/dota_react/icons/hero_universal.png";
+        public static string UniversalIcon    => "https://cdn.discordapp.com/emojis/1098920779674030142.png"; // Temporary until valve fix their website assets
 
         public static string DamageIcon          => BaseUrl + "images/dota_react/heroes/stats/icon_damage.png";
         public static string AttackTimeIcon      => BaseUrl + "images/dota_react/heroes/stats/icon_attack_time.png";
@@ -40,6 +42,7 @@ namespace Magus.Data
              AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => StrengthIcon,
              AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AgilityIcon,
              AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => IntelligenceIcon,
+             AttributePrimary.DOTA_ATTRIBUTE_ALL       => UniversalIcon,
          };
 #pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 
