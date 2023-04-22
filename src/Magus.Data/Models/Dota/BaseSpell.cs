@@ -38,6 +38,7 @@ namespace Magus.Data.Models.Dota
         public IList<float> AbilityDuration { get; set; }
         public IList<float> AbilityDamage { get; set; }
         public IList<float> AbilityManaCost { get; set; }
+        public IList<float> AbilityHealthCost { get; set; }
 
         public IList<AbilityValue> AbilityValues { get; set; }
         public IDictionary<string, string> DisplayedValues { get; set; }
@@ -149,6 +150,7 @@ namespace Magus.Data.Models.Dota
         DOTA_ABILITY_BEHAVIOR_FREE_DRAW_TARGETING            = 68719476736,
         DOTA_ABILITY_BEHAVIOR_NOASSIST                       = 137438953472, // Is this right, valve you F***ers
         DOTA_ABILITY_BEHAVIOR_OVERSHOOT                      = 274877906944, // Is this right, valve you F***ers
+        DOTA_ABILITY_BEHAVIOR_USE_HP                         = 549755813888, // Lets hope this is right
     }
 
     [Flags]

@@ -2,7 +2,6 @@
 using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
-using System.Text;
 
 namespace Magus.DataBuilder.Extensions
 {
@@ -18,7 +17,7 @@ namespace Magus.DataBuilder.Extensions
                 ColorRaw     = 0X00A84300,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
                 ThumbnailUrl = $"{DotaUrls.Hero}{hero.InternalName.Substring(14)}.png",
-                Footer       = new() { Text = $"Patch {latestPatch.PatchNumber}" },
+                Footer       = new() { Text = $"Patch {latestPatch.PatchNumber}", IconUrl = hero.AttributePrimary.GetAttributeIcon() },
             };
             var heroInfoFields = new List<Field>();
 
@@ -217,9 +216,12 @@ namespace Magus.DataBuilder.Extensions
                 var chargeRestoreTimes = ability.AbilityValues.FirstOrDefault(x => x.Name == "AbilityChargeRestoreTime")?.Values ?? ability.AbilityChargeRestoreTime ?? Enumerable.Empty<float>();
                 cooldownString += $"\n> Charges:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", charges))}\n> Restore:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", chargeRestoreTimes))}";
             }
-            var manaString     = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Count == 0 ? new List<float>(){0F} : ability.AbilityManaCost.Distinct()));
+            var manaString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Count == 0 ? new List<float>(){0F} : ability.AbilityManaCost.Distinct()));
+            var hpString   = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityHealthCost.Count == 0 ? new List<float>(){0F} : ability.AbilityHealthCost.Distinct()));
+
             embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.CooldownIcon}\u00A0{cooldownString}" });
             embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.ManaIcon}\u00A0{manaString}" });
+            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.HpIcon}\u00A0{hpString}" });
 
             // Do talents
 
@@ -336,24 +338,35 @@ namespace Magus.DataBuilder.Extensions
                 cooldownString += $"\n> Charges:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", charges))}\n> Restore:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", chargeRestoreTimes))}";
             }
             cooldownString = $"{Emotes.CooldownIcon}\u00A0{cooldownString}";
-            var manaString = $"{Emotes.ManaIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityManaCost.Count == 0 ? new List<float>(){0F} : item.AbilityManaCost.Distinct()))}";
-
-            var cooldownAndManaFields = new List<Field>() {
-                new Field() { Name = cooldownString, IsInline = true, Value = $"{Emotes.Spacer}" },
-                new Field() { Name = manaString, IsInline = true, Value = $"{Emotes.Spacer}" }
-            };
 
             if (item.Spells != null && item.Spells.Count > 0)
             {
                 var firstSpell = true;
                 foreach (var spell in item.Spells)
                 {
-                    var spellField = new Field() { Name = spell.Name, Value = $">>> {spell.Description.Trim()}" };
+                    var spellField = new Field() { Name = spell.Name };
+                    var spellValue = new StringBuilder()
+                        .Append(">>> ")
+                        .AppendLine(spell.Description.Trim());
                     if (firstSpell)
                     {
-                        spellField.Value += $"\n{manaString}{Emotes.Spacer}{cooldownString}";
+                        if (item.AbilityManaCost.Any())
+                        {
+                            var manaString = $"{Emotes.ManaIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityManaCost.Count == 0 ? new List<float>(){0F} : item.AbilityManaCost.Distinct()))}";
+                            spellValue.Append(manaString);
+                            spellValue.Append(Emotes.Spacer);
+                        }
+                        if (item.AbilityHealthCost.Any())
+                        {
+
+                            var hpString   = $"{Emotes.HpIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityHealthCost.Count == 0 ? new List<float>(){0F} : item.AbilityHealthCost.Distinct()))}";
+                            spellValue.Append(hpString);
+                            spellValue.Append(Emotes.Spacer);
+                        }
+                        spellValue.Append(cooldownString);
                         firstSpell = false;
                     }
+                    spellField.Value = spellValue.ToString();
                     embedFields.Add(spellField);
                 }
             }
