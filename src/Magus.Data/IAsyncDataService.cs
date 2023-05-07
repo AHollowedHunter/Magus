@@ -16,6 +16,8 @@ namespace Magus.Data
         Task<T> GetEntityInfo<T>(int entityId, string locale = "en-GB") where T : EntityInfoEmbed;
         Task<IEnumerable<T>> GetEntityInfo<T>(string entityName, string locale = "en-GB", int limit = int.MaxValue) where T : EntityInfoEmbed;
         Task<GeneralPatchNoteEmbed> GetGeneralPatchNote(string patchNumber, string locale = "en-GB");
+        Task<AbilityInfoEmbed> GetHeroScepter(int heroId, string locale = "en-GB");
+        Task<AbilityInfoEmbed> GetHeroShard(int heroId, string locale = "en-GB");
         Task<Patch> GetLatestPatch();
         Task<Announcement?> GetLatestPublishedAnnouncement(Topic topic);
         Task<Patch> GetPatch(string patch);

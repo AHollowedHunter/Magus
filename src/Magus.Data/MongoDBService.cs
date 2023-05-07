@@ -271,5 +271,17 @@ namespace Magus.Data
                 query = query.Where(g => g.Announcements.Any());
             return await query.CountAsync();
         }
+
+        public async Task<AbilityInfoEmbed> GetHeroScepter(int heroId, string locale = "en-GB")
+        {
+            var collection = GetCollection<AbilityInfoEmbed>();
+            return await collection.AsQueryable().Where(ability => ability.HeroId == heroId && ability.Scepter && ability.Locale == locale).FirstOrDefaultAsync();
+        }
+
+        public async Task<AbilityInfoEmbed> GetHeroShard(int heroId, string locale = "en-GB")
+        {
+            var collection = GetCollection<AbilityInfoEmbed>();
+            return await collection.AsQueryable().Where(ability => ability.HeroId == heroId && ability.Shard && ability.Locale == locale).FirstOrDefaultAsync();
+        }
     }
 }
