@@ -136,7 +136,7 @@ namespace Magus.DataBuilder.Extensions
             return heroInfoEmbedList;
         }
 
-        public static IEnumerable<AbilityInfoEmbed> CreateAbilityInfoEmbeds(this Ability ability, Dictionary<string, string[]> languageMap, Patch latestPatch)
+        public static IEnumerable<AbilityInfoEmbed> CreateAbilityInfoEmbeds(this Ability ability, Dictionary<string, string[]> languageMap, Patch latestPatch, Hero hero)
         {
             var embed = new Embed()
             {
@@ -266,6 +266,9 @@ namespace Magus.DataBuilder.Extensions
                     InternalName = ability.InternalName,
                     Name         = ability.Name,
                     Embed        = embed,
+                    HeroId       = hero.Id,
+                    Scepter      = ability.AbilityHasScepter || ability.AbilityIsGrantedByScepter,
+                    Shard        = ability.AbilityHasShard || ability.AbilityIsGrantedByShard
                 });
             }
             return abilityInfoEmbedList;

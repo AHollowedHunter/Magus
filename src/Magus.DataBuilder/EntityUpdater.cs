@@ -1130,13 +1130,12 @@ namespace Magus.DataBuilder
 
             foreach (var hero in _heroes)
             {
-                _logger.LogDebug("Processing hero info embeds for {0,-40} in {1}", hero.InternalName, hero.Language);
+                _logger.LogDebug("Processing hero and ability info embeds for {0,-40} in {1}", hero.InternalName, hero.Language);
                 heroInfoEmbeds.AddRange(hero.GetHeroInfoEmbeds(_localisationOptions.SourceLocaleMappings, latestPatch));
-            }
-            foreach (var heroAbility in _heroAbilities)
-            {
-                _logger.LogDebug("Processing ability info embeds for {0,-40} in {1}", heroAbility.InternalName, heroAbility.Language);
-                abilityInfoEmbeds.AddRange(heroAbility.CreateAbilityInfoEmbeds(_localisationOptions.SourceLocaleMappings, latestPatch));
+                foreach (var heroAbility in hero.Abilities)
+                {
+                    abilityInfoEmbeds.AddRange(heroAbility.CreateAbilityInfoEmbeds(_localisationOptions.SourceLocaleMappings, latestPatch, hero));
+                }
             }
             foreach (var item in _items.Where(x => !x.ItemRecipe))
             {
