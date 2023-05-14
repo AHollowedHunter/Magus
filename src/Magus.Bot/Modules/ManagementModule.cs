@@ -29,6 +29,13 @@ namespace Magus.Bot.Modules
             _botSettings = botSettings.Value;
         }
 
+        [SlashCommand("set-status", "playing, watching; whatever")]
+        public async Task SetStatus(string status, [Summary(description: "Can't be CustomStatus")] ActivityType type, [Summary(description: "If streaming, the url")] string? url = null)
+        {
+            await Context.Client.SetGameAsync(name: status, streamUrl: url, type: type);
+            await RespondAsync("Done", ephemeral: true);
+        }
+
         [Group(SubGroupName, "get info of things")]
         public class InfoGroup : InteractionModuleBase<SocketInteractionContext>
         {
