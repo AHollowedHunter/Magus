@@ -23,11 +23,14 @@ namespace Magus.Bot.Modules
             => await RespondAsync("After a new patch is announced, it may take around ~30-60 minutes for me to fully update depending on different factors.\nIf they make breaking changes in game files it will take longer.");
 
         [SlashCommand("notes", "Knowledge 📚")]
-        public async Task PatchNotes([Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string number,
+        public async Task PatchNotes([Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string? number = null,
                                      [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
+
+            number ??= (await _db.GetLatestPatch()).PatchNumber;
             var patchNote = await _db.GetGeneralPatchNote(number, locale ?? Context.Interaction.UserLocale);
+
             if (patchNote != null)
                 await FollowupAsync(embed: patchNote.Embed.CreateDiscordEmbed());
             else
@@ -43,7 +46,10 @@ namespace Magus.Bot.Modules
             var embeds = await GetEntityPatchNotesEmbeds<ItemPatchNoteEmbed>(name, patch, locale, 3);
             if (!embeds.Any())
             {
-                await FollowupAsync($"No changes for this item in Patch **{patch}**", ephemeral: true);
+                if (patch != null)
+                    await FollowupAsync($"No changes for this item in Patch **{patch}**.", ephemeral: true);
+                else
+                    await FollowupAsync($"No patchnotes for this item.", ephemeral: true);
                 return;
             }
             await FollowupAsync(embeds: embeds.Reverse().ToArray());
@@ -58,7 +64,10 @@ namespace Magus.Bot.Modules
             var embeds = await GetEntityPatchNotesEmbeds<HeroPatchNoteEmbed>(name, patch, locale);
             if (!embeds.Any())
             {
-                await FollowupAsync($"No changes for this hero in Patch **{patch}**", ephemeral: true);
+                if (patch != null)
+                    await FollowupAsync($"No changes for this hero in Patch **{patch}**.", ephemeral: true);
+                else
+                    await FollowupAsync($"No patchnotes for this hero.", ephemeral: true);
                 return;
             }
             await FollowupAsync(embeds: embeds.ToArray());
