@@ -26,11 +26,12 @@ namespace Magus.Bot.Modules
         public async Task PatchNotes([Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string number,
                                      [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
+            await DeferAsync();
             var patchNote = await _db.GetGeneralPatchNote(number, locale ?? Context.Interaction.UserLocale);
             if (patchNote != null)
-                await RespondAsync(embed: patchNote.Embed.CreateDiscordEmbed());
+                await FollowupAsync(embed: patchNote.Embed.CreateDiscordEmbed());
             else
-                await RespondAsync($"Could not find a patch note numbered **{number}**");
+                await FollowupAsync($"Could not find a patch note numbered **{number}**");
         }
 
         [SlashCommand("item", "NullReferenceException Talisman")]
@@ -38,13 +39,14 @@ namespace Magus.Bot.Modules
                                     [Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
+            await DeferAsync();
             var embeds = await GetEntityPatchNotesEmbeds<ItemPatchNoteEmbed>(name, patch, locale, 3);
             if (!embeds.Any())
             {
-                await RespondAsync($"No changes for this item in Patch **{patch}**", ephemeral: true);
+                await FollowupAsync($"No changes for this item in Patch **{patch}**", ephemeral: true);
                 return;
             }
-            await RespondAsync(embeds: embeds.Reverse().ToArray());
+            await FollowupAsync(embeds: embeds.Reverse().ToArray());
         }
 
         [SlashCommand("hero", "🎶 I need a hero 🎶")]
@@ -52,13 +54,14 @@ namespace Magus.Bot.Modules
                                     [Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
+            await DeferAsync();
             var embeds = await GetEntityPatchNotesEmbeds<HeroPatchNoteEmbed>(name, patch, locale);
             if (!embeds.Any())
             {
-                await RespondAsync($"No changes for this hero in Patch **{patch}**", ephemeral: true);
+                await FollowupAsync($"No changes for this hero in Patch **{patch}**", ephemeral: true);
                 return;
             }
-            await RespondAsync(embeds: embeds.ToArray());
+            await FollowupAsync(embeds: embeds.ToArray());
         }
 
         private async Task<IEnumerable<Discord.Embed>> GetEntityPatchNotesEmbeds<T>(string name, string? patch = null, string? locale = null, int limit = 1) where T : EntityPatchNoteEmbed

@@ -25,7 +25,8 @@ namespace Magus.Bot.Modules
         [SlashCommand("help", "Get help with these commands")]
         public async Task Help()
         {
-            await RespondAsync(embed: await CreateHelpEmbed(Context, GetType()), ephemeral: true);
+            await DeferAsync();
+            await FollowupAsync(embed: await CreateHelpEmbed(Context, GetType()), ephemeral: true);
         }
 
         internal static async Task<Embed> CreateHelpEmbed(SocketInteractionContext context, Type type)

@@ -25,6 +25,7 @@ namespace Magus.Bot.Modules
         [SlashCommand("about", "What is MagusBot?")]
         public async Task About()
         {
+            await DeferAsync();
             var latestPatchNote = await _db.GetLatestPatch();
             var latestPatch = $"[{latestPatchNote.PatchNumber}](https://www.dota2.com/patches/{latestPatchNote.PatchNumber}) - <t:{latestPatchNote.Timestamp}:R>";
             var response = new EmbedBuilder()
@@ -44,25 +45,28 @@ namespace Magus.Bot.Modules
             response.AddField("Links", links, false);
             response.AddField(Emotes.Spacer.ToString(), "Dota and the Dota Logo are trademarks and/or registered trademarks of Valve Corporation");
 
-            await RespondAsync(embed: response.Build(), ephemeral: true);
+            await FollowupAsync(embed: response.Build(), ephemeral: true);
         }
 
         [SlashCommand("invite", "Where shall I go next? Ultimyr University? Yama Raskav? Hmm.")]
         public async Task Invite()
         {
-            await RespondAsync(text: "Share me with your friends (or server admin) with my invite link!\n" + _config.BotInvite);
+            await DeferAsync();
+            await FollowupAsync(text: "Share me with your friends (or server admin) with my invite link!\n" + _config.BotInvite);
         }
 
         [SlashCommand("privacy", "Privacy Policy for MagusBot")]
         public async Task Privacy()
         {
-            await RespondAsync(text: "To view the privacy policy for MagusBot, please follow the link below:\n" + _config.BotPrivacyPolicy);
+            await DeferAsync();
+            await FollowupAsync(text: "To view the privacy policy for MagusBot, please follow the link below:\n" + _config.BotPrivacyPolicy);
         }
 
         [SlashCommand("terms", "Terms of Service for MagusBot")]
         public async Task Term()
         {
-            await RespondAsync(text: "To view the terms of service for MagusBot, please follow the link below:\n" + _config.BotTermsOfService);
+            await DeferAsync();
+            await FollowupAsync(text: "To view the terms of service for MagusBot, please follow the link below:\n" + _config.BotTermsOfService);
         }
     }
 }
