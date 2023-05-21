@@ -15,7 +15,7 @@ namespace Magus.Bot.Modules
     /// </remarks>
     public abstract class ModuleBase : InteractionModuleBase<SocketInteractionContext> // InteractionService will log a warning "not public" (as of v3.8) as the class is abstract. Ignore
     {
-        static readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString();
+        static readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString(3);
 
         protected ModuleBase()
         {
