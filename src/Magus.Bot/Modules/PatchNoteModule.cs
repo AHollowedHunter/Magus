@@ -7,7 +7,7 @@ using Magus.Data.Models.Embeds;
 
 namespace Magus.Bot.Modules
 {
-    [Group("patch", "Knowledge 📚")]
+    [Group("patch", "Get specific patchnotes for any patch! ... *since 7.06d*.")]
     [ModuleRegistration(Location.GLOBAL)]
     public class PatchNoteModule : ModuleBase
     {
@@ -20,45 +20,57 @@ namespace Magus.Bot.Modules
 
         [SlashCommand("when", "how long is a piece of string?")]
         public async Task When()
-            => await RespondAsync("After a new patch is announced, it may take around ~30-60 minutes for me to fully update depending on different factors.\nIf they make breaking changes in game files it will take longer.");
+            => await RespondAsync("After a new patch is announced, it may take around ~30-60 minutes for me to fully update depending on different factors.\nIf they make breaking changes in game files it will take longer.\nIf they patch after midnight UTC... I'm sleeping 😅.");
 
-        [SlashCommand("notes", "Knowledge 📚")]
-        public async Task PatchNotes([Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string number,
-                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
+        [SlashCommand("notes", "Get General Patchnotes.")]
+        public async Task PatchNotes([Summary(description: "The specific patch to lookup. Otherwise defaults to latest.")][Autocomplete(typeof(PatchAutocompleteHandler))] string? number = null,
+                                     [Summary(description: "The language/locale of the response.")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
+            await DeferAsync();
+
+            number ??= (await _db.GetLatestPatch()).PatchNumber;
             var patchNote = await _db.GetGeneralPatchNote(number, locale ?? Context.Interaction.UserLocale);
+
             if (patchNote != null)
-                await RespondAsync(embed: patchNote.Embed.CreateDiscordEmbed());
+                await FollowupAsync(embed: patchNote.Embed.CreateDiscordEmbed());
             else
-                await RespondAsync($"Could not find a patch note numbered **{number}**");
+                await FollowupAsync($"Could not find a patch note numbered **{number}**.");
         }
 
-        [SlashCommand("item", "NullReferenceException Talisman")]
+        [SlashCommand("item", "Get an item's last few patchnotes.")]
         public async Task PatchItem([Summary(description: "The item's name to lookup")][Autocomplete(typeof(ItemAutocompleteHandler))] string name,
                                     [Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
+            await DeferAsync();
             var embeds = await GetEntityPatchNotesEmbeds<ItemPatchNoteEmbed>(name, patch, locale, 3);
             if (!embeds.Any())
             {
-                await RespondAsync($"No changes for this item in Patch **{patch}**", ephemeral: true);
+                if (patch != null)
+                    await FollowupAsync($"No changes for this item in Patch **{patch}**.", ephemeral: true);
+                else
+                    await FollowupAsync($"No patchnotes for this item.", ephemeral: true);
                 return;
             }
-            await RespondAsync(embeds: embeds.Reverse().ToArray());
+            await FollowupAsync(embeds: embeds.Reverse().ToArray());
         }
 
-        [SlashCommand("hero", "🎶 I need a hero 🎶")]
+        [SlashCommand("hero", "Get the latest patchnote for a hero.")]
         public async Task PatchHero([Summary(description: "The heroes name to lookup")][Autocomplete(typeof(HeroAutocompleteHandler))] string name,
                                     [Summary(description: "The specific patch to lookup")][Autocomplete(typeof(PatchAutocompleteHandler))] string? patch = null,
                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
+            await DeferAsync();
             var embeds = await GetEntityPatchNotesEmbeds<HeroPatchNoteEmbed>(name, patch, locale);
             if (!embeds.Any())
             {
-                await RespondAsync($"No changes for this hero in Patch **{patch}**", ephemeral: true);
+                if (patch != null)
+                    await FollowupAsync($"No changes for this hero in Patch **{patch}**.", ephemeral: true);
+                else
+                    await FollowupAsync($"No patchnotes for this hero.", ephemeral: true);
                 return;
             }
-            await RespondAsync(embeds: embeds.ToArray());
+            await FollowupAsync(embeds: embeds.ToArray());
         }
 
         private async Task<IEnumerable<Discord.Embed>> GetEntityPatchNotesEmbeds<T>(string name, string? patch = null, string? locale = null, int limit = 1) where T : EntityPatchNoteEmbed

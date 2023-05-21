@@ -15,7 +15,7 @@ namespace Magus.Bot.Modules
     /// </remarks>
     public abstract class ModuleBase : InteractionModuleBase<SocketInteractionContext> // InteractionService will log a warning "not public" (as of v3.8) as the class is abstract. Ignore
     {
-        static readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString();
+        static readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString(3);
 
         protected ModuleBase()
         {
@@ -25,7 +25,8 @@ namespace Magus.Bot.Modules
         [SlashCommand("help", "Get help with these commands")]
         public async Task Help()
         {
-            await RespondAsync(embed: await CreateHelpEmbed(Context, GetType()), ephemeral: true);
+            await DeferAsync();
+            await FollowupAsync(embed: await CreateHelpEmbed(Context, GetType()), ephemeral: true);
         }
 
         internal static async Task<Embed> CreateHelpEmbed(SocketInteractionContext context, Type type)
