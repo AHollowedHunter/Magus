@@ -1,6 +1,6 @@
 ﻿namespace Magus.Data.Enums
 {
-    public enum DiscordAction
+    public enum DiscordGuildAction
     {
         None,
         Joined,

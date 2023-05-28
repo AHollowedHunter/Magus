@@ -68,13 +68,13 @@ namespace Magus.Bot
         static async Task JoinedGuild(SocketGuild guild)
         {
             _logger.LogInformation("Added to guild Name: {name} ID: {id} Members: {count}, at {joined}", guild.Name, guild.Id, guild.MemberCount, guild.CurrentUser.JoinedAt);
-            await _db.UpsertGuildRecord(guild, DiscordAction.Joined);
+            await _db.UpsertGuildRecord(guild, DiscordGuildAction.Joined);
         }
 
         static async Task LeftGuild(SocketGuild guild)
         {
             _logger.LogInformation("Removed from guild Name: {name} ID: {id} Members: {count}, at {joined}", guild.Name, guild.Id, guild.MemberCount, DateTimeOffset.UtcNow);
-            await _db.UpsertGuildRecord(guild, DiscordAction.Left);
+            await _db.UpsertGuildRecord(guild, DiscordGuildAction.Left);
         }
 
         static Task LogDiscord(LogMessage message)

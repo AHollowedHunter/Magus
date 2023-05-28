@@ -13,7 +13,7 @@ namespace Magus.Bot.Modules
 {
     [DefaultMemberPermissions(GuildPermission.Administrator)]
     [EnabledInDm(false)]
-    [Group(GroupName, "Configure MAGUS features")]
+    [Group(GroupName, "Configure server features")]
     [ModuleRegistration(Location.GLOBAL)]
     public class ConfigServerModule : ModuleBase
     {
@@ -34,7 +34,7 @@ namespace Magus.Bot.Modules
         public async Task Announcements()
         {
             var message = new StringBuilder()
-                    .AppendLine("Select a category below to choose a targetChannel to receive the corrosponding updates in.")
+                    .AppendLine("Select a category below to choose a targetChannel to receive the corresponding updates in.")
                     .AppendLine("You can also choose to remove the announcement category from the server.");
             var notes = new StringBuilder()
                     .AppendLine("• Each category can only be subscribed to a single targetChannel.")
@@ -85,17 +85,17 @@ namespace Magus.Bot.Modules
                 channel = Context.Guild.GetTextChannel(webhook.ChannelId);
             }
             var message = new StringBuilder()
-                    .AppendFormat("Choose a targetChannel to recieve **{0}** related news and updates.", topic)
+                    .AppendFormat("Choose a targetChannel to receive **{0}** related news and updates.", topic)
                     .AppendLine();
             if (webhook != null && channel != null)
                 message
                 .AppendLine()
-                .AppendFormat("Currently receiving **{0}** announcments in **{1} {2}**", topic, Emotes.TextChannel.ToString(), channel.Name);
+                .AppendFormat("Currently receiving **{0}** announcements in **{1} {2}**", topic, Emotes.TextChannel.ToString(), channel.Name);
 
             var fieldValue = new StringBuilder()
                     .AppendFormat("• You may only choose **one** {0} Text Channel.", Emotes.TextChannel.ToString())
                     .AppendLine()
-                    .AppendLine("• MagusBot requies the `Manage Webhooks` permission is enabled for the server or selected targetChannel to create or remove webhooks required to send messages.")
+                    .AppendLine("• MagusBot requires the `Manage Webhooks` permission is enabled for the server or selected targetChannel to create or remove webhooks required to send messages.")
                     .AppendLine("• Selecting a targetChannel from the menu will **instantly** attempt to update the chosen targetChannel.")
                     .AppendLine("• If the process fails, please wait a minute and try again.");
 
@@ -138,7 +138,7 @@ namespace Magus.Bot.Modules
             var targetChannel = channels[0];
             var guild         = await _db.GetGuild(Context.Guild);
 
-            var name = $"{topic} Announcments";
+            var name = $"{topic} Announcements";
             if (topic == Topic.Dota)
                 name += " via MagusBot";
 
@@ -202,6 +202,5 @@ namespace Magus.Bot.Modules
                 await FollowupAsync($"Removed **{topic}** announcements from this server.", ephemeral: true);
             }
         }
-
     }
 }
