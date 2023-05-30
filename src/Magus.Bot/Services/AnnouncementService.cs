@@ -25,10 +25,10 @@ namespace Magus.Bot.Services
 
         public AnnouncementService(IAsyncDataService db, DiscordSocketClient discord, HttpClient httpClient, ILogger<AnnouncementService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings)
         {
-            _db = db;
-            _discord = discord.Rest;
-            _logger = logger;
-            _scheduler = scheduler;
+            _db          = db;
+            _discord     = discord.Rest;
+            _logger      = logger;
+            _scheduler   = scheduler;
             _botSettings = botSettings.Value;
         }
 
@@ -36,7 +36,7 @@ namespace Magus.Bot.Services
         {
             ScheduleGetDotaNews();
 
-            _logger.LogInformation("AnnouncementService Initalised");
+            _logger.LogInformation("AnnouncementService Initialised");
         }
 
         private void ScheduleGetDotaNews() => _scheduler.ScheduleAsync(GetDotaNews)
@@ -95,7 +95,7 @@ namespace Magus.Bot.Services
         {
             var sourceId      = _botSettings.Announcements.DotaSource;
             var sourceChannel = await _discord.GetChannelAsync(sourceId) as INewsChannel;
-            
+
             var content = announcement.Content.Length < 512
                 ? announcement.Content
                 : announcement.Content[..(512+announcement.Content[512..].IndexOf(" "))] + " ***...***";
