@@ -33,7 +33,7 @@ namespace Magus.Bot.Modules
         [SlashCommand("hero", "Get stats playing as a hero.")]
         public async Task Hero(
             [Summary(description: "The heroes name.")][Autocomplete(typeof(HeroAutocompleteHandler))] string name,
-            [Summary(description: "Friends to include. You can @mention users who have set their Steam, or include a list of account IDs.")] string? friend = null,
+            [Summary(description: "Friends to include. You can @mention and manually enter Dota account IDs, separated by spaces.")] string? friend = null,
             [Summary(description: "The language/locale of the response.")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync(true);
@@ -62,6 +62,33 @@ namespace Magus.Bot.Modules
                 var heroMatches = playerInfo.HeroesPerformance.Where(x => x.Hero.Id == heroInfo.EntityId).First();
 
                 await FollowupAsync(text: $"Played {heroMatches.MatchCount} matches as **{heroInfo.Name}**, {heroMatches.WinCount} wins.", ephemeral: true);
+            }
+            else
+            {
+                await FollowupAsync(text: "No steam set", ephemeral: true);
+            }
+        }
+
+        [SlashCommand("summary", "Get summary of recent games.")]
+        public async Task Summary(
+            [Summary(description: "The language/locale of the response.")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
+        {
+            await DeferAsync(true);
+
+            var user = await _db.GetUser(Context.User);
+
+            if (user.DotaID != null)
+            {
+                var summary = await _stratz.GetPlayerSummary((long)user.DotaID);
+
+                var embed = new EmbedBuilder()
+                    .WithTitle(summary.SteamAccount.Name)
+                    .WithDescription($"Last {summary.MatchCount} matches.\n\n**Best heroes:**");
+
+                foreach (var hero in summary.Heroes)
+                    embed.AddField(hero.HeroId.ToString(), $"{hero.WinCount} - {hero.LossCount}", true);
+
+                await FollowupAsync(embed: embed.Build(), ephemeral: true);
             }
             else
             {

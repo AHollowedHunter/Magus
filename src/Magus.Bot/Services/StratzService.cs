@@ -59,5 +59,23 @@ namespace Magus.Bot.Services
             var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query), () => new { Player = new PlayerType() });
             return response.Data.Player;
         }
+
+        public async Task<PlayerCardHoverType> GetPlayerSummary(long steamId)
+        {
+            var query = new DotaQueryQueryBuilder()
+                .WithPlayer(new PlayerTypeQueryBuilder()
+                    .WithSimpleSummary(new PlayerCardHoverTypeQueryBuilder()
+                        .WithSteamAccount(new SteamAccountTypeQueryBuilder()
+                            .WithName())
+                        .WithHeroes(new PlayerCardHoverHeroTypeQueryBuilder()
+                            .WithAllScalarFields())
+                        .WithLastUpdateDateTime()
+                        .WithAllScalarFields())
+                    , steamId)
+                .Build();
+            _logger.LogDebug(query);
+            var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query), () => new { Player = new PlayerType() });
+            return response.Data.Player.SimpleSummary;
+        }
     }
 }
