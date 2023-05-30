@@ -6,6 +6,10 @@ using Magus.Common.Enums;
 using Magus.Data;
 using Magus.Data.Extensions;
 using Microsoft.Extensions.Options;
+using ReverseMarkdown;
+using SteamWebAPI2.Interfaces;
+using SteamWebAPI2.Utilities;
+using System.Net.Http;
 
 namespace Magus.Bot.Modules
 {
@@ -78,22 +82,28 @@ namespace Magus.Bot.Modules
             private readonly ILogger<SteamGroup> _logger;
             private readonly IAsyncDataService _db;
             private readonly BotSettings _botSettings;
+            private readonly HttpClient _httpClient;
+            private readonly SteamWebInterfaceFactory webInterfaceFactory;
 
-            public SteamGroup(ILogger<SteamGroup> logger, IAsyncDataService db, IOptions<BotSettings> botSettings)
+            public SteamGroup(ILogger<SteamGroup> logger, IAsyncDataService db, IOptions<BotSettings> botSettings, HttpClient httpClient)
             {
                 _logger = logger;
                 _db = db;
                 _botSettings = botSettings.Value;
+                _httpClient = httpClient;
+
+                webInterfaceFactory = new(_botSettings.Steam.SteamKey);
             }
 
-            [SlashCommand("set-id", "Set your Steam ID")]
-            public async Task SetSteamId(uint steamId)
+            [SlashCommand("set", "Set your Steam account")]
+            public async Task SetSteamId([Summary(description: "steamID, either")] string steamid)
             {
                 await DeferAsync(true);
 
+                var steamInterface = webInterfaceFactory.CreateSteamWebInterface<SteamUser>(_httpClient);
+                var id = (await steamInterface.ResolveVanityUrlAsync("ahollowedhunter")).Data;
+                _logger.LogInformation((await steamInterface.GetPlayerSummaryAsync(id)).Data.Nickname);
                 var user = await _db.GetUser(Context.User);
-
-
 
                 //await FollowupAsync(text: "SteamID updated", ephemeral: true);
             }

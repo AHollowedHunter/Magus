@@ -13,6 +13,7 @@
 
         public ulong[] ManagementGuilds { get; set; } = Array.Empty<ulong>();
 
+        public string StratzToken { get; set; }
 
         public StatusConfig Status { get; set; }
         public SteamConfig Steam { get; set; }

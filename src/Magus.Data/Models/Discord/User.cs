@@ -7,7 +7,7 @@
 
         public ulong Id { get; set; }
 
-        public uint? DotaID { get; set; }
+        public long? DotaID { get; set; }
         public ulong? SteamID64 { get; set; }
 
         public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;

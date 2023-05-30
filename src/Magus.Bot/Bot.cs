@@ -2,6 +2,9 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using GraphQL;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.SystemTextJson;
 using Magus.Bot.Services;
 using Magus.Common.Options;
 using Magus.Data;
@@ -103,8 +106,9 @@ namespace Magus.Bot
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
                 .AddSingleton(x => new InteractionServiceConfig() { InteractionCustomIdDelimiters = new char[] { Constants.CustomIdGroupDelimiter }, UseCompiledLambda = true })
-                .AddSingleton<InteractionService>()
+                .AddSingleton<InteractionService>() 
                 .AddSingleton<InteractionHandler>()
+                .AddSingleton<StratzService>()
                 .AddSingleton<TIService>()
                 .AddSingleton<AnnouncementService>();
 
