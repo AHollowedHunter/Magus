@@ -7,6 +7,7 @@ using Magus.Data;
 using Magus.Data.Extensions;
 using Magus.Data.Models.Embeds;
 using Microsoft.Extensions.Options;
+using ReverseMarkdown.Converters;
 using SteamWebAPI2.Models;
 
 namespace Magus.Bot.Modules
@@ -73,27 +74,44 @@ namespace Magus.Bot.Modules
         public async Task Summary(
             [Summary(description: "The language/locale of the response.")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
-            await DeferAsync(true);
+            await DeferAsync();
 
             var user = await _db.GetUser(Context.User);
 
             if (user.DotaID != null)
             {
-                var summary = await _stratz.GetPlayerSummary((long)user.DotaID);
+                var player = await _stratz.GetPlayerSummary((long)user.DotaID);
+                var summary = player.SimpleSummary;
+
+                var longestMatch = player.Matches.MaxBy(match => match.DurationSeconds);
+                var shortestMatch = player.Matches.MinBy(match => match.DurationSeconds);
+                var avgDuration = player.Matches.Average(match => match.DurationSeconds);
 
                 var embed = new EmbedBuilder()
-                    .WithTitle(summary.SteamAccount.Name)
-                    .WithDescription($"Last {summary.MatchCount} matches.\n\n**Best heroes:**");
+                    .WithAuthor(summary.SteamAccount.Name, summary.SteamAccount.Avatar, summary.SteamAccount.ProfileUri)
+                    .WithThumbnailUrl("https://static.wikia.nocookie.net/dota2_gamepedia/images/2/25/SeasonalRank5-4.png")
+                    .WithColor(Color.DarkPurple)
+                    .WithDescription($"Last {summary.MatchCount} matches.\nLast Match: <t:{summary.LastUpdateDateTime}:R>\n\n**Best recent heroes:**")
+                    .WithFooter($"Powered by STRATZ    |    Account ID: {user.DotaID}", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
+
+                embed.AddField("Shortest Match", $"{(shortestMatch?.Players[0].IsVictory?? false ? "Win" : "Loss")} as {shortestMatch?.Players[0].HeroId} {shortestMatch?.Id} - {SecondsToTime(shortestMatch?.DurationSeconds ?? 0)} (<t:{shortestMatch?.EndDateTime}:R>)");
+                embed.AddField("Longest Match", $"{(longestMatch?.Players[0].IsVictory?? false ? "Win" : "Loss")} as {longestMatch?.Players[0].HeroId} {longestMatch?.Id} - {SecondsToTime(longestMatch?.DurationSeconds ?? 0)} (<t:{longestMatch?.EndDateTime}:R>)");
 
                 foreach (var hero in summary.Heroes)
                     embed.AddField(hero.HeroId.ToString(), $"{hero.WinCount} - {hero.LossCount}", true);
 
-                await FollowupAsync(embed: embed.Build(), ephemeral: true);
+                await FollowupAsync(embed: embed.Build());
             }
             else
             {
                 await FollowupAsync(text: "No steam set", ephemeral: true);
             }
+        }
+
+        private string SecondsToTime(int seconds)
+        {
+            var timespan = TimeSpan.FromSeconds(seconds);
+            return timespan.ToString(@"hh\:mm\:ss");
         }
     }
 }

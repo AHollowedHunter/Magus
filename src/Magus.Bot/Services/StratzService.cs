@@ -4,7 +4,6 @@ using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
 using Microsoft.Extensions.Options;
 using STRATZ;
-using System.Net.Http;
 
 namespace Magus.Bot.Services
 {
@@ -62,22 +61,37 @@ namespace Magus.Bot.Services
             return response.Data.Player;
         }
 
-        public async Task<PlayerCardHoverType> GetPlayerSummary(long steamId)
+        public async Task<PlayerType> GetPlayerSummary(long steamId)
         {
             var query = new DotaQueryQueryBuilder()
                 .WithPlayer(new PlayerTypeQueryBuilder()
                     .WithSimpleSummary(new PlayerCardHoverTypeQueryBuilder()
                         .WithSteamAccount(new SteamAccountTypeQueryBuilder()
-                            .WithName())
+                            .WithName()
+                            .WithAvatar()
+                            .WithProfileUri()
+                            .WithSeasonRank())
                         .WithHeroes(new PlayerCardHoverHeroTypeQueryBuilder()
                             .WithAllScalarFields())
                         .WithLastUpdateDateTime()
                         .WithAllScalarFields())
-                    , steamId)
+                    .WithMatches(new MatchTypeQueryBuilder()
+                        .WithId()
+                        .WithDurationSeconds()
+                        .WithEndDateTime()
+                        .WithGameMode()
+                        .WithAnalysisOutcome()
+                        .WithPlayers(new MatchPlayerTypeQueryBuilder()
+                            .WithIsVictory()
+                            .WithHeroId()
+                            .WithAward()
+                        , steamId)
+                    , new PlayerMatchesRequestType() { Take = 25, OrderBy = FindMatchPlayerOrderBy.Desc })
+                , steamId)
                 .Build();
             _logger.LogDebug(query);
             var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query), () => new { Player = new PlayerType() });
-            return response.Data.Player.SimpleSummary;
+            return response.Data.Player;
         }
     }
 }
