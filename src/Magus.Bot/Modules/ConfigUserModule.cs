@@ -85,12 +85,12 @@ namespace Magus.Bot.Modules
             private readonly HttpClient _httpClient;
             private readonly SteamWebInterfaceFactory webInterfaceFactory;
 
-            public SteamGroup(ILogger<SteamGroup> logger, IAsyncDataService db, IOptions<BotSettings> botSettings, HttpClient httpClient)
+            public SteamGroup(ILogger<SteamGroup> logger, IAsyncDataService db, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
             {
                 _logger = logger;
                 _db = db;
                 _botSettings = botSettings.Value;
-                _httpClient = httpClient;
+                _httpClient = httpClientFactory.CreateClient();
 
                 webInterfaceFactory = new(_botSettings.Steam.SteamKey);
             }

@@ -23,7 +23,7 @@ namespace Magus.Bot.Services
         private readonly BotSettings _botSettings;
 
 
-        public AnnouncementService(IAsyncDataService db, DiscordSocketClient discord, HttpClient httpClient, ILogger<AnnouncementService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings)
+        public AnnouncementService(IAsyncDataService db, DiscordSocketClient discord, ILogger<AnnouncementService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings)
         {
             _db          = db;
             _discord     = discord.Rest;

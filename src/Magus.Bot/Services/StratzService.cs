@@ -4,6 +4,7 @@ using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
 using Microsoft.Extensions.Options;
 using STRATZ;
+using System.Net.Http;
 
 namespace Magus.Bot.Services
 {
@@ -16,17 +17,18 @@ namespace Magus.Bot.Services
 
         private readonly GraphQLHttpClient _stratz;
 
-        public StratzService(ILogger<AnnouncementService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, HttpClient httpClient)
+        const string StratzApiUrl = "https://api.stratz.com/graphql";
+
+        public StratzService(ILogger<AnnouncementService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
         {
             _logger      = logger;
             _scheduler   = scheduler;
             _botSettings = botSettings.Value;
-            _httpClient  = httpClient;
+            _httpClient  = httpClientFactory.CreateClient();
+            _httpClient.DefaultRequestHeaders.Authorization = new("Bearer", _botSettings.StratzToken);
+            _httpClient.BaseAddress = new Uri(StratzApiUrl);
 
-            // refactor app to use httpfactory and prevent token leaking?
-            //_stratz = new GraphQLHttpClient(new() { EndPoint = new Uri("https://api.stratz.com/graphql") }, new SystemTextJsonSerializer(), _httpClient);
-            _stratz = new GraphQLHttpClient(new() { EndPoint = new Uri("https://api.stratz.com/graphql") }, new SystemTextJsonSerializer(), new HttpClient());
-            _stratz.HttpClient.DefaultRequestHeaders.Authorization = new("Bearer", _botSettings.StratzToken);
+            _stratz = new GraphQLHttpClient(new(), new SystemTextJsonSerializer(), _httpClient);
         }
 
         public async Task<PlayerType> GetPlayerHeroStats(long steamId, int heroIds, IList<long>? friendIds = null) =>

@@ -102,7 +102,7 @@ namespace Magus.Bot
                 .Configure<DataSettings>(settings => config.GetSection("DataSettings").Bind(settings))
                 .Configure<LocalisationOptions>(settings => config.GetSection("Localisation").Bind(settings))
                 .AddScheduler()
-                .AddSingleton<HttpClient>()
+                .AddHttpClient()
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
                 .AddSingleton(x => new InteractionServiceConfig() { InteractionCustomIdDelimiters = new char[] { Constants.CustomIdGroupDelimiter }, UseCompiledLambda = true })
