@@ -56,7 +56,7 @@ namespace Magus.Bot.Services
                         , take: int.MaxValue)
                     , steamId)
                 .Build();
-            _logger.LogDebug(query);
+
             var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query), () => new { Player = new PlayerType() });
             return response.Data.Player;
         }
@@ -65,16 +65,27 @@ namespace Magus.Bot.Services
         {
             var query = new DotaQueryQueryBuilder()
                 .WithPlayer(new PlayerTypeQueryBuilder()
-                    .WithSimpleSummary(new PlayerCardHoverTypeQueryBuilder()
-                        .WithSteamAccount(new SteamAccountTypeQueryBuilder()
+                    .WithSteamAccount(new SteamAccountTypeQueryBuilder()
                             .WithName()
                             .WithAvatar()
                             .WithProfileUri()
                             .WithSeasonRank())
+                    .WithSimpleSummary(new PlayerCardHoverTypeQueryBuilder()
                         .WithHeroes(new PlayerCardHoverHeroTypeQueryBuilder()
                             .WithAllScalarFields())
-                        .WithLastUpdateDateTime()
-                        .WithAllScalarFields())
+                        .WithLastUpdateDateTime())
+                    .WithMatchesGroupBy(new MatchGroupByTypeQueryBuilder()
+                        .WithMatchGroupBySteamAccountIdTypeFragment(new MatchGroupBySteamAccountIdTypeQueryBuilder()
+                            .WithWinCount()
+                            .WithMatchCount()
+                            .WithAllScalarFields())
+                        , new PlayerMatchesGroupByRequestType()
+                        {
+                            Take = 25,
+                            GameModeIds = new List<object>() {1, 22},
+                            PlayerList = FindMatchPlayerList.Single,
+                            GroupBy = FindMatchPlayerGroupBy.SteamAccountId,
+                        })
                     .WithMatches(new MatchTypeQueryBuilder()
                         .WithId()
                         .WithDurationSeconds()
@@ -83,13 +94,17 @@ namespace Magus.Bot.Services
                         .WithAnalysisOutcome()
                         .WithPlayers(new MatchPlayerTypeQueryBuilder()
                             .WithIsVictory()
-                            .WithHeroId()
+                            .WithIsRadiant()
                             .WithAward()
+                            .WithHeroId()
+                            .WithKills()
+                            .WithAssists()
+                            .WithDeaths()
                         , steamId)
                     , new PlayerMatchesRequestType() { Take = 25, OrderBy = FindMatchPlayerOrderBy.Desc })
                 , steamId)
                 .Build();
-            _logger.LogDebug(query);
+
             var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query), () => new { Player = new PlayerType() });
             return response.Data.Player;
         }

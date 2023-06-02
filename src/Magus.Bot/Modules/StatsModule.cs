@@ -3,12 +3,13 @@ using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Services;
+using Magus.Common.Emotes;
 using Magus.Data;
 using Magus.Data.Extensions;
 using Magus.Data.Models.Embeds;
 using Microsoft.Extensions.Options;
-using ReverseMarkdown.Converters;
-using SteamWebAPI2.Models;
+using MongoDB.Driver.Linq;
+using System.Diagnostics;
 
 namespace Magus.Bot.Modules
 {
@@ -70,8 +71,8 @@ namespace Magus.Bot.Modules
             }
         }
 
-        [SlashCommand("summary", "Get summary of recent games.")]
-        public async Task Summary(
+        [SlashCommand("recent", "Get summary of recent games.")]
+        public async Task Recent(
             [Summary(description: "The language/locale of the response.")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
@@ -80,26 +81,56 @@ namespace Magus.Bot.Modules
 
             if (user.DotaID != null)
             {
+                var sw = new Stopwatch();
                 var player = await _stratz.GetPlayerSummary((long)user.DotaID);
+                sw.Start();
                 var summary = player.SimpleSummary;
+                var mgroup = player.MatchesGroupBy.First();
 
-                var longestMatch = player.Matches.MaxBy(match => match.DurationSeconds);
+                var winPercent = (double) mgroup.WinCount / mgroup.MatchCount * 100;
+
+                var longestMatch  = player.Matches.MaxBy(match => match.DurationSeconds);
                 var shortestMatch = player.Matches.MinBy(match => match.DurationSeconds);
-                var avgDuration = player.Matches.Average(match => match.DurationSeconds);
+                var avgDuration   = player.Matches.Average(match => match.DurationSeconds);
+
+                var awardCount = player.Matches.Where(match => match.Players[0].Award != STRATZ.MatchPlayerAward.None)
+                    .GroupBy(x => x.Players[0].Award)
+                    .OrderByDescending(x => x.Count())
+                    .Select(x=> new { x.Key, Count = x.Count() })
+                    .ToList();
+
+                var description = new StringBuilder()
+                    .AppendLine($"Last Played: <t:{summary.LastUpdateDateTime}:R>")
+                    .AppendLine($"WR: **{winPercent:0.#}%** over **{mgroup.MatchCount}** matches")
+                    .AppendLine($"KDA: **{mgroup.AvgKills:0.##}\u202F/\u202F{mgroup.AvgDeaths:0.##}\u202F/\u202F{mgroup.AvgAssists:0.##}**\u2007\u2007\u2007Ratio: **{mgroup.AvgKda:0.##}**")
+                    .AppendLine($"Avg. Duration **{SecondsToTime(avgDuration ?? 0)}**")
+                    .AppendLine()
+                    .Append("**Best heroes:**");
 
                 var embed = new EmbedBuilder()
-                    .WithAuthor(summary.SteamAccount.Name, summary.SteamAccount.Avatar, summary.SteamAccount.ProfileUri)
-                    .WithThumbnailUrl("https://static.wikia.nocookie.net/dota2_gamepedia/images/2/25/SeasonalRank5-4.png")
-                    .WithColor(Color.DarkPurple)
-                    .WithDescription($"Last {summary.MatchCount} matches.\nLast Match: <t:{summary.LastUpdateDateTime}:R>\n\n**Best recent heroes:**")
-                    .WithFooter($"Powered by STRATZ    |    Account ID: {user.DotaID}", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
+                    .WithAuthor(player.SteamAccount.Name, player.SteamAccount.Avatar, $"https://stratz.com/players/{user.DotaID}")
+                    .WithColor(Color.DarkGreen)
+                    .WithDescription(description.ToString())
+                    .WithFooter($"Powered by STRATZ", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
 
-                embed.AddField("Shortest Match", $"{(shortestMatch?.Players[0].IsVictory?? false ? "Win" : "Loss")} as {shortestMatch?.Players[0].HeroId} {shortestMatch?.Id} - {SecondsToTime(shortestMatch?.DurationSeconds ?? 0)} (<t:{shortestMatch?.EndDateTime}:R>)");
-                embed.AddField("Longest Match", $"{(longestMatch?.Players[0].IsVictory?? false ? "Win" : "Loss")} as {longestMatch?.Players[0].HeroId} {longestMatch?.Id} - {SecondsToTime(longestMatch?.DurationSeconds ?? 0)} (<t:{longestMatch?.EndDateTime}:R>)");
+                for (var i = 0; i < 3; i++)
+                {
+                    var hero = summary.Heroes.ElementAtOrDefault(i);
+                    if (hero != null)
+                        embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId ?? 0)} HERONAME", $"**{hero.WinCount}\u202F-\u202F{hero.LossCount}**", true);
+                    else
+                        embed.AddField("_ _", "_ _", true);
+                }
+                // Won as <side>, stomped in <time>
+                // Lost to a stomp
+                // Won with a comeback
+                // Lost to a comeback
+                // Won a **close game** as <side>, 
+                embed.AddField("Shortest Match", $"{(shortestMatch?.Players[0].IsVictory?? false ? "Win" : "Loss")} as {shortestMatch?.Players[0].HeroId} {shortestMatch?.Id} - {SecondsToTime(shortestMatch?.DurationSeconds ?? 0)} (<t:{shortestMatch?.EndDateTime}:R>)", true);
+                embed.AddField("Longest Match", $"{(longestMatch?.Players[0].IsVictory?? false ? "Win" : "Loss")} as {longestMatch?.Players[0].HeroId} {longestMatch?.Id} - {SecondsToTime(longestMatch?.DurationSeconds ?? 0)} (<t:{longestMatch?.EndDateTime}:R>)", true);
 
-                foreach (var hero in summary.Heroes)
-                    embed.AddField(hero.HeroId.ToString(), $"{hero.WinCount} - {hero.LossCount}", true);
-
+                sw.Stop();
+                _logger.LogDebug(sw.Elapsed.TotalSeconds.ToString());
                 await FollowupAsync(embed: embed.Build());
             }
             else
@@ -108,7 +139,7 @@ namespace Magus.Bot.Modules
             }
         }
 
-        private string SecondsToTime(int seconds)
+        private static string SecondsToTime(double seconds)
         {
             var timespan = TimeSpan.FromSeconds(seconds);
             return timespan.ToString(@"hh\:mm\:ss");
