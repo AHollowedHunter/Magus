@@ -2,6 +2,7 @@
 using GraphQL.Client.Abstractions;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
+using Magus.Data.Models.Stratz.Results;
 using Microsoft.Extensions.Options;
 using STRATZ;
 
@@ -107,6 +108,60 @@ namespace Magus.Bot.Services
 
             var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query), () => new { Player = new PlayerType() });
             return response.Data.Player;
+        }
+
+        public async Task<QueryRecentResult> GetRecentStats(long steamId)
+        {
+            var query =
+                @"query ($steamid: Long!)
+{
+  player(steamAccountId: $steamid) {
+    MatchGroupBySteamId: matchesGroupBy( request: {
+      take: 25
+      gameModeIds: [1,22]
+      playerList: SINGLE
+      groupBy: STEAM_ACCOUNT_ID
+    }) {
+      ... on MatchGroupBySteamAccountIdType{ matchCount winCount avgImp avgKills avgDeaths avgAssists avgExperiencePerMinute avgGoldPerMinute avgKDA }
+    }
+    MatchGroupByHero: matchesGroupBy( request: {
+      take: 25
+      gameModeIds: [1,22]
+      playerList: SINGLE
+      groupBy: HERO
+    }) {
+      ... on MatchGroupByHeroType{ heroId matchCount winCount avgKills avgDeaths avgAssists avgExperiencePerMinute avgGoldPerMinute avgKDA avgImp }
+    }
+    simpleSummary{
+      matchCount
+      lastUpdateDateTime
+      heroes
+      {
+        heroId
+        winCount
+        lossCount
+      }
+    }
+    steamAccount {
+      name
+      avatar
+    }
+    matches( request: {
+      gameModeIds: [1,22]
+      take: 25
+      playerList: SINGLE
+    }) {
+      id
+      analysisOutcome
+      durationSeconds
+      endDateTime
+      players(steamAccountId: $steamid) { isVictory networth assists kills deaths heroId experiencePerMinute goldPerMinute }
+    }
+  }
+}";
+
+            var response = await _stratz.SendQueryAsync<QueryRecentResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = steamId}));
+            return response.Data;
         }
     }
 }
