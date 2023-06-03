@@ -139,10 +139,6 @@ namespace Magus.Bot.Modules
             }
         }
 
-        private static string SecondsToTime(double seconds)
-        {
-            var timespan = TimeSpan.FromSeconds(seconds);
-            return timespan.ToString(@"hh\:mm\:ss");
-        }
+        private static string SecondsToTime(double seconds) => TimeSpan.FromSeconds(seconds).ToString(@"hh\:mm\:ss");
     }
 }
