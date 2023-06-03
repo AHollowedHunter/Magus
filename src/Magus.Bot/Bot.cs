@@ -54,6 +54,7 @@ namespace Magus.Bot
 
             await interactionHandler.InitialiseAsync();
             //await services.GetRequiredService<TIService>().Initialise();
+            await _services.GetRequiredService<EntityNameLocalisationService>().InitialiseAsync();
             await _services.GetRequiredService<AnnouncementService>().InitialiseAsync();
 
             if (IsDebug())
@@ -108,6 +109,7 @@ namespace Magus.Bot
                 .AddSingleton(x => new InteractionServiceConfig() { InteractionCustomIdDelimiters = new char[] { Constants.CustomIdGroupDelimiter }, UseCompiledLambda = true })
                 .AddSingleton<InteractionService>() 
                 .AddSingleton<InteractionHandler>()
+                .AddSingleton<EntityNameLocalisationService>()
                 .AddSingleton<StratzService>()
                 .AddSingleton<TIService>()
                 .AddSingleton<AnnouncementService>();

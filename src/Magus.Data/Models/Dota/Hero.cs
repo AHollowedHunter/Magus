@@ -1,5 +1,4 @@
-﻿using Magus.Data.Models.Embeds;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Magus.Data.Models.Dota
 {

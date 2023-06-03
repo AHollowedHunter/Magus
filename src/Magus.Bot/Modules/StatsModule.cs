@@ -23,13 +23,15 @@ namespace Magus.Bot.Modules
         private readonly BotSettings _config;
         private readonly IAsyncDataService _db;
         private readonly StratzService _stratz;
+        private readonly EntityNameLocalisationService _entityNameLocalisationService;
 
-        public StatsModule(ILogger<StatsModule> logger, IOptions<BotSettings> config, IAsyncDataService db, StratzService stratz)
+        public StatsModule(ILogger<StatsModule> logger, IOptions<BotSettings> config, IAsyncDataService db, StratzService stratz, EntityNameLocalisationService entityNameLocalisationService)
         {
-            _logger = logger;
-            _db = db;
-            _config = config.Value;
-            _stratz = stratz;
+            _logger                        = logger;
+            _db                            = db;
+            _config                        = config.Value;
+            _stratz                        = stratz;
+            _entityNameLocalisationService = entityNameLocalisationService;
         }
 
         [SlashCommand("hero", "Get stats playing as a hero.")]
@@ -77,6 +79,8 @@ namespace Magus.Bot.Modules
         {
             await DeferAsync();
 
+            locale ??= Context.Interaction.UserLocale;
+
             var user = await _db.GetUser(Context.User);
 
             if (user.DotaID != null)
@@ -117,7 +121,7 @@ namespace Magus.Bot.Modules
                 {
                     var hero = summary.Heroes.ElementAtOrDefault(i);
                     if (hero != null)
-                        embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId ?? 0)} HERONAME", $"**{hero.WinCount}\u202F-\u202F{hero.LossCount}**", true);
+                        embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId ?? 0)} {_entityNameLocalisationService.GetLocalisedHeroName(hero.HeroId ?? 0, locale)}", $"**{hero.WinCount}\u202F-\u202F{hero.LossCount}**", true);
                     else
                         embed.AddField("_ _", "_ _", true);
                 }

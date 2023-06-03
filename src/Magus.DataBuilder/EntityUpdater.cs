@@ -1,7 +1,9 @@
 ﻿using Magus.Common.Options;
 using Magus.Data;
+using Magus.Data.Enums;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
+using Magus.Data.Models.Magus;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -60,6 +62,8 @@ namespace Magus.DataBuilder
             stopwatch.Start();
             await SetEntityValues();
             await SetEntities();
+
+            await CreateAndStoreEntityLocalisations();
 
             await StoreEntityEmbeds();
 
@@ -698,14 +702,14 @@ namespace Magus.DataBuilder
 
             => name.ToLower() switch
             {
-                "abilitycastrange"   => ability.AbilityCastRange,
+                "abilitycastrange" => ability.AbilityCastRange,
                 "abilitychanneltime" => ability.AbilityChannelTime,
-                "abilitycooldown"    => ability.AbilityCooldown,
-                "abilitydamage"      => ability.AbilityDamage,
-                "abilityduration"    => ability.AbilityDuration,
-                "abilitymanacost"    => ability.AbilityManaCost,
-                "abilityhealthcost"  => ability.AbilityHealthCost,
-                _                    => null
+                "abilitycooldown" => ability.AbilityCooldown,
+                "abilitydamage" => ability.AbilityDamage,
+                "abilityduration" => ability.AbilityDuration,
+                "abilitymanacost" => ability.AbilityManaCost,
+                "abilityhealthcost" => ability.AbilityHealthCost,
+                _ => null
             };
 
 
@@ -1120,6 +1124,62 @@ namespace Magus.DataBuilder
                 newNotes.Add(newNote);
             }
             item.Notes = newNotes;
+        }
+
+        /// <summary>
+        /// This is a messy ad-hoc slotted into this existing monolith.
+        /// </summary>
+        private async Task CreateAndStoreEntityLocalisations()
+        {
+            _logger.LogInformation("Creating entity localisation records.");
+
+            var entityLocalisation = new List<EntityLocalisation>();
+
+            foreach (var heroLocalisationsGroup in _heroes.GroupBy(x => (x.Id, x.InternalName)))
+            {
+                _logger.LogDebug("Processing hero and ability EntityLocalisations for {key}", heroLocalisationsGroup.Key);
+
+                var heroLocalisation = new EntityLocalisation()
+                {
+                    EntityId     = heroLocalisationsGroup.Key.Id,
+                    InternalName = heroLocalisationsGroup.Key.InternalName,
+                    DefaultTag   = _localisationOptions.DefaultTag,
+                    Type         = EntityType.HERO,
+                    NameLocalisations = new Dictionary<string, string>(),
+                };
+                SetEntityLocalisationId(heroLocalisation);
+
+                // Set the default first, to be compared against after.
+                // This is dirty, to be fixed with localisation + DataBuilder refactor.
+                heroLocalisation.NameLocalisations[_localisationOptions.DefaultTag] = heroLocalisationsGroup.First(x => x.Language == _localisationOptions.DefaultLanguage).Name;
+
+                foreach (var localisedHero in heroLocalisationsGroup)
+                {
+                    if (localisedHero.Name != heroLocalisation.DefaultName)
+                    {
+                        // now this is filthy... but only language with two tags is english so it won't matter about only accessing one index as its default anyway.
+                        heroLocalisation.NameLocalisations[_localisationOptions.SourceLocaleMappings[localisedHero.Language][0]] = localisedHero.Name;
+                    }
+                }
+                entityLocalisation.Add(heroLocalisation);
+            }
+
+            // Ensure indexes
+            _db.CreateCollection<EntityLocalisation>();
+            await _db.EnsureIndex<EntityLocalisation>(x => x.EntityId);
+            await _db.EnsureIndex<EntityLocalisation>(x => x.InternalName, caseSensitive: false);
+            // Add records
+            await _db.UpsertRecords(entityLocalisation);
+
+            _logger.LogInformation("Finished creating entity localisation records.");
+        }
+
+        private static void SetEntityLocalisationId(EntityLocalisation entity)
+        {
+            var str = $"{entity.EntityId}_{entity.InternalName}_{entity.Type}";
+            var md5 = System.Security.Cryptography.MD5.Create();
+            var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(str));
+            entity.Id = BitConverter.ToUInt64(hash);
         }
 
         private async Task StoreEntityEmbeds()
