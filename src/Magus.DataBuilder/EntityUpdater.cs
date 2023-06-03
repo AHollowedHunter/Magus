@@ -32,6 +32,8 @@ namespace Magus.DataBuilder
 
         private static readonly string ValueSeparator = "\u00A0/\u00A0";
 
+        private static readonly Regex NameGender = new("#\\|(\\p{L})\\|#");
+
         public EntityUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger)
         {
             _db                  = db;
@@ -714,7 +716,7 @@ namespace Magus.DataBuilder
             hero.InternalName = kvhero.Name;
             hero.Language     = language;
             hero.Id           = kvhero.ParseChildValue<int>("HeroID");
-            hero.Name         = GetHeroValue(language, hero.InternalName, isName: true);
+            hero.Name         = NameGender.Replace(GetHeroValue(language, hero.InternalName, isName: true), string.Empty);
             hero.NameAliases  = kvhero.ParseChildValueList<string>("NameAliases");
             hero.Bio          = GetHeroValue(language, hero.InternalName, "bio");
             hero.Hype         = GetHeroValue(language, hero.InternalName, "hype");
