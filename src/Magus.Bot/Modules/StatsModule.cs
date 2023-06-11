@@ -9,9 +9,11 @@ using Magus.Data.Extensions;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Stratz.Results;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using MongoDB.Driver.Linq;
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Magus.Bot.Modules
 {
@@ -95,8 +97,6 @@ namespace Magus.Bot.Modules
                 var summary = player.SimpleSummary;
                 var mgroup = player.MatchGroupBySteamId.Single();
 
-                var winPercent = (double) mgroup.WinCount / mgroup.MatchCount * 100;
-
                 var longestMatch  = player.Matches.MaxBy(match => match.DurationSeconds);
                 var shortestMatch = player.Matches.MinBy(match => match.DurationSeconds);
                 var avgDuration   = player.Matches.Average(match => match.DurationSeconds);
@@ -109,8 +109,8 @@ namespace Magus.Bot.Modules
 
                 var description = new StringBuilder()
                     .AppendLine($"Last Played: <t:{summary.LastUpdateDateTime}:R> ({MatchIdLink(player.Matches.First().Id)})")
-                    .AppendLine($"WR: **{winPercent:0.#}%** over **{mgroup.MatchCount}** matches")
-                    .AppendLine($"KDA: **{mgroup.AvgKills:0.##}\u202F/\u202F{mgroup.AvgDeaths:0.##}\u202F/\u202F{mgroup.AvgAssists:0.##}**{WideSpace}Ratio: **{mgroup.AvgKDA:0.##}**")
+                    .AppendLine(WinRate(mgroup.MatchCount, mgroup.WinCount))
+                    .AppendLine(KDA(mgroup, true))
                     .AppendLine($"Avg. Duration **{SecondsToTime(avgDuration)}**{WideSpace}Avg. GPM: **{mgroup.AvgGoldPerMinute:n0}**{WideSpace}Avg. XPM: **{mgroup.AvgExperiencePerMinute:n0}**")
                     .AppendLine()
                     .Append("**Best heroes:**");
@@ -125,7 +125,7 @@ namespace Magus.Bot.Modules
                 {
                     var hero = summary.Heroes.ElementAtOrDefault(i);
                     if (hero != null)
-                        embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId)} {_entityNameLocalisationService.GetLocalisedHeroName(hero.HeroId, locale)}", $"**{hero.WinCount}\u202F-\u202F{hero.LossCount}**", true);
+                        embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId)} {_entityNameLocalisationService.GetLocalisedHeroName(hero.HeroId, locale)}", HeroSummary(player.MatchGroupByHero.First(x => x.HeroId == hero.HeroId)), true);
                     else
                         embed.AddField("_ _", "_ _", true);
                 }
@@ -148,52 +148,96 @@ namespace Magus.Bot.Modules
 
         private static string SecondsToTime(double seconds) => TimeSpan.FromSeconds(seconds).ToString(@"h\:mm\:ss");
 
+        private static string WinRate(double matchCount, double wins)
+        => new StringBuilder()
+            .Append("WR: **")
+            .Append((wins /matchCount * 100).ToString("0.#"))
+            .Append("%** in **")
+            .Append(matchCount)
+            .Append("** matches")
+            .ToString();
+
+        private static string KDA(MatchGroupByType group, bool showRatio = false)
+        {
+            var sb = new StringBuilder()
+                .Append("KDA: **")
+                .Append(group.AvgKills.ToString("0.##"))
+                .Append("\u202F/\u202F")
+                .Append(group.AvgDeaths.ToString("0.##"))
+                .Append("\u202F/\u202F")
+                .Append(group.AvgAssists.ToString("0.##"))
+                .Append("**");
+            if (showRatio)
+            {
+                sb.Append(WideSpace);
+                sb.Append("Ratio: **");
+                sb.Append(group.AvgKDA.ToString("0.##"));
+                sb.Append("**");
+            }
+            return sb.ToString();
+        }
+
+        private static string HeroSummary(QueryRecentResult.PlayerType.MatchGroupByHeroType heroGroup)
+        {
+            var sb = new StringBuilder()
+                .AppendLine(WinRate(heroGroup.MatchCount, heroGroup.WinCount))
+                .AppendLine(KDA(heroGroup))
+                .Append("GPM: **")
+                .Append(heroGroup.AvgGoldPerMinute)
+                .AppendLine("**")
+                .Append("XPM: **")
+                .Append(heroGroup.AvgExperiencePerMinute)
+                .Append("**");
+
+            return sb.ToString();
+        }
+
         private string MatchSummary(QueryRecentResult.PlayerType.MatchType match, string locale)
         {
-            var summary = new StringBuilder();
-            summary.Append(match.Players.Single().IsVictory ? "Won" : "Lost");
+            var sb = new StringBuilder();
+            sb.Append(match.Players.Single().IsVictory ? "Won" : "Lost");
             if (match.AnalysisOutcome != QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.NONE)
             {
-                summary.Append(' ');
-                summary.Append(OutcomeDescription(match.AnalysisOutcome));
+                sb.Append(' ');
+                sb.Append(OutcomeDescription(match.AnalysisOutcome));
             }
-            summary.Append(" in ");
-            summary.Append(SecondsToTime(match.DurationSeconds));
-            summary.Append(" as ");
-            summary.Append(HeroEmotes.GetFromHeroId(match!.Players.Single().HeroId));
-            summary.Append('\u202F');
-            summary.AppendLine(_entityNameLocalisationService.GetLocalisedHeroName(match.Players.Single().HeroId, locale));
+            sb.Append(" in ");
+            sb.Append(SecondsToTime(match.DurationSeconds));
+            sb.Append(" as ");
+            sb.Append(HeroEmotes.GetFromHeroId(match!.Players.Single().HeroId));
+            sb.Append('\u202F');
+            sb.AppendLine(_entityNameLocalisationService.GetLocalisedHeroName(match.Players.Single().HeroId, locale));
 
-            summary.Append("KDA: **");
-            summary.Append(match.Players.Single().Kills);
-            summary.Append("\u202F/\u202F");
-            summary.Append(match.Players.Single().Deaths);
-            summary.Append("\u202F/\u202F");
-            summary.Append(match.Players.Single().Assists);
-            summary.AppendLine("**");
+            sb.Append("KDA: **");
+            sb.Append(match.Players.Single().Kills);
+            sb.Append("\u202F/\u202F");
+            sb.Append(match.Players.Single().Deaths);
+            sb.Append("\u202F/\u202F");
+            sb.Append(match.Players.Single().Assists);
+            sb.AppendLine("**");
 
-            summary.Append("GPM: **");
-            summary.Append(match.Players.Single().GoldPerMinute);
-            summary.Append("**");
-            summary.Append(WideSpace);
-            summary.Append(Emotes.GoldIcon);
-            summary.Append('\u202F');
-            summary.AppendLine(match.Players.Single().Networth.ToString("n0"));
+            sb.Append("GPM: **");
+            sb.Append(match.Players.Single().GoldPerMinute);
+            sb.Append("**");
+            sb.Append(WideSpace);
+            sb.Append(Emotes.GoldIcon);
+            sb.Append('\u202F');
+            sb.AppendLine(match.Players.Single().Networth.ToString("n0"));
 
-            summary.Append("XPM: **");
-            summary.Append(match.Players.Single().ExperiencePerMinute.ToString("n0"));
-            summary.Append("**");
-            summary.Append(WideSpace);
-            summary.Append("Level: **");
-            summary.Append(match.Players.Single().Level);
-            summary.AppendLine("**");
+            sb.Append("XPM: **");
+            sb.Append(match.Players.Single().ExperiencePerMinute.ToString("n0"));
+            sb.Append("**");
+            sb.Append(WideSpace);
+            sb.Append("Level: **");
+            sb.Append(match.Players.Single().Level);
+            sb.AppendLine("**");
 
-            summary.Append(MatchIdLink(match.Id));
-            summary.Append(" <t:");
-            summary.Append(match.EndDateTime);
-            summary.Append(":R>");
+            sb.Append(MatchIdLink(match.Id));
+            sb.Append(" <t:");
+            sb.Append(match.EndDateTime);
+            sb.Append(":R>");
 
-            return summary.ToString();
+            return sb.ToString();
         }
 
         private static string OutcomeDescription(QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome outcome)
