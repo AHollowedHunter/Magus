@@ -64,6 +64,7 @@
                     public short Deaths { get; init; }
                     public short Assists { get; init; }
                     public int Networth { get; init; }
+                    public int Level { get; set; }
                     public short ExperiencePerMinute { get; init; }
                     public short GoldPerMinute { get; init; }
                     public MatchPlayerAward Award { get; init; }

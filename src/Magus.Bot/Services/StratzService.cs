@@ -155,7 +155,7 @@ namespace Magus.Bot.Services
       analysisOutcome
       durationSeconds
       endDateTime
-      players(steamAccountId: $steamid) { isVictory networth assists kills deaths heroId experiencePerMinute goldPerMinute }
+      players(steamAccountId: $steamid) { isVictory networth level assists kills deaths heroId experiencePerMinute goldPerMinute }
     }
   }
 }";

@@ -11,6 +11,7 @@ using Magus.Data.Models.Stratz.Results;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver.Linq;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Magus.Bot.Modules
 {
@@ -19,6 +20,8 @@ namespace Magus.Bot.Modules
     public class StatsModule : InteractionModuleBase<SocketInteractionContext>
     {
         const string GroupName = "stats";
+
+        const string WideSpace = "\u2007\u2007\u2007";
 
         private readonly ILogger<StatsModule> _logger;
         private readonly BotSettings _config;
@@ -105,10 +108,10 @@ namespace Magus.Bot.Modules
                     .ToList();
 
                 var description = new StringBuilder()
-                    .AppendLine($"Last Played: <t:{summary.LastUpdateDateTime}:R>")
+                    .AppendLine($"Last Played: <t:{summary.LastUpdateDateTime}:R> ({MatchIdLink(player.Matches.First().Id)})")
                     .AppendLine($"WR: **{winPercent:0.#}%** over **{mgroup.MatchCount}** matches")
-                    .AppendLine($"KDA: **{mgroup.AvgKills:0.##}\u202F/\u202F{mgroup.AvgDeaths:0.##}\u202F/\u202F{mgroup.AvgAssists:0.##}**\u2007\u2007\u2007Ratio: **{mgroup.AvgKDA:0.##}**")
-                    .AppendLine($"Avg. Duration **{SecondsToTime(avgDuration)}**")
+                    .AppendLine($"KDA: **{mgroup.AvgKills:0.##}\u202F/\u202F{mgroup.AvgDeaths:0.##}\u202F/\u202F{mgroup.AvgAssists:0.##}**{WideSpace}Ratio: **{mgroup.AvgKDA:0.##}**")
+                    .AppendLine($"Avg. Duration **{SecondsToTime(avgDuration)}**{WideSpace}Avg. GPM: **{mgroup.AvgGoldPerMinute:n0}**{WideSpace}Avg. XPM: **{mgroup.AvgExperiencePerMinute:n0}**")
                     .AppendLine()
                     .Append("**Best heroes:**");
 
@@ -126,13 +129,11 @@ namespace Magus.Bot.Modules
                     else
                         embed.AddField("_ _", "_ _", true);
                 }
-                // Won as <side>, stomped in <time>
-                // Lost to a stomp
-                // Won with a comeback
-                // Lost to a comeback
-                // Won a **close game** as <side>, 
-                embed.AddField("Shortest Match", $"{(shortestMatch?.Players.Single().IsVictory ?? false ? "Win" : "Loss")} as {shortestMatch?.Players.Single().HeroId} {shortestMatch?.Id} - {SecondsToTime(shortestMatch?.DurationSeconds ?? 0)} (<t:{shortestMatch?.EndDateTime}:R>)", true);
-                embed.AddField("Longest Match", $"{(longestMatch?.Players.Single().IsVictory?? false ? "Win" : "Loss")} as {longestMatch?.Players.Single().HeroId} {longestMatch?.Id} - {SecondsToTime(longestMatch?.DurationSeconds ?? 0)} (<t:{longestMatch?.EndDateTime}:R>)", true);
+
+                if (shortestMatch != null)
+                    embed.AddField("Shortest Match", MatchSummary(shortestMatch, locale), true);
+                if (longestMatch != null)
+                    embed.AddField("Longest Match", MatchSummary(longestMatch, locale), true);
 
                 sw.Stop();
                 _logger.LogDebug(sw.Elapsed.TotalSeconds.ToString());
@@ -145,6 +146,72 @@ namespace Magus.Bot.Modules
         }
 
 
-        private static string SecondsToTime(double seconds) => TimeSpan.FromSeconds(seconds).ToString(@"hh\:mm\:ss");
+        private static string SecondsToTime(double seconds) => TimeSpan.FromSeconds(seconds).ToString(@"h\:mm\:ss");
+
+        private string MatchSummary(QueryRecentResult.PlayerType.MatchType match, string locale)
+        {
+            var summary = new StringBuilder();
+            summary.Append(match.Players.Single().IsVictory ? "Won" : "Lost");
+            if (match.AnalysisOutcome != QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.NONE)
+            {
+                summary.Append(' ');
+                summary.Append(OutcomeDescription(match.AnalysisOutcome));
+            }
+            summary.Append(" in ");
+            summary.Append(SecondsToTime(match.DurationSeconds));
+            summary.Append(" as ");
+            summary.Append(HeroEmotes.GetFromHeroId(match!.Players.Single().HeroId));
+            summary.Append('\u202F');
+            summary.AppendLine(_entityNameLocalisationService.GetLocalisedHeroName(match.Players.Single().HeroId, locale));
+
+            summary.Append("KDA: **");
+            summary.Append(match.Players.Single().Kills);
+            summary.Append("\u202F/\u202F");
+            summary.Append(match.Players.Single().Deaths);
+            summary.Append("\u202F/\u202F");
+            summary.Append(match.Players.Single().Assists);
+            summary.AppendLine("**");
+
+            summary.Append("GPM: **");
+            summary.Append(match.Players.Single().GoldPerMinute);
+            summary.Append("**");
+            summary.Append(WideSpace);
+            summary.Append(Emotes.GoldIcon);
+            summary.Append('\u202F');
+            summary.AppendLine(match.Players.Single().Networth.ToString("n0"));
+
+            summary.Append("XPM: **");
+            summary.Append(match.Players.Single().ExperiencePerMinute.ToString("n0"));
+            summary.Append("**");
+            summary.Append(WideSpace);
+            summary.Append("Level: **");
+            summary.Append(match.Players.Single().Level);
+            summary.AppendLine("**");
+
+            summary.Append(MatchIdLink(match.Id));
+            summary.Append(" <t:");
+            summary.Append(match.EndDateTime);
+            summary.Append(":R>");
+
+            return summary.ToString();
+        }
+
+        private static string OutcomeDescription(QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome outcome)
+            => outcome switch
+            {
+                QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.STOMPED => "a stomp",
+                QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.COMEBACK => "a comeback",
+                QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.CLOSE_GAME => "a close game",
+                _ => string.Empty
+            };
+
+        private static string MatchIdLink(long matchId)
+            => new StringBuilder()
+            .Append('[')
+            .Append(matchId)
+            .Append("](https://stratz.com/matches/")
+            .Append(matchId)
+            .Append(')')
+            .ToString();
     }
 }

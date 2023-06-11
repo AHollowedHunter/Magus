@@ -46,7 +46,7 @@ namespace Magus.DataBuilder.Extensions
             heroInfoFields.Add(new()
             {
                 Name     = "Attack",
-                Value    = $"{Emotes.DamageIcon} {hero.GetAttackDamageMin():0.} - {hero.GetAttackDamageMax():n0}\n{Emotes.AttackTimeIcon} {hero.GetAttackTime():n2}{Emotes.Spacer}({hero.AttackRate:n1} Base)\n{Emotes.AttackRangeIcon} {hero.AttackRange}\n{Emotes.ProjectileSpeedIcon} {hero.ProjectileSpeed}",
+                Value    = $"{Emotes.DamageIcon} {hero.GetAttackDamageMin():n0} - {hero.GetAttackDamageMax():n0}\n{Emotes.AttackTimeIcon} {hero.GetAttackTime():n2}{Emotes.Spacer}({hero.AttackRate:n1} Base)\n{Emotes.AttackRangeIcon} {hero.AttackRange}\n{Emotes.ProjectileSpeedIcon} {hero.ProjectileSpeed}",
                 IsInline = true
             });
             heroInfoFields.Add(new()

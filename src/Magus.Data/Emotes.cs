@@ -14,6 +14,8 @@ namespace Magus.Data
 
         public static Emote MagusIcon => Emote.Parse("<:magusbot:995727154191020155>");
 
+        public static Emote MVPIcon => Emote.Parse("<:mvp:1117570846182092821>");
+
         public static Emote DotaLogo    => Emote.Parse("<:dota:1080576453449617468>");
         public static Emote DotaLogoAlt => Emote.Parse("<:dota_alt:1080576919537471661>");
 
