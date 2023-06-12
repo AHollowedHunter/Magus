@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace Magus.Bot.Modules
 {
     [Group(GroupName, "steam commands")]
-    [ModuleRegistration(Location.TESTING)]
+    [ModuleRegistration(Location.TESTING, isEnabled: false)]
     public class SteamModule : InteractionModuleBase<SocketInteractionContext>
     {
         const string GroupName = "steam";
