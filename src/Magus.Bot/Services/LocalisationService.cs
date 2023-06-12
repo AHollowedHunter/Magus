@@ -12,16 +12,16 @@ namespace Magus.Bot.Services
      * Ideally this service would be able to server the AutocompleteHandlers,
      * but unfortunately re-working those now would be more waste of time.
      */
-    public class EntityNameLocalisationService
+    public class LocalisationService
     {
         private readonly IAsyncDataService _db;
-        private readonly ILogger<EntityNameLocalisationService> _logger;
+        private readonly ILogger<LocalisationService> _logger;
         private readonly IScheduler _scheduler;
         private readonly LocalisationOptions _localisationOptions;
 
         private IEnumerable<EntityLocalisation> heroLocalisations = new List<EntityLocalisation>();
 
-        public EntityNameLocalisationService(IAsyncDataService db, ILogger<EntityNameLocalisationService> logger, IScheduler scheduler, IOptions<LocalisationOptions> localisationOptions)
+        public LocalisationService(IAsyncDataService db, ILogger<LocalisationService> logger, IScheduler scheduler, IOptions<LocalisationOptions> localisationOptions)
         {
             _db                  = db;
             _logger              = logger;
@@ -54,5 +54,14 @@ namespace Magus.Bot.Services
 
         public string GetLocalisedHeroName(int heroId, string locale)
             => heroLocalisations.First(hero => hero.EntityId == heroId).GetLocalisedNameOrDefault(locale);
+
+        /// <summary>
+        /// Checks if the given locale is included, or ignores it.
+        /// </summary>
+        /// <remarks>
+        /// Like all other localisation things... this is a patch job and needs better thinking.
+        /// </remarks>
+        public string LocaleConfirmOrDefault(string locale)
+            => _localisationOptions.Locales.Contains(locale) ? locale : _localisationOptions.DefaultTag;
     }
 }

@@ -29,15 +29,15 @@ namespace Magus.Bot.Modules
         private readonly BotSettings _config;
         private readonly IAsyncDataService _db;
         private readonly StratzService _stratz;
-        private readonly EntityNameLocalisationService _entityNameLocalisationService;
+        private readonly LocalisationService _localisationService;
 
-        public StatsModule(ILogger<StatsModule> logger, IOptions<BotSettings> config, IAsyncDataService db, StratzService stratz, EntityNameLocalisationService entityNameLocalisationService)
+        public StatsModule(ILogger<StatsModule> logger, IOptions<BotSettings> config, IAsyncDataService db, StratzService stratz, LocalisationService localisationService)
         {
             _logger                        = logger;
             _db                            = db;
             _config                        = config.Value;
             _stratz                        = stratz;
-            _entityNameLocalisationService = entityNameLocalisationService;
+            _localisationService = localisationService;
         }
 
         [SlashCommand("hero", "Get stats playing as a hero.")]
@@ -85,7 +85,7 @@ namespace Magus.Bot.Modules
         {
             await DeferAsync();
 
-            locale ??= Context.Interaction.UserLocale;
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
 
             var user = await _db.GetUser(Context.User);
 
@@ -125,7 +125,7 @@ namespace Magus.Bot.Modules
                 {
                     var hero = summary.Heroes.ElementAtOrDefault(i);
                     if (hero != null)
-                        embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId)} {_entityNameLocalisationService.GetLocalisedHeroName(hero.HeroId, locale)}", HeroSummary(player.MatchGroupByHero.First(x => x.HeroId == hero.HeroId)), true);
+                        embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId)} {_localisationService.GetLocalisedHeroName(hero.HeroId, locale)}", HeroSummary(player.MatchGroupByHero.First(x => x.HeroId == hero.HeroId)), true);
                     else
                         embed.AddField("_ _", "_ _", true);
                 }
@@ -206,7 +206,7 @@ namespace Magus.Bot.Modules
             sb.Append(" as ");
             sb.Append(HeroEmotes.GetFromHeroId(match!.Players.Single().HeroId));
             sb.Append('\u202F');
-            sb.AppendLine(_entityNameLocalisationService.GetLocalisedHeroName(match.Players.Single().HeroId, locale));
+            sb.AppendLine(_localisationService.GetLocalisedHeroName(match.Players.Single().HeroId, locale));
 
             sb.Append("KDA: **");
             sb.Append(match.Players.Single().Kills);

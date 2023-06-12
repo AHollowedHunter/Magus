@@ -2,6 +2,7 @@
 using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Extensions;
+using Magus.Bot.Services;
 using Magus.Data;
 using Magus.Data.Models.Embeds;
 
@@ -12,10 +13,12 @@ namespace Magus.Bot.Modules
     public class PatchNoteModule : ModuleBase
     {
         private readonly IAsyncDataService _db;
+        private readonly LocalisationService _localisationService;
 
-        public PatchNoteModule(IAsyncDataService db)
+        public PatchNoteModule(IAsyncDataService db, LocalisationService localisationService)
         {
             _db = db;
+            _localisationService = localisationService;
         }
 
         [SlashCommand("when", "how long is a piece of string?")]
@@ -27,9 +30,9 @@ namespace Magus.Bot.Modules
                                      [Summary(description: "The language/locale of the response.")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
-
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
             number ??= (await _db.GetLatestPatch()).PatchNumber;
-            var patchNote = await _db.GetGeneralPatchNote(number, locale ?? Context.Interaction.UserLocale);
+            var patchNote = await _db.GetGeneralPatchNote(number, locale);
 
             if (patchNote != null)
                 await FollowupAsync(embed: patchNote.Embed.CreateDiscordEmbed());
@@ -43,6 +46,7 @@ namespace Magus.Bot.Modules
                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
             var embeds = await GetEntityPatchNotesEmbeds<ItemPatchNoteEmbed>(name, patch, locale, 3);
             if (!embeds.Any())
             {
@@ -61,6 +65,7 @@ namespace Magus.Bot.Modules
                                     [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
             var embeds = await GetEntityPatchNotesEmbeds<HeroPatchNoteEmbed>(name, patch, locale);
             if (!embeds.Any())
             {
@@ -75,14 +80,15 @@ namespace Magus.Bot.Modules
 
         private async Task<IEnumerable<Discord.Embed>> GetEntityPatchNotesEmbeds<T>(string name, string? patch = null, string? locale = null, int limit = 1) where T : EntityPatchNoteEmbed
         {
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
             var patchNotes = new List<T>();
             if (patch == null)
             {
-                patchNotes.AddRange(await _db.GetPatchNotes<T>(name, locale ?? Context.Interaction.UserLocale, limit: limit, orderByDesc: true));
+                patchNotes.AddRange(await _db.GetPatchNotes<T>(name, locale, limit: limit, orderByDesc: true));
             }
             else
             {
-                var patchnote = await _db.GetPatchNote<T>(patch, name, locale ?? Context.Interaction.UserLocale);
+                var patchnote = await _db.GetPatchNote<T>(patch, name, locale);
                 if (patchnote != null)
                     patchNotes.Add(patchnote); ;
             }
