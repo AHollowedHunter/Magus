@@ -34,7 +34,7 @@ namespace Magus.DataBuilder
 
         private static readonly string ValueSeparator = "\u00A0/\u00A0";
 
-        private static readonly Regex NameGender = new("#\\|(\\p{L})\\|#");
+        private static readonly Regex NameGender = new("#\\|(\\p{L}+)\\|#");
 
         public EntityUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger)
         {

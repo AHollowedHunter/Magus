@@ -113,7 +113,7 @@ namespace Magus.Bot.Modules
                     .AppendLine(KDA(mgroup, true))
                     .AppendLine($"Avg. Duration **{SecondsToTime(avgDuration)}**{WideSpace}Avg. GPM: **{mgroup.AvgGoldPerMinute:n0}**{WideSpace}Avg. XPM: **{mgroup.AvgExperiencePerMinute:n0}**")
                     .AppendLine()
-                    .Append("**Best heroes:**");
+                    .Append("**Top hero averages**");
 
                 var embed = new EmbedBuilder()
                     .WithAuthor(player.SteamAccount.Name, player.SteamAccount.Avatar, $"https://stratz.com/players/{user.DotaID}")
