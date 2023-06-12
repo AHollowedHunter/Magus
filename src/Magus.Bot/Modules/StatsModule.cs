@@ -91,11 +91,9 @@ namespace Magus.Bot.Modules
 
             if (user.DotaID != null)
             {
-                var sw = new Stopwatch();
                 var player = (await _stratz.GetRecentStats((long)user.DotaID)).Player;
-                sw.Start();
                 var summary = player.SimpleSummary;
-                var mgroup = player.MatchGroupBySteamId.Single();
+                var userGroup = player.MatchGroupBySteamId.Single();
 
                 var longestMatch  = player.Matches.MaxBy(match => match.DurationSeconds);
                 var shortestMatch = player.Matches.MinBy(match => match.DurationSeconds);
@@ -109,9 +107,9 @@ namespace Magus.Bot.Modules
 
                 var description = new StringBuilder()
                     .AppendLine($"Last Played: <t:{summary.LastUpdateDateTime}:R> ({MatchIdLink(player.Matches.First().Id)})")
-                    .AppendLine(WinRate(mgroup.MatchCount, mgroup.WinCount))
-                    .AppendLine(KDA(mgroup, true))
-                    .AppendLine($"Avg. Duration **{SecondsToTime(avgDuration)}**{WideSpace}Avg. GPM: **{mgroup.AvgGoldPerMinute:n0}**{WideSpace}Avg. XPM: **{mgroup.AvgExperiencePerMinute:n0}**")
+                    .AppendLine(WinRate(userGroup.MatchCount, userGroup.WinCount))
+                    .AppendLine(KDA(userGroup, true))
+                    .AppendLine($"Avg. Duration **{SecondsToTime(avgDuration)}**{WideSpace}Avg. GPM: **{userGroup.AvgGoldPerMinute:n0}**{WideSpace}Avg. XPM: **{userGroup.AvgExperiencePerMinute:n0}**")
                     .AppendLine()
                     .Append("**Top hero averages**");
 
@@ -135,8 +133,6 @@ namespace Magus.Bot.Modules
                 if (longestMatch != null)
                     embed.AddField("Longest Match", MatchSummary(longestMatch, locale), true);
 
-                sw.Stop();
-                _logger.LogDebug(sw.Elapsed.TotalSeconds.ToString());
                 await FollowupAsync(embed: embed.Build());
             }
             else
