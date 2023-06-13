@@ -62,54 +62,6 @@ namespace Magus.Bot.Services
             return response.Data.Player;
         }
 
-        public async Task<PlayerType> GetPlayerSummary(long steamId)
-        {
-            var query = new DotaQueryQueryBuilder()
-                .WithPlayer(new PlayerTypeQueryBuilder()
-                    .WithSteamAccount(new SteamAccountTypeQueryBuilder()
-                            .WithName()
-                            .WithAvatar()
-                            .WithProfileUri()
-                            .WithSeasonRank())
-                    .WithSimpleSummary(new PlayerCardHoverTypeQueryBuilder()
-                        .WithHeroes(new PlayerCardHoverHeroTypeQueryBuilder()
-                            .WithAllScalarFields())
-                        .WithLastUpdateDateTime())
-                    .WithMatchesGroupBy(new MatchGroupByTypeQueryBuilder()
-                        .WithMatchGroupBySteamAccountIdTypeFragment(new MatchGroupBySteamAccountIdTypeQueryBuilder()
-                            .WithWinCount()
-                            .WithMatchCount()
-                            .WithAllScalarFields())
-                        , new PlayerMatchesGroupByRequestType()
-                        {
-                            Take = 25,
-                            GameModeIds = new List<object>() {1, 22},
-                            PlayerList = FindMatchPlayerList.Single,
-                            GroupBy = FindMatchPlayerGroupBy.SteamAccountId,
-                        })
-                    .WithMatches(new MatchTypeQueryBuilder()
-                        .WithId()
-                        .WithDurationSeconds()
-                        .WithEndDateTime()
-                        .WithGameMode()
-                        .WithAnalysisOutcome()
-                        .WithPlayers(new MatchPlayerTypeQueryBuilder()
-                            .WithIsVictory()
-                            .WithIsRadiant()
-                            .WithAward()
-                            .WithHeroId()
-                            .WithKills()
-                            .WithAssists()
-                            .WithDeaths()
-                        , steamId)
-                    , new PlayerMatchesRequestType() { Take = 25, OrderBy = FindMatchPlayerOrderBy.Desc })
-                , steamId)
-                .Build();
-
-            var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query), () => new { Player = new PlayerType() });
-            return response.Data.Player;
-        }
-
         public async Task<QueryRecentResult> GetRecentStats(long steamId)
         {
             var query =

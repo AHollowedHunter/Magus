@@ -9,10 +9,7 @@ using Magus.Data.Extensions;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Stratz.Results;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using MongoDB.Driver.Linq;
-using System.Diagnostics;
-using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Magus.Bot.Modules
@@ -40,10 +37,9 @@ namespace Magus.Bot.Modules
             _localisationService = localisationService;
         }
 
-        [SlashCommand("hero", "Get stats playing as a hero.")]
+        //[SlashCommand("hero", "Get stats playing as a hero.")]
         public async Task Hero(
             [Summary(description: "The heroes name.")][Autocomplete(typeof(HeroAutocompleteHandler))] string name,
-            [Summary(description: "Friends to include. You can @mention and manually enter Dota account IDs, separated by spaces.")] string? friend = null,
             [Summary(description: "The language/locale of the response.")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync(true);
@@ -51,15 +47,6 @@ namespace Magus.Bot.Modules
             var user = await _db.GetUser(Context.User);
             var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).FirstOrDefault();
 
-            // Placeholder for testing
-            List<long>? friendIds = null;
-            try
-            {
-                if (friend != null)
-                    friendIds = new List<long>() { long.Parse(friend) };
-            }
-            catch { }
-            //
 
             if (heroInfo == null)
             {
@@ -67,7 +54,7 @@ namespace Magus.Bot.Modules
             }
             else if (user.DotaID != null)
             {
-                var playerInfo = await _stratz.GetPlayerHeroStats((long)user.DotaID, heroInfo.EntityId, friendIds);
+                var playerInfo = await _stratz.GetPlayerHeroStats((long)user.DotaID, heroInfo.EntityId);
 
                 var heroMatches = playerInfo.HeroesPerformance.Where(x => x.Hero.Id == heroInfo.EntityId).First();
 
@@ -123,7 +110,9 @@ namespace Magus.Bot.Modules
                 {
                     var hero = summary.Heroes.ElementAtOrDefault(i);
                     if (hero != null)
-                        embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId)} {_localisationService.GetLocalisedHeroName(hero.HeroId, locale)}", HeroSummary(player.MatchGroupByHero.First(x => x.HeroId == hero.HeroId)), true);
+                        embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId)} {_localisationService.GetLocalisedHeroName(hero.HeroId, locale)}"
+                            , HeroSummary(player.MatchGroupByHero.First(x => x.HeroId == hero.HeroId))
+                            , true);
                     else
                         embed.AddField("_ _", "_ _", true);
                 }
@@ -140,7 +129,6 @@ namespace Magus.Bot.Modules
                 await FollowupAsync(text: "No steam set", ephemeral: true);
             }
         }
-
 
         private static string SecondsToTime(double seconds) => TimeSpan.FromSeconds(seconds).ToString(@"h\:mm\:ss");
 
