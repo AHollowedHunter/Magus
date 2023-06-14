@@ -17,7 +17,7 @@ namespace Magus.Bot.Modules
     [ModuleRegistration(Location.TESTING)]
     public class ConfigUserModule : ModuleBase
     {
-        const string GroupName = "config-user";
+        public const string GroupName = "config-user";
 
         private readonly ILogger<ConfigUserModule> _logger;
         private readonly IAsyncDataService _db;
@@ -77,7 +77,7 @@ namespace Magus.Bot.Modules
         [Group(SubGroupName, "user steam settings")]
         public class SteamGroup : InteractionModuleBase<SocketInteractionContext>
         {
-            const string SubGroupName = "steam";
+            public const string SubGroupName = "steam";
 
             private readonly ILogger<SteamGroup> _logger;
             private readonly IAsyncDataService _db;
@@ -106,23 +106,32 @@ namespace Magus.Bot.Modules
 
                 if (accountID == null)
                 {
-                    // Show how to get ID
-                    await FollowupAsync("I could not validate this ID. Please check your input and try again.");
+                    await FollowupAsync(embed: InvalidSteamIDEmbed());
                     return;
                 }
                 else
                 {
                     var accountInfo = await _stratz.GetAccountInfo(accountID.Value);
 
-                    if (accountInfo.Player == null)
+                    if (accountInfo.Player == null || accountInfo.Player.SteamAccount == null)
                     {
-                        await FollowupAsync("I could not confirm your account via STRATZ, please check your input and try again. If your account is new, please wait 24 hours and try again.", ephemeral: true);
+                        await FollowupAsync(embed: NoDotaStats());
                         return;
                     }
 
                     await UpdateUserDotaId(accountID.Value);
 
-                    var embeds = new List<Embed>();
+                    var embeds = new List<Embed>
+                    {
+                        // tell the user success, and show basic account details to confirm.
+                        new EmbedBuilder()
+                        .WithTitle("Successfully updated your Steam account")
+                        .WithDescription("You can now use commands like /stats!\n\nIf you have linked the wrong account, just run the command again with the correct ID.")
+                        .WithColor(Color.Green)
+                        .WithThumbnailUrl(accountInfo.Player.SteamAccount.Avatar)
+                        .AddField(accountInfo.Player.SteamAccount.Name, accountInfo.Player.SteamAccount.ProfileUri)
+                        .Build()
+                    };
                     if (accountInfo.Player.SteamAccount.IsAnonymous)
                     {
                         // tell user to expose public match data
@@ -137,18 +146,30 @@ namespace Magus.Bot.Modules
                             .WithColor(Color.Red)
                             .Build());
                     }
-                    // tell the user success, and show basic account details to confirm.
-                    embeds.Add(new EmbedBuilder()
-                        .WithTitle("Successfully updated your Steam account")
-                        .WithDescription("You can now use commands like /stats!\n\nIf you have linked the wrong account, just run the command again with the correct ID.")
-                        .WithColor(Color.Green)
-                        .WithThumbnailUrl(accountInfo.Player.SteamAccount.Avatar)
-                        .AddField(accountInfo.Player.SteamAccount.Name, accountInfo.Player.SteamAccount.ProfileUri)
-                        .Build());
 
-                    await FollowupAsync(embeds: embeds.ToArray(), ephemeral: true);
+                    await FollowupAsync(embeds: embeds.ToArray());
                 }
             }
+
+            public static Embed NoDotaStats()
+                => new EmbedBuilder()
+                        .WithTitle("No Dota info for this account.")
+                        .WithDescription("I could not confirm your account via STRATZ, please check your input and try again.\n\n" +
+                            "If your account is new or you only just started playing Dota please play at least one match, wait a few hours, and try again.")
+                        .WithColor(Color.LightOrange)
+                        .Build();
+
+            private static Embed InvalidSteamIDEmbed()
+                => new EmbedBuilder()
+                        .WithTitle("Invalid account ID given")
+                        .WithDescription("I could not validate this ID. Please check your input and try again.\n\n" +
+                        "If you need help getting your ID, you can copy your \"Friend ID\" from your Dota profile.\n\n" +
+                        "Alternatively, you can copy the link to your Steam, STRATZ, OpenDota, or Dotabuff webpage.\n\n" +
+                        "Possible valid ID/link examples:\n" +
+                        "- 22202\n- 76561197960287930\n- steamcommunity.com/id/gabelogannewell\n- steamcommunity.com/profiles/76561197960287930\n- stratz.com/players/22202\n- www.opendota.com/players/22202")
+                        .WithColor(Color.LightOrange)
+                        .WithImageUrl("https://i.imgur.com/GZ987LZ.gif")
+                        .Build();
 
             private async Task UpdateUserDotaId(long dotaId)
             {

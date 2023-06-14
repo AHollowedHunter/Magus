@@ -114,7 +114,7 @@ namespace Magus.Bot
                 .AddSingleton<TIService>()
                 .AddSingleton<AnnouncementService>();
 
-        static bool IsDebug()
+        public static bool IsDebug()
         {
 #if DEBUG
             return true;

@@ -11,7 +11,7 @@
         public ulong Id { get; set; }
 
         /// <summary>
-        /// The set steam account ID, aka DotaID.
+        /// The set steam account ID, aka DotaID, Friend ID.
         /// </summary>
         public long? DotaID { get; set; }
 

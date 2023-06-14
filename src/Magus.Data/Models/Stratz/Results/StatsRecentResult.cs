@@ -1,4 +1,5 @@
 ﻿using Magus.Data.Models.Stratz.Types;
+using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.Stratz.Results
 {
@@ -48,7 +49,8 @@ namespace Magus.Data.Models.Stratz.Results
                 public long Id { get; init; }
                 public int DurationSeconds { get; init; }
                 public long EndDateTime { get; init; }
-                public MatchAnalysisOutcome AnalysisOutcome { get; init; }
+                [JsonConverter(typeof(JsonStringEnumConverter))]
+                public MatchAnalysisOutcome? AnalysisOutcome { get; init; }
                 public IEnumerable<MatchPlayerType> Players { get; init; }
 
                 public enum MatchAnalysisOutcome

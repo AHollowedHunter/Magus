@@ -80,6 +80,15 @@ namespace Magus.Bot.Modules
             if (user.DotaID != null)
             {
                 var player = (await _stratz.GetRecentStats((long)user.DotaID)).Player;
+                if (player.SteamAccount == null)
+                {
+                    await FollowupAsync(embed: new EmbedBuilder()
+                        .WithTitle("No Dota info for this account.")
+                        .WithDescription("If your account is new or you only just started playing Dota please play at least one match, wait a few hours, and try again.")
+                        .WithColor(Color.LightOrange)
+                        .Build());
+                    return;
+                }
                 if (player.SteamAccount.IsAnonymous)
                 {
                     await FollowupAsync(embed: new EmbedBuilder()
@@ -92,6 +101,15 @@ namespace Magus.Bot.Modules
                             .WithImageUrl("https://i.imgur.com/cBmEY44.png")
                             .WithColor(Color.Red)
                             .Build(), ephemeral: true);
+                    return;
+                }
+                if (player.Matches.Count == 0)
+                {
+                    await FollowupAsync(embed: new EmbedBuilder()
+                        .WithTitle("No Parsed Matches")
+                        .WithDescription("No recent All Pick games played and parsed. If you have just finished a game, please wait a bit and try again.")
+                        .WithColor(Color.LightOrange)
+                        .Build());
                     return;
                 }
                 var summary = player.SimpleSummary;
@@ -141,8 +159,30 @@ namespace Magus.Bot.Modules
             }
             else
             {
-                await FollowupAsync(text: "No steam set", ephemeral: true);
+                await FollowupAsync(embed: await NoSteamMessage());
             }
+        }
+
+        private async Task<Discord.Embed> NoSteamMessage()
+        {
+            IEnumerable<IApplicationCommand> commands = Bot.IsDebug() ? await Context.Guild.GetApplicationCommandsAsync() : await Context.Client.Rest.GetGlobalApplicationCommands();
+            var configUserCommandId = commands.Single(c => c.Name == ConfigUserModule.GroupName).Id;
+            var commandLink = new StringBuilder()
+                .Append("</")
+                .Append(ConfigUserModule.GroupName)
+                .Append(' ')
+                .Append(ConfigUserModule.SteamGroup.SubGroupName)
+                .Append(' ')
+                .Append("set")
+                .Append(':')
+                .Append(configUserCommandId)
+                .Append('>')
+                .ToString();
+            return new EmbedBuilder()
+                .WithTitle("No Steam account linked")
+                .WithDescription($"You need to link a steam account with {commandLink} to use this command. Please enter your Steam ID/Dota Friend ID into this command.")
+                .WithColor(Color.Red)
+                .Build();
         }
 
         private static string SecondsToTime(double seconds) => TimeSpan.FromSeconds(seconds).ToString(@"h\:mm\:ss");
@@ -195,10 +235,10 @@ namespace Magus.Bot.Modules
         {
             var sb = new StringBuilder();
             sb.Append(match.Players.Single().IsVictory ? "Won" : "Lost");
-            if (match.AnalysisOutcome != StatsRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.NONE)
+            if (match.AnalysisOutcome != null && match.AnalysisOutcome != StatsRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.NONE)
             {
                 sb.Append(' ');
-                sb.Append(OutcomeDescription(match.AnalysisOutcome));
+                sb.Append(OutcomeDescription(match.AnalysisOutcome.Value));
             }
             sb.Append(" in ");
             sb.Append(SecondsToTime(match.DurationSeconds));

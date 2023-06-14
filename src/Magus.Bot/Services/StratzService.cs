@@ -100,6 +100,7 @@ namespace Magus.Bot.Services
       isAnonymous
     }
     matches( request: {
+      isParsed: true
       gameModeIds: [1,22]
       take: 25
       playerList: SINGLE
