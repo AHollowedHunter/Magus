@@ -9,6 +9,8 @@ using Magus.Data.Enums;
 using Magus.Data.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Prometheus;
+using Prometheus.SystemMetrics;
 using Serilog;
 
 namespace Magus.Bot
@@ -24,6 +26,9 @@ namespace Magus.Bot
 
         static void Main(string[] args)
         {
+            using var metricsServer = new MetricServer(hostname: "127.0.0.1", port: 9703);
+            metricsServer.Start();
+
             using IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(x => x.AddEnvironmentVariables(prefix: "MAGUS_"))
                 .ConfigureServices((context, serviceCollection) => ConfigureServices(context.Configuration, serviceCollection))
@@ -98,6 +103,7 @@ namespace Magus.Bot
                 .Configure<BotSettings>(settings => config.GetSection("BotSettings").Bind(settings))
                 .Configure<DataSettings>(settings => config.GetSection("DataSettings").Bind(settings))
                 .Configure<LocalisationOptions>(settings => config.GetSection("Localisation").Bind(settings))
+                .AddSystemMetrics()
                 .AddScheduler()
                 .AddSingleton<HttpClient>()
                 .AddSingleton<IAsyncDataService, MongoDBService>()

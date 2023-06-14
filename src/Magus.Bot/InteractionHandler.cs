@@ -171,6 +171,7 @@ namespace Magus.Bot
 
         private Task SlashCommandExecuted(SlashCommandInfo slashCommandInfo, IInteractionContext interactionContext, IResult result)
         {
+            MagusMetrics.SlashCommandsExecuted.WithLabels(slashCommandInfo.Name).Inc();
             if (!result.IsSuccess)
             {
                 switch (result.Error)
