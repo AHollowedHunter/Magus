@@ -1,8 +1,10 @@
 ﻿using Magus.Common.Enums;
+using Magus.Data.Enums;
 using Magus.Data.Models;
 using Magus.Data.Models.Discord;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
+using Magus.Data.Models.Magus;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson.IO;
 using MongoDB.Driver;
@@ -229,7 +231,7 @@ namespace Magus.Data
             await collection.BulkWriteAsync(GetBulkReplaceRequest(records));
         }
 
-        private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : INamedEntity, ILocaleRecord
+        private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = IDatabaseService.DEFAULT_LOCALE) where T : ILocalisedEntity, ILocaleRecord
             => entity => entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
                                                      || entity.Name.ToLower().Contains(entityName.ToLower())
                                                      || entity.RealName!.ToLower().StartsWith(entityName.ToLower())
@@ -282,6 +284,12 @@ namespace Magus.Data
         {
             var collection = GetCollection<AbilityInfoEmbed>();
             return await collection.AsQueryable().Where(ability => ability.HeroId == heroId && ability.Shard && ability.Locale == locale).FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<EntityLocalisation>> GetEntityLocalisations(EntityType type)
+        {
+            var collection = GetCollection<EntityLocalisation>();
+            return await collection.AsQueryable().Where(x => x.Type == type).ToListAsync();
         }
     }
 }

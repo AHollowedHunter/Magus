@@ -2,6 +2,9 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using GraphQL;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.SystemTextJson;
 using Magus.Bot.Services;
 using Magus.Common.Options;
 using Magus.Data;
@@ -56,6 +59,7 @@ namespace Magus.Bot
 
             await interactionHandler.InitialiseAsync();
             //await services.GetRequiredService<TIService>().Initialise();
+            await _services.GetRequiredService<LocalisationService>().InitialiseAsync();
             await _services.GetRequiredService<AnnouncementService>().InitialiseAsync();
 
             if (IsDebug())
@@ -105,16 +109,18 @@ namespace Magus.Bot
                 .Configure<LocalisationOptions>(settings => config.GetSection("Localisation").Bind(settings))
                 .AddSystemMetrics()
                 .AddScheduler()
-                .AddSingleton<HttpClient>()
+                .AddHttpClient()
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
                 .AddSingleton(x => new InteractionServiceConfig() { InteractionCustomIdDelimiters = new char[] { Constants.CustomIdGroupDelimiter }, UseCompiledLambda = true })
-                .AddSingleton<InteractionService>()
+                .AddSingleton<InteractionService>() 
                 .AddSingleton<InteractionHandler>()
+                .AddSingleton<LocalisationService>()
+                .AddSingleton<StratzService>()
                 .AddSingleton<TIService>()
                 .AddSingleton<AnnouncementService>();
 
-        static bool IsDebug()
+        public static bool IsDebug()
         {
 #if DEBUG
             return true;
