@@ -1,6 +1,8 @@
-﻿namespace Magus.Data.Models.Stratz.Results
+﻿using Magus.Data.Models.Stratz.Types;
+
+namespace Magus.Data.Models.Stratz.Results
 {
-    public record QueryRecentResult
+    public record StatsRecentResult
     {
         public PlayerType Player { get; init; }
 
@@ -38,6 +40,7 @@
             {
                 public string Name { get; init; }
                 public string Avatar { get; init; }
+                public bool IsAnonymous { get; init; }
             }
 
             public record MatchType
@@ -79,20 +82,5 @@
                 }
             }
         }
-
-    }
-
-
-    public abstract record MatchGroupByType
-    {
-        public int MatchCount { get; init; }
-        public int WinCount { get; init; }
-        public int AvgImp { get; init; }
-        public int AvgGoldPerMinute { get; init; }
-        public int AvgExperiencePerMinute { get; init; }
-        public float AvgKills { get; init; }
-        public float AvgDeaths { get; init; }
-        public float AvgAssists { get; init; }
-        public float AvgKDA { get; init; }
     }
 }

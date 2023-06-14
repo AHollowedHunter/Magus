@@ -8,6 +8,7 @@ using Magus.Data;
 using Magus.Data.Extensions;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Stratz.Results;
+using Magus.Data.Models.Stratz.Types;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver.Linq;
 using System.Text.RegularExpressions;
@@ -79,6 +80,20 @@ namespace Magus.Bot.Modules
             if (user.DotaID != null)
             {
                 var player = (await _stratz.GetRecentStats((long)user.DotaID)).Player;
+                if (player.SteamAccount.IsAnonymous)
+                {
+                    await FollowupAsync(embed: new EmbedBuilder()
+                            .WithTitle("YOUR DOTA ACCOUNT IS PRIVATE")
+                            .WithDescription("**You won't be able to see any match data while private.**\n\n" +
+                            "Please open Dota 2 and change your settings to enable \"Expose Public Match Data\".\n\n" +
+                            "Then play a game, or log in to [STRATZ](https://stratz.com/settings) and go to \"Settings\" and click \"Check My Status\"\n\n" +
+                            "**You will need to wait a few hours to a day for new stats to update.**\n\n" +
+                            "You do not need to set your Steam account via this command again, unless you linked the wrong one.")
+                            .WithImageUrl("https://i.imgur.com/cBmEY44.png")
+                            .WithColor(Color.Red)
+                            .Build(), ephemeral: true);
+                    return;
+                }
                 var summary = player.SimpleSummary;
                 var userGroup = player.MatchGroupBySteamId.Single();
 
@@ -86,7 +101,7 @@ namespace Magus.Bot.Modules
                 var shortestMatch = player.Matches.MinBy(match => match.DurationSeconds);
                 var avgDuration   = player.Matches.Average(match => match.DurationSeconds);
 
-                var awardCount = player.Matches.Where(match => match.Players.Single().Award != QueryRecentResult.PlayerType.MatchType.MatchPlayerType.MatchPlayerAward.NONE)
+                var awardCount = player.Matches.Where(match => match.Players.Single().Award != StatsRecentResult.PlayerType.MatchType.MatchPlayerType.MatchPlayerAward.NONE)
                     .GroupBy(x => x.Players.Single().Award)
                     .OrderByDescending(x => x.Count())
                     .Select(x=> new { x.Key, Count = x.Count() })
@@ -161,7 +176,7 @@ namespace Magus.Bot.Modules
             return sb.ToString();
         }
 
-        private static string HeroSummary(QueryRecentResult.PlayerType.MatchGroupByHeroType heroGroup)
+        private static string HeroSummary(StatsRecentResult.PlayerType.MatchGroupByHeroType heroGroup)
         {
             var sb = new StringBuilder()
                 .AppendLine(WinRate(heroGroup.MatchCount, heroGroup.WinCount))
@@ -176,11 +191,11 @@ namespace Magus.Bot.Modules
             return sb.ToString();
         }
 
-        private string MatchSummary(QueryRecentResult.PlayerType.MatchType match, string locale)
+        private string MatchSummary(StatsRecentResult.PlayerType.MatchType match, string locale)
         {
             var sb = new StringBuilder();
             sb.Append(match.Players.Single().IsVictory ? "Won" : "Lost");
-            if (match.AnalysisOutcome != QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.NONE)
+            if (match.AnalysisOutcome != StatsRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.NONE)
             {
                 sb.Append(' ');
                 sb.Append(OutcomeDescription(match.AnalysisOutcome));
@@ -224,12 +239,12 @@ namespace Magus.Bot.Modules
             return sb.ToString();
         }
 
-        private static string OutcomeDescription(QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome outcome)
+        private static string OutcomeDescription(StatsRecentResult.PlayerType.MatchType.MatchAnalysisOutcome outcome)
             => outcome switch
             {
-                QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.STOMPED => "a stomp",
-                QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.COMEBACK => "a comeback",
-                QueryRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.CLOSE_GAME => "a close game",
+                StatsRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.STOMPED => "a stomp",
+                StatsRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.COMEBACK => "a comeback",
+                StatsRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.CLOSE_GAME => "a close game",
                 _ => string.Empty
             };
 

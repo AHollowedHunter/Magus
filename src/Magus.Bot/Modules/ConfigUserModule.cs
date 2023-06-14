@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.Extensions;
+using Magus.Bot.Services;
 using Magus.Data;
 using Magus.Data.Extensions;
 using Microsoft.Extensions.Options;
@@ -24,8 +25,8 @@ namespace Magus.Bot.Modules
 
         public ConfigUserModule(ILogger<ConfigUserModule> logger, IAsyncDataService db, IOptions<BotSettings> botSettings)
         {
-            _logger = logger;
-            _db = db;
+            _logger      = logger;
+            _db          = db;
             _botSettings = botSettings.Value;
         }
 
@@ -83,22 +84,85 @@ namespace Magus.Bot.Modules
             private readonly BotSettings _botSettings;
             private readonly HttpClient _httpClient;
             private readonly SteamWebInterfaceFactory webInterfaceFactory;
+            private readonly StratzService _stratz;
 
-            public SteamGroup(ILogger<SteamGroup> logger, IAsyncDataService db, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
+            public SteamGroup(ILogger<SteamGroup> logger, IAsyncDataService db, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory, StratzService stratz)
             {
-                _logger = logger;
-                _db = db;
+                _logger      = logger;
+                _db          = db;
                 _botSettings = botSettings.Value;
-                _httpClient = httpClientFactory.CreateClient();
+                _httpClient  = httpClientFactory.CreateClient();
+                _stratz      = stratz;
 
                 webInterfaceFactory = new(_botSettings.Steam.SteamKey);
             }
 
             [SlashCommand("set", "Set your Steam account")]
-            public async Task SetSteam([Summary(description: "Steam account ID, like '22202', '76561197960287930', or custom URL 'gabelogannewell'.")] string account)
+            public async Task SetSteam([Summary(description: "Account ID, e.g: '22202', '76561197960287930', or custom URL 'steamcommunity.com/id/gabelogannewell'")] string account)
             {
                 await DeferAsync(true);
 
+                var accountID = await ConvertToAccountID(account.Trim());
+
+                if (accountID == null)
+                {
+                    // Show how to get ID
+                    await FollowupAsync("I could not validate this ID. Please check your input and try again.");
+                    return;
+                }
+                else
+                {
+                    var accountInfo = await _stratz.GetAccountInfo(accountID.Value);
+
+                    if (accountInfo.Player == null)
+                    {
+                        await FollowupAsync("I could not confirm your account via STRATZ, please check your input and try again. If your account is new, please wait 24 hours and try again.", ephemeral: true);
+                        return;
+                    }
+
+                    await UpdateUserDotaId(accountID.Value);
+
+                    var embeds = new List<Embed>();
+                    if (accountInfo.Player.SteamAccount.IsAnonymous)
+                    {
+                        // tell user to expose public match data
+                        embeds.Add(new EmbedBuilder()
+                            .WithTitle("YOUR DOTA ACCOUNT IS PRIVATE")
+                            .WithDescription("**You won't be able to see any match data while private.**\n\n" +
+                            "Please open Dota 2 and change your settings to enable \"Expose Public Match Data\".\n\n" +
+                            "Then play a game, or log in to [STRATZ](https://stratz.com/settings) and go to \"Settings\" and click \"Check My Status\"\n\n" +
+                            "**You will need to wait a few hours to a day for new stats to update.**\n\n" +
+                            "You do not need to set your Steam account via this command again, unless you linked the wrong one.")
+                            .WithImageUrl("https://i.imgur.com/cBmEY44.png")
+                            .WithColor(Color.Red)
+                            .Build());
+                    }
+                    // tell the user success, and show basic account details to confirm.
+                    embeds.Add(new EmbedBuilder()
+                        .WithTitle("Successfully updated your Steam account")
+                        .WithDescription("You can now use commands like /stats!\n\nIf you have linked the wrong account, just run the command again with the correct ID.")
+                        .WithColor(Color.Green)
+                        .WithThumbnailUrl(accountInfo.Player.SteamAccount.Avatar)
+                        .AddField(accountInfo.Player.SteamAccount.Name, accountInfo.Player.SteamAccount.ProfileUri)
+                        .Build());
+
+                    await FollowupAsync(embeds: embeds.ToArray(), ephemeral: true);
+                }
+            }
+
+            private async Task UpdateUserDotaId(long dotaId)
+            {
+                var user = await _db.GetUser(Context.User);
+                user.DotaID = dotaId;
+                await _db.UpsertRecord(user);
+            }
+
+            /// <summary>
+            /// Convert an input into a Steam Account ID (aka Dota ID)
+            /// </summary>
+            /// <returns>Parsed Account ID, or null if couldn't detect and convert.</returns>
+            private async Task<long?> ConvertToAccountID(string account)
+            {
                 // It's important to capture the numeric IDs first, as a custom URL may also be numeric only.
                 // STEAMID64 first, as it will ALWAYS be 17 characters (on public universe),
                 // followed by ACCOUNTID to stop it matching partial STEAMID64.
@@ -108,53 +172,28 @@ namespace Magus.Bot.Modules
 
                 var match = steamIdRegex.Match(account);
 
-                long accountId;
                 // Then we get the first NAMED group after "0" that succeeds.
                 switch (match.Groups.Values.FirstOrDefault(x => x.Name != "0" && x.Success)?.Name)
                 {
                     case "STEAMID64":
                         if (ulong.TryParse(match.Value, out var parsedID))
-                        {
-                            accountId = ConvertSteamID64ToAccountID(parsedID);
-                            await FollowupAsync("STEAMID64: " + accountId);
-                        }
-                        break;
+                            return ConvertSteamID64ToAccountID(parsedID);
+                        goto default;
                     case "ACCOUNTID":
-                        if (long.TryParse(match.Value, out accountId))
-                        {
-                            await FollowupAsync("ACCOUNTID: " + accountId);
-                        }
-                        break;
+                        if (long.TryParse(match.Value, out var accountId))
+                            return accountId;
+                        goto default;
                     case "FULLCUSTOMURL":
                     case "CUSTOMURL":
                         var steamID64 = await SteamID64FromVanityUrl(match.Value);
                         if (steamID64 != null)
                         {
-                            accountId = ConvertSteamID64ToAccountID(steamID64.Value);
-                            await FollowupAsync("VANITY: " + accountId);
+                            return ConvertSteamID64ToAccountID(steamID64.Value);
                         }
-                        break;
+                        goto default;
                     default:
-                        // Tell the user what's accepted
-                        await FollowupAsync("WRONG");
-                        break;
+                        return null;
                 };
-
-                // still testing
-                var user = await _db.GetUser(Context.User);
-
-                //user.DotaID = accountId;
-                //var steamId64 = await SteamID64FromVanityUrl(match.Value);
-
-                //if (steamId64 != null)
-                //{
-                //    user.DotaID = ConvertSteamID64ToAccountID(76561198063635869);
-                //    var steamInterface = webInterfaceFactory.CreateSteamWebInterface<SteamUser>(_httpClient);
-                //    _logger.LogInformation((await steamInterface.GetPlayerSummaryAsync(steamId64.Value)).Data.Nickname);
-                //}
-
-
-                //await FollowupAsync(text: "SteamID updated", ephemeral: true);
             }
 
             /// <see cref="https://developer.valvesoftware.com/wiki/SteamID"/>

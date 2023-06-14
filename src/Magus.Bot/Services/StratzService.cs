@@ -62,7 +62,7 @@ namespace Magus.Bot.Services
             return response.Data.Player;
         }
 
-        public async Task<QueryRecentResult> GetRecentStats(long steamId)
+        public async Task<StatsRecentResult> GetRecentStats(long accountId)
         {
             var query =
                 @"query ($steamid: Long!)
@@ -97,6 +97,7 @@ namespace Magus.Bot.Services
     steamAccount {
       name
       avatar
+      isAnonymous
     }
     matches( request: {
       gameModeIds: [1,22]
@@ -112,7 +113,26 @@ namespace Magus.Bot.Services
   }
 }";
 
-            var response = await _stratz.SendQueryAsync<QueryRecentResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = steamId}));
+            var response = await _stratz.SendQueryAsync<StatsRecentResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = accountId}));
+            return response.Data;
+        }
+
+        public async Task<AccountCheckResult> GetAccountInfo(long accountId)
+        {
+            var query = @"
+query ($steamid: Long!)
+{
+    player(steamAccountId: $steamid) {
+        steamAccount {
+            name
+            avatar
+            profileUri
+            isAnonymous
+        }
+    }
+}";
+
+            var response = await _stratz.SendQueryAsync<AccountCheckResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = accountId}));
             return response.Data;
         }
     }
