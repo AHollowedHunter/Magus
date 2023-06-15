@@ -15,6 +15,9 @@
 
         public string StratzToken { get; set; }
 
+        public string MetricHost { get; set; } = "127.0.0.1";
+        public int MetricPort { get; set; } = 9703;
+
         public StatusConfig Status { get; set; }
         public SteamConfig Steam { get; set; }
         public AnnouncementConfig Announcements { get; set; }

@@ -29,9 +29,6 @@ namespace Magus.Bot
 
         static void Main(string[] args)
         {
-            using var metricsServer = new MetricServer(hostname: "127.0.0.1", port: 9703);
-            metricsServer.Start();
-
             using IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(x => x.AddEnvironmentVariables(prefix: "MAGUS_"))
                 .ConfigureServices((context, serviceCollection) => ConfigureServices(context.Configuration, serviceCollection))
@@ -46,10 +43,14 @@ namespace Magus.Bot
 
         static async Task RunAsync(IHost host)
         {
+
             var botSettings        = _services.GetRequiredService<IOptions<BotSettings>>().Value;
             var client             = _services.GetRequiredService<DiscordSocketClient>();
             var interactionService = _services.GetRequiredService<InteractionService>();
             var interactionHandler = _services.GetRequiredService<InteractionHandler>();
+
+            using var metricsServer = new MetricServer(hostname: botSettings.MetricHost, port: botSettings.MetricPort);
+            metricsServer.Start();
 
             client.Log += LogDiscord;
             interactionService.Log += LogDiscord;
