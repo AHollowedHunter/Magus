@@ -67,6 +67,10 @@ namespace Magus.Bot
             else
                 client.Ready += interactionHandler.RegisterModulesAsync;
 
+            // Set the Guild Gauge to current guilds on ready, and inc/dec in respective event.
+            // This could be moved to a separate scheduled task to ensure correct (such as missed gateway events), but not critical.
+            client.Ready += async () => await Task.Run(() => MagusMetrics.Guilds.Set(client.Guilds.Count));
+
             await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
             await client.StartAsync();
             await client.SetGameAsync(name: botSettings.Status.Title, type: (ActivityType)botSettings.Status.Type);
@@ -78,12 +82,14 @@ namespace Magus.Bot
         {
             _logger.LogInformation("Added to guild Name: {name} ID: {id} Members: {count}, at {joined}", guild.Name, guild.Id, guild.MemberCount, guild.CurrentUser.JoinedAt);
             await _db.UpsertGuildRecord(guild, DiscordGuildAction.Joined);
+            MagusMetrics.Guilds.Inc();
         }
 
         static async Task LeftGuild(SocketGuild guild)
         {
             _logger.LogInformation("Removed from guild Name: {name} ID: {id} Members: {count}, at {joined}", guild.Name, guild.Id, guild.MemberCount, DateTimeOffset.UtcNow);
             await _db.UpsertGuildRecord(guild, DiscordGuildAction.Left);
+            MagusMetrics.Guilds.Dec();
         }
 
         static Task LogDiscord(LogMessage message)
@@ -113,7 +119,7 @@ namespace Magus.Bot
                 .AddSingleton<IAsyncDataService, MongoDBService>()
                 .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
                 .AddSingleton(x => new InteractionServiceConfig() { InteractionCustomIdDelimiters = new char[] { Constants.CustomIdGroupDelimiter }, UseCompiledLambda = true })
-                .AddSingleton<InteractionService>() 
+                .AddSingleton<InteractionService>()
                 .AddSingleton<InteractionHandler>()
                 .AddSingleton<LocalisationService>()
                 .AddSingleton<StratzService>()

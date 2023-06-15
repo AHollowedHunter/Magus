@@ -164,6 +164,7 @@ namespace Magus.Bot.Modules
                         .WithTitle("Invalid account ID given")
                         .WithDescription("I could not validate this ID. Please check your input and try again.\n\n" +
                         "If you need help getting your ID, you can copy your \"Friend ID\" from your Dota profile.\n\n" +
+                        "Or you can use your Friend Code from Steam → Friends → Add Friend page [HERE](https://steamcommunity.com/friends/add/)\n\n" +
                         "Alternatively, you can copy the link to your Steam, STRATZ, OpenDota, or Dotabuff webpage.\n\n" +
                         "Possible valid ID/link examples:\n" +
                         "- 22202\n- 76561197960287930\n- steamcommunity.com/id/gabelogannewell\n- steamcommunity.com/profiles/76561197960287930\n- stratz.com/players/22202\n- www.opendota.com/players/22202")
