@@ -2,6 +2,7 @@
 using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Extensions;
+using Magus.Bot.Services;
 using Magus.Data;
 using Magus.Data.Models.Embeds;
 
@@ -12,10 +13,12 @@ namespace Magus.Bot.Modules
     public class InfoModule : ModuleBase
     {
         private readonly IAsyncDataService _db;
+        private readonly LocalisationService _localisationService;
 
-        public InfoModule(IAsyncDataService db)
+        public InfoModule(IAsyncDataService db, LocalisationService entityNameLocalisationService)
         {
             _db = db;
+            _localisationService = entityNameLocalisationService;
         }
 
         [SlashCommand("hero", "Get information about a hero; including abilities, vision range, stat base+gain, and more.")]
@@ -23,7 +26,8 @@ namespace Magus.Bot.Modules
                                    [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
-            var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).FirstOrDefault();
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
+            var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale, 1)).FirstOrDefault();
 
             if (heroInfo != null)
                 await FollowupAsync(embed: heroInfo.Embed.CreateDiscordEmbed());
@@ -36,7 +40,8 @@ namespace Magus.Bot.Modules
                                       [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
-            var abilityInfo = (await _db.GetEntityInfo<AbilityInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).FirstOrDefault();
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
+            var abilityInfo = (await _db.GetEntityInfo<AbilityInfoEmbed>(name, locale, 1)).FirstOrDefault();
 
             if (abilityInfo != null)
                 await FollowupAsync(embed: abilityInfo.Embed.CreateDiscordEmbed());
@@ -49,7 +54,8 @@ namespace Magus.Bot.Modules
                                       [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
-            var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).FirstOrDefault();
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
+            var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale, 1)).FirstOrDefault();
             if (heroInfo == null)
             {
                 await FollowupAsync($"Could not find an scepter for the hero called **{name}**", ephemeral: true);
@@ -68,7 +74,8 @@ namespace Magus.Bot.Modules
                                       [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
-            var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).FirstOrDefault();
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
+            var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale, 1)).FirstOrDefault();
             if (heroInfo == null)
             {
                 await FollowupAsync($"Could not find an shard for the hero called **{name}**", ephemeral: true);
@@ -87,7 +94,8 @@ namespace Magus.Bot.Modules
                                    [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
         {
             await DeferAsync();
-            var itemInfo = (await _db.GetEntityInfo<ItemInfoEmbed>(name, locale ?? Context.Interaction.UserLocale)).FirstOrDefault();
+            locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
+            var itemInfo = (await _db.GetEntityInfo<ItemInfoEmbed>(name, locale)).FirstOrDefault();
 
             if (itemInfo != null)
                 await FollowupAsync(embed: itemInfo.Embed.CreateDiscordEmbed());

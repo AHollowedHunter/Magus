@@ -1,5 +1,4 @@
-﻿using Magus.Data.Models.Embeds;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Magus.Data.Models.Dota
 {
@@ -73,7 +72,7 @@ namespace Magus.Data.Models.Dota
                 AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AttackDamageMin + AttributeBaseAgility,
                 AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => AttackDamageMin + AttributeBaseIntelligence,
                 AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => AttackDamageMin + AttributeBaseStrength,
-                AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMin + (AttributeBaseTotal * 0.6),
+                AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMin + (AttributeBaseTotal * 0.7),
                 _                                         => AttackDamageMin,
             };
 
@@ -83,7 +82,7 @@ namespace Magus.Data.Models.Dota
                 AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AttackDamageMax + AttributeBaseAgility,
                 AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => AttackDamageMax + AttributeBaseIntelligence,
                 AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => AttackDamageMax + AttributeBaseStrength,
-                AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMax + (AttributeBaseTotal * 0.6),
+                AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMax + (AttributeBaseTotal * 0.7),
                 _                                         => AttackDamageMax
             };
 

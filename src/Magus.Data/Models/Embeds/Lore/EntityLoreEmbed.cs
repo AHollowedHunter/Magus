@@ -1,6 +1,6 @@
 ﻿namespace Magus.Data.Models.Embeds
 {
-    public abstract record EntityLoreEmbed : ISnowflakeRecord, ILocaleRecord, INamedEntity
+    public abstract record EntityLoreEmbed : ISnowflakeRecord, ILocaleRecord, ILocalisedEntity
     {
         public ulong Id { get; set; }
         public int EntityId { get; set; }

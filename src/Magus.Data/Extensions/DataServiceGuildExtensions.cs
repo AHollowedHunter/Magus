@@ -13,7 +13,7 @@ namespace Magus.Data.Extensions
         /// <param name="guild">Guild information to use</param>
         /// <param name="action">Whether to add a joined or left snapshot</param>
         /// <returns></returns>
-        public async static Task UpsertGuildRecord(this IAsyncDataService db, SocketGuild guild, DiscordAction action = DiscordAction.None)
+        public async static Task UpsertGuildRecord(this IAsyncDataService db, SocketGuild guild, DiscordGuildAction action = DiscordGuildAction.None)
         {
             var guildRecord = await db.GetRecord<Guild>(guild.Id) ?? new Guild(guild.Id);
 
@@ -29,12 +29,12 @@ namespace Magus.Data.Extensions
             guildRecord.IsVerified     = guild.Features.IsVerified;
 
 
-            if (action == DiscordAction.Joined)
+            if (action == DiscordGuildAction.Joined)
             {
                 guildRecord.IsCurrentMember = true;
                 guildRecord.JoinedInfo.Add(MakeSnapshot(guild, guild.CurrentUser.JoinedAt ?? DateTime.UtcNow));
             }
-            if (action == DiscordAction.Left)
+            if (action == DiscordGuildAction.Left)
             {
                 guildRecord.IsCurrentMember = false;
                 guildRecord.LeftInfo.Add(MakeSnapshot(guild, DateTime.UtcNow));
@@ -48,7 +48,7 @@ namespace Magus.Data.Extensions
             var guildRecord = await db.GetRecord<Guild>(guild.Id);
             if (guildRecord == null)
             {
-                await db.UpsertGuildRecord(guild, DiscordAction.Joined);
+                await db.UpsertGuildRecord(guild, DiscordGuildAction.Joined);
                 guildRecord = await db.GetRecord<Guild>(guild.Id);
             }
             return guildRecord;

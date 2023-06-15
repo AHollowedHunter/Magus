@@ -1,8 +1,10 @@
 ﻿using Magus.Common.Enums;
+using Magus.Data.Enums;
 using Magus.Data.Models;
 using Magus.Data.Models.Discord;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
+using Magus.Data.Models.Magus;
 using System.Linq.Expressions;
 
 namespace Magus.Data
@@ -15,6 +17,7 @@ namespace Magus.Data
         Task<string> EnsureIndex<T>(Expression<Func<T, object>> field, bool unique = false, bool caseSensitive = true) where T : ISnowflakeRecord;
         Task<T> GetEntityInfo<T>(int entityId, string locale = "en-GB") where T : EntityInfoEmbed;
         Task<IEnumerable<T>> GetEntityInfo<T>(string entityName, string locale = "en-GB", int limit = int.MaxValue) where T : EntityInfoEmbed;
+        Task<IEnumerable<EntityLocalisation>> GetEntityLocalisations(EntityType type);
         Task<GeneralPatchNoteEmbed> GetGeneralPatchNote(string patchNumber, string locale = "en-GB");
         Task<AbilityInfoEmbed> GetHeroScepter(int heroId, string locale = "en-GB");
         Task<AbilityInfoEmbed> GetHeroShard(int heroId, string locale = "en-GB");

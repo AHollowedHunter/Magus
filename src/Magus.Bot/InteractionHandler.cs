@@ -37,7 +37,7 @@ namespace Magus.Bot
             _interactionService.ComponentCommandExecuted += ComponentCommandExecuted;
             _interactionService.ModalCommandExecuted += ModalCommandExecuted;
 
-            _logger.LogInformation("InteractionHandler Initialised, {count} Modules registered: {moudleList}", _interactionService.Modules.Count, string.Join(", ", _interactionService.Modules.Select(x => x.Name)));
+            _logger.LogInformation("InteractionHandler Initialised, {count} Modules registered: {moduleList}", _interactionService.Modules.Count, string.Join(", ", _interactionService.Modules.Select(x => x.Name)));
         }
 
         public async Task RegisterModulesAsync()
@@ -111,65 +111,7 @@ namespace Magus.Bot
 
         # region Error Handling
 
-        private Task ComponentCommandExecuted(ComponentCommandInfo arg1, IInteractionContext arg2, IResult arg3)
-        {
-            if (!arg3.IsSuccess)
-            {
-                switch (arg3.Error)
-                {
-                    case InteractionCommandError.UnmetPrecondition:
-                        // implement
-                        break;
-                    case InteractionCommandError.UnknownCommand:
-                        // implement
-                        break;
-                    case InteractionCommandError.BadArgs:
-                        // implement
-                        break;
-                    case InteractionCommandError.Exception:
-                        // implement
-                        break;
-                    case InteractionCommandError.Unsuccessful:
-                        // implement
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private Task ContextCommandExecuted(ContextCommandInfo arg1, IInteractionContext arg2, IResult arg3)
-        {
-            if (!arg3.IsSuccess)
-            {
-                switch (arg3.Error)
-                {
-                    case InteractionCommandError.UnmetPrecondition:
-                        // implement
-                        break;
-                    case InteractionCommandError.UnknownCommand:
-                        // implement
-                        break;
-                    case InteractionCommandError.BadArgs:
-                        // implement
-                        break;
-                    case InteractionCommandError.Exception:
-                        // implement
-                        break;
-                    case InteractionCommandError.Unsuccessful:
-                        // implement
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private Task SlashCommandExecuted(SlashCommandInfo slashCommandInfo, IInteractionContext interactionContext, IResult result)
+        private Task ComponentCommandExecuted(ComponentCommandInfo commandInfo, IInteractionContext ctx, IResult result)
         {
             if (!result.IsSuccess)
             {
@@ -185,7 +127,7 @@ namespace Magus.Bot
                         // implement
                         break;
                     case InteractionCommandError.Exception:
-                        _logger.LogError("Error handling slash command");
+                        // implement
                         break;
                     case InteractionCommandError.Unsuccessful:
                         // implement
@@ -198,11 +140,81 @@ namespace Magus.Bot
             return Task.CompletedTask;
         }
 
-        private Task ModalCommandExecuted(ModalCommandInfo arg1, IInteractionContext arg2, IResult arg3)
+        private Task ContextCommandExecuted(ContextCommandInfo commandInfo, IInteractionContext ctx, IResult result)
         {
-            if (!arg3.IsSuccess)
+            if (!result.IsSuccess)
             {
-                switch (arg3.Error)
+                switch (result.Error)
+                {
+                    case InteractionCommandError.UnmetPrecondition:
+                        // implement
+                        break;
+                    case InteractionCommandError.UnknownCommand:
+                        // implement
+                        break;
+                    case InteractionCommandError.BadArgs:
+                        // implement
+                        break;
+                    case InteractionCommandError.Exception:
+                        // implement
+                        break;
+                    case InteractionCommandError.Unsuccessful:
+                        // implement
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private Task SlashCommandExecuted(SlashCommandInfo commandInfo, IInteractionContext ctx, IResult result)
+        {
+            var nameArray = commandInfo.ToString().Split(' ');
+            var labels = new string[] {
+                nameArray[0],
+                nameArray.Length == 3 ? nameArray[1] : "",
+                nameArray.Length > 1 ? nameArray.Last() : "",
+                result.IsSuccess.ToString(),
+                result.Error.ToString() ?? ""
+            };
+            MagusMetrics.SlashCommandsExecuted.WithLabels(labels).Inc();
+
+            if (!result.IsSuccess)
+            {
+                switch (result.Error)
+                {
+                    case InteractionCommandError.UnmetPrecondition:
+                        // implement
+                        break;
+                    case InteractionCommandError.UnknownCommand:
+                        // implement
+                        break;
+                    case InteractionCommandError.BadArgs:
+                        // implement
+                        break;
+                    case InteractionCommandError.Exception:
+                        _logger.LogError("Error Executing Slash Command: {reason}", result.ErrorReason);
+                        ctx.Interaction.FollowupAsync("Apologies, there was a problem while processing this command!\n\n" +
+                            "Please try again, and if it persists you can search or report it on [GitHub](<https://github.com/AHollowedHunter/Magus/issues/>) and provide the command you had the problem with.");
+                        break;
+                    case InteractionCommandError.Unsuccessful:
+                        // implement
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private Task ModalCommandExecuted(ModalCommandInfo commandInfo, IInteractionContext ctx, IResult result)
+        {
+            if (!result.IsSuccess)
+            {
+                switch (result.Error)
                 {
                     case InteractionCommandError.UnmetPrecondition:
                         // implement
