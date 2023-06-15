@@ -3,8 +3,6 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using GraphQL;
-using GraphQL.Client.Http;
-using GraphQL.Client.Serializer.SystemTextJson;
 using Magus.Bot.Services;
 using Magus.Common.Options;
 using Magus.Data;
