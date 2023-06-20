@@ -58,6 +58,7 @@ namespace Magus.Bot
 
             await interactionHandler.InitialiseAsync();
             //await services.GetRequiredService<TIService>().Initialise();
+            await _services.GetRequiredService<DPCService>().InitialiseAsync();
             await _services.GetRequiredService<LocalisationService>().InitialiseAsync();
             await _services.GetRequiredService<AnnouncementService>().InitialiseAsync();
 
@@ -122,6 +123,7 @@ namespace Magus.Bot
                 .AddSingleton<InteractionHandler>()
                 .AddSingleton<LocalisationService>()
                 .AddSingleton<StratzService>()
+                .AddSingleton<DPCService>()
                 .AddSingleton<TIService>()
                 .AddSingleton<AnnouncementService>();
 

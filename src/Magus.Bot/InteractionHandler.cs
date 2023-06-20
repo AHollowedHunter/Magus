@@ -90,6 +90,8 @@ namespace Magus.Bot
 
         private async Task HandleInteraction(SocketInteraction interaction)
         {
+            // metric this? interaction.UserLocale
+
             try
             {
                 var ctx = new SocketInteractionContext(_client, interaction);

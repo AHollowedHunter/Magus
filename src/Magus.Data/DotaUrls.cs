@@ -35,6 +35,8 @@ namespace Magus.Data
         public static string GetAbilityImage(string internalName) => $"{Ability}{internalName}.png";
         public static string GetItemImage(string internalName)    => $"{Item}{internalName[5..]}.png";
 
+        public static string GetTeamLogo(int teamId) => $"https://cdn.cloudflare.steamstatic.com/apps/dota2/teamlogos/{teamId}.png";
+
         public static string GetAttributeIcon(this AttributePrimary attribute)
 #pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
          => attribute switch

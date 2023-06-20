@@ -10,7 +10,7 @@ namespace Magus.Bot.Services
 {
     public sealed class StratzService
     {
-        private readonly ILogger<AnnouncementService> _logger;
+        private readonly ILogger<StratzService> _logger;
         private readonly IScheduler _scheduler;
         private readonly BotSettings _botSettings;
         private readonly HttpClient _httpClient;
@@ -19,7 +19,7 @@ namespace Magus.Bot.Services
 
         const string StratzApiUrl = "https://api.stratz.com/graphql";
 
-        public StratzService(ILogger<AnnouncementService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
+        public StratzService(ILogger<StratzService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
         {
             _logger      = logger;
             _scheduler   = scheduler;
@@ -135,6 +135,67 @@ query ($steamid: Long!)
 
             var response = await _stratz.SendQueryAsync<AccountCheckResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = accountId}));
             return response.Data;
+        }
+
+        public async Task<LeagueType> GetLeagueInfo(int leagueId)
+        {
+            var query = $@"
+query ($leagueId: Int!) {{
+  league(id: $leagueId) {{
+    id
+    displayName
+    tournamentUrl
+    basePrizePool
+    prizePool
+    liveMatches {{
+      matchId
+      delay
+      gameState
+      gameTime
+      completed
+      direTeam {{
+        name
+      }}
+      radiantTeam {{
+        name
+      }}
+    }}
+    nodeGroups {{
+      id
+      name
+      teamCount
+      nodeGroupType
+      advancingNodeGroupId
+      advancingTeamCount
+      nodes {{
+        id
+        seriesId
+        nodeType
+        winningNodeId
+        losingNodeId
+        hasStarted
+        isCompleted
+        scheduledTime
+        actualTime
+        teamOne {{
+          id
+          name
+          tag
+        }}
+        teamTwo {{
+          id
+          name
+          tag
+        }}
+      }}
+    }}
+  }}
+}}
+
+";
+
+            var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query, variables: new { leagueId }), () => new { League = new LeagueType() });
+            return response.Data.League;
         }
     }
 }
