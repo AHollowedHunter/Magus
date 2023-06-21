@@ -1,6 +1,5 @@
 ﻿using Coravel.Scheduling.Schedule.Interfaces;
 using Magus.Data;
-using ReverseMarkdown.Converters;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
@@ -54,9 +53,10 @@ namespace Magus.Bot.Services
 
             Font font = SystemFonts.CreateFont("Arial", 48); // for scaling water mark size is largely ignored.
 
-            var image = new Image<Rgb24>(1400, 1050);
+            //var image = new Image<Rgb24>(1400, 1050);
+            var image = Image.Load<Rgba32>(Common.Images.BracketTemplate);
 
-            image.Mutate(x => x.DrawText(grandFinalNodeId.ToString(), font, Color.GhostWhite, new Point(1200, 525)));
+            image.Mutate(x => x.DrawText(grandFinalNodeId.ToString(), font, Color.GhostWhite, new Point(1375, 455)));
             for (var i = 0; i < ubNodes.Count; i++)
             {
                 var col = i <= 3 ? 200 : i <= 5 ? 600 : 1000;

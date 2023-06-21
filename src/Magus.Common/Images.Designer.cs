@@ -63,6 +63,16 @@ namespace Magus.Common {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        public static byte[] BracketTemplate {
+            get {
+                object obj = ResourceManager.GetObject("BracketTemplate", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         public static byte[] DotaAvatar {
             get {
                 object obj = ResourceManager.GetObject("DotaAvatar", resourceCulture);
