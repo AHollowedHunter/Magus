@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Dom;
 using Coravel.Scheduling.Schedule.Interfaces;
+using GraphQLParser.AST;
 using Magus.Data;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -62,57 +63,16 @@ namespace Magus.Bot.Services
             var ubAnchors = new (int x, int y)[] { (250, 60), (250, 170), (250, 280), (250, 390), (700, 115), (700, 335), (1150, 225) };
             var lbAnchors = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 520), (250, 630), (250, 740), (250, 850), (475, 575), (475, 795), (700, 575), (700, 795), (925, 685), (1150, 685) };
 
-            // temp id testing
-            var textOptions = new TextOptions(font) { Dpi = 96, Origin = new Point(4 + gfAnchor.x, 24 + gfAnchor.y), WrappingLength = 160 };
-            image.Mutate(x => x.DrawText(textOptions, gfNode.TeamOne.Name, Color.GhostWhite));
-
-            textOptions.Origin = new Point(184 + gfAnchor.x, 24 + gfAnchor.y);
-            image.Mutate(x => x.DrawText(textOptions, gfNode.TeamOneWins.ToString(), Color.GhostWhite));
-
-            textOptions.Origin = new Point(4 + gfAnchor.x, 56 + gfAnchor.y);
-            image.Mutate(x => x.DrawText(textOptions, gfNode.TeamTwo.Name, Color.GhostWhite));
-
-
-            textOptions.Origin = new Point(184 + gfAnchor.x, 56 + gfAnchor.y);
-            image.Mutate(x => x.DrawText(textOptions, gfNode.TeamTwoWins.ToString(), Color.GhostWhite));
-
+            AddNodeToImage(image, gfNode, gfAnchor);
 
             for (var i = 0; i < ubNodes.Count; i++)
             {
-                var anchor = ubAnchors[i];
-                var node = ubNodes[i];
-
-                textOptions.Origin = new Point(4 + anchor.x, 24 + anchor.y);
-                image.Mutate(x => x.DrawText(textOptions, node.TeamOne.Name, Color.GhostWhite));
-                textOptions.Origin = new Point(184 + anchor.x, 24 + anchor.y);
-                image.Mutate(x => x.DrawText(textOptions, node.TeamOneWins.ToString(), Color.GhostWhite));
-
-                textOptions.Origin = new Point(4 + anchor.x, 56 + anchor.y);
-                image.Mutate(x => x.DrawText(textOptions, node.TeamTwo.Name, Color.GhostWhite));
-                textOptions.Origin = new Point(184 + anchor.x, 56 + anchor.y);
-                image.Mutate(x => x.DrawText(textOptions, node.TeamTwoWins.ToString(), Color.GhostWhite));
+                AddNodeToImage(image, ubNodes[i], ubAnchors[i]);
             }
             // assuming the "round 1" nodes are included. change this to cope in case they are not
             for (var i = 0; i < lbNodes.Count; i++)
             {
-                var anchor = lbAnchors[i];
-                var node = lbNodes[i];
-
-                textOptions.Origin = new Point(4 + anchor.x, 24 + anchor.y);
-                if (node.TeamOne != null)
-                {
-                    image.Mutate(x => x.DrawText(textOptions, node.TeamOne.Name, Color.GhostWhite));
-                    textOptions.Origin = new Point(184 + anchor.x, 24 + anchor.y);
-                    image.Mutate(x => x.DrawText(textOptions, node.TeamOneWins.ToString(), Color.GhostWhite));
-                }
-
-                textOptions.Origin = new Point(4 + anchor.x, 56 + anchor.y);
-                if (node.TeamTwo != null)
-                {
-                    image.Mutate(x => x.DrawText(textOptions, node.TeamTwo.Name, Color.GhostWhite));
-                    textOptions.Origin = new Point(184 + anchor.x, 56 + anchor.y);
-                    image.Mutate(x => x.DrawText(textOptions, node.TeamTwoWins.ToString(), Color.GhostWhite));
-                }
+                AddNodeToImage(image, lbNodes[i], lbAnchors[i]);
             }
             //
 
@@ -122,6 +82,30 @@ namespace Magus.Bot.Services
 
             _logger.LogInformation("Updated DPC Bracket for: {id}. Final node: {node}", berlinId, gfNode.Id);
         }
+
+        private static void AddNodeToImage(Image image, LeagueNodeType node, (int x, int y) anchor)
+        {
+            var font = SystemFonts.CreateFont("Noto Sans", 12); // temporary measure, should include any fonts in resources.
+            var textOptions = new TextOptions(font) { Dpi = 96, WrappingLength = 160 };
+
+            textOptions.Origin = new Point(4 + anchor.x, 24 + anchor.y);
+            if (node.TeamOne != null)
+            {
+                image.Mutate(x => x.DrawText(textOptions, node.TeamOne.Name, Color.GhostWhite));
+                textOptions.Origin = new Point(184 + anchor.x, 24 + anchor.y);
+                image.Mutate(x => x.DrawText(textOptions, node.TeamOneWins.ToString(), Color.GhostWhite));
+            }
+
+            textOptions.Origin = new Point(4 + anchor.x, 56 + anchor.y);
+            if (node.TeamTwo != null)
+            {
+                image.Mutate(x => x.DrawText(textOptions, node.TeamTwo.Name, Color.GhostWhite));
+                textOptions.Origin = new Point(184 + anchor.x, 56 + anchor.y);
+                image.Mutate(x => x.DrawText(textOptions, node.TeamTwoWins.ToString(), Color.GhostWhite));
+            }
+        }
+
+
         public string GetBracketImagePath() => BracketImagePath;
 
         private static bool IsGrandFinalNode(LeagueNodeType node)
