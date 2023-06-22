@@ -177,6 +177,8 @@ query ($leagueId: Int!) {{
         isCompleted
         scheduledTime
         actualTime
+        teamOneWins
+        teamTwoWins
         teamOne {{
           id
           name

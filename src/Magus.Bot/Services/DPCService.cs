@@ -1,4 +1,5 @@
-﻿using Coravel.Scheduling.Schedule.Interfaces;
+﻿using AngleSharp.Dom;
+using Coravel.Scheduling.Schedule.Interfaces;
 using Magus.Data;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -18,10 +19,10 @@ namespace Magus.Bot.Services
 
         public DPCService(ILogger<StratzService> logger, IScheduler scheduler, StratzService stratz, IAsyncDataService db)
         {
-            _logger    = logger;
+            _logger = logger;
             _scheduler = scheduler;
-            _stratz    = stratz;
-            _db        = db;
+            _stratz = stratz;
+            _db = db;
         }
 
 
@@ -39,44 +40,87 @@ namespace Magus.Bot.Services
         const int berlinId = 15251;
         const int baliId   = 15438;
         const int limaId   = 15089;
+        const int ti_22    = 14268;
 
         private string BracketImagePath = Path.GetTempPath() + "bracketImage.png";
 
         private async Task UpdateBracket()
         {
             var league = await _stratz.GetLeagueInfo(berlinId);
-            var playoffNodes = league.NodeGroups.Single(x => x.Name == "Playoffs");
+            var playoffNodes = league.NodeGroups.Single(x => x.Name.StartsWith("Playoff"));
 
-            var grandFinalNodeId = playoffNodes.Nodes.Single(IsGrandFinalNode).Id;
-            var ubNodes = playoffNodes.Nodes.Where(x => x.Id < grandFinalNodeId).ToList();
-            var lbNodes = playoffNodes.Nodes.Where(x => x.Id > grandFinalNodeId).ToList();
+            var gfNode = playoffNodes.Nodes.Single(IsGrandFinalNode);
+            var ubNodes = playoffNodes.Nodes.Where(x => x.Id < gfNode.Id).ToList();
+            var lbNodes = playoffNodes.Nodes.Where(x => x.Id > gfNode.Id).ToList();
 
-            Font font = SystemFonts.CreateFont("Arial", 48); // for scaling water mark size is largely ignored.
-
-            //var image = new Image<Rgb24>(1400, 1050);
             var image = Image.Load<Rgba32>(Common.Images.BracketTemplate);
 
-            image.Mutate(x => x.DrawText(grandFinalNodeId.ToString(), font, Color.GhostWhite, new Point(1375, 455)));
+            var font = SystemFonts.CreateFont("Noto Sans", 12); // temporary measure, should include any fonts in resources.
+
+            // temp bracket "anchors", the top-left point of each bracket card of template at 1600x1000
+            var gfAnchor = (x: 1375, y:455);
+            var ubAnchors = new (int x, int y)[] { (250, 60), (250, 170), (250, 280), (250, 390), (700, 115), (700, 335), (1150, 225) };
+            var lbAnchors = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 520), (250, 630), (250, 740), (250, 850), (475, 575), (475, 795), (700, 575), (700, 795), (925, 685), (1150, 685) };
+
+            // temp id testing
+            var textOptions = new TextOptions(font) { Dpi = 96, Origin = new Point(4 + gfAnchor.x, 24 + gfAnchor.y), WrappingLength = 160 };
+            image.Mutate(x => x.DrawText(textOptions, gfNode.TeamOne.Name, Color.GhostWhite));
+
+            textOptions.Origin = new Point(184 + gfAnchor.x, 24 + gfAnchor.y);
+            image.Mutate(x => x.DrawText(textOptions, gfNode.TeamOneWins.ToString(), Color.GhostWhite));
+
+            textOptions.Origin = new Point(4 + gfAnchor.x, 56 + gfAnchor.y);
+            image.Mutate(x => x.DrawText(textOptions, gfNode.TeamTwo.Name, Color.GhostWhite));
+
+
+            textOptions.Origin = new Point(184 + gfAnchor.x, 56 + gfAnchor.y);
+            image.Mutate(x => x.DrawText(textOptions, gfNode.TeamTwoWins.ToString(), Color.GhostWhite));
+
+
             for (var i = 0; i < ubNodes.Count; i++)
             {
-                var col = i <= 3 ? 200 : i <= 5 ? 600 : 1000;
-                var row = 100 * ((i % 4) + 1);
+                var anchor = ubAnchors[i];
+                var node = ubNodes[i];
 
-                image.Mutate(x => x.DrawText(ubNodes[i].Id.ToString(), font, Color.GhostWhite, new Point(col, row)));
+                textOptions.Origin = new Point(4 + anchor.x, 24 + anchor.y);
+                image.Mutate(x => x.DrawText(textOptions, node.TeamOne.Name, Color.GhostWhite));
+                textOptions.Origin = new Point(184 + anchor.x, 24 + anchor.y);
+                image.Mutate(x => x.DrawText(textOptions, node.TeamOneWins.ToString(), Color.GhostWhite));
+
+                textOptions.Origin = new Point(4 + anchor.x, 56 + anchor.y);
+                image.Mutate(x => x.DrawText(textOptions, node.TeamTwo.Name, Color.GhostWhite));
+                textOptions.Origin = new Point(184 + anchor.x, 56 + anchor.y);
+                image.Mutate(x => x.DrawText(textOptions, node.TeamTwoWins.ToString(), Color.GhostWhite));
             }
-            
+            // assuming the "round 1" nodes are included. change this to cope in case they are not
             for (var i = 0; i < lbNodes.Count; i++)
             {
-                var col = i <= 3 ? 100 : i <= 7 ? 200 : i <= 9 ? 400 : i <=11 ? 600 : i == 12 ? 800 : 1000;
-                var row = (100 * ((i % 4) + 1)) + 500;
+                var anchor = lbAnchors[i];
+                var node = lbNodes[i];
 
-                image.Mutate(x => x.DrawText(lbNodes[i].Id.ToString(), font, Color.GhostWhite, new Point(col, row)));
+                textOptions.Origin = new Point(4 + anchor.x, 24 + anchor.y);
+                if (node.TeamOne != null)
+                {
+                    image.Mutate(x => x.DrawText(textOptions, node.TeamOne.Name, Color.GhostWhite));
+                    textOptions.Origin = new Point(184 + anchor.x, 24 + anchor.y);
+                    image.Mutate(x => x.DrawText(textOptions, node.TeamOneWins.ToString(), Color.GhostWhite));
+                }
+
+                textOptions.Origin = new Point(4 + anchor.x, 56 + anchor.y);
+                if (node.TeamTwo != null)
+                {
+                    image.Mutate(x => x.DrawText(textOptions, node.TeamTwo.Name, Color.GhostWhite));
+                    textOptions.Origin = new Point(184 + anchor.x, 56 + anchor.y);
+                    image.Mutate(x => x.DrawText(textOptions, node.TeamTwoWins.ToString(), Color.GhostWhite));
+                }
             }
+            //
 
-
+            // Cache image in temp folder for now
+            // todo check and improve this
             await image.SaveAsPngAsync(BracketImagePath);
 
-            _logger.LogInformation("Updated DPC Bracket for: {id}. Final node: {node}", berlinId, grandFinalNodeId);
+            _logger.LogInformation("Updated DPC Bracket for: {id}. Final node: {node}", berlinId, gfNode.Id);
         }
         public string GetBracketImagePath() => BracketImagePath;
 
