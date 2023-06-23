@@ -15,21 +15,55 @@ namespace Magus.Bot.Services
         private readonly IScheduler _scheduler;
         private readonly StratzService _stratz;
         private readonly IAsyncDataService _db;
+        private readonly HttpClient _httpClient;
 
-        public DPCService(ILogger<StratzService> logger, IScheduler scheduler, StratzService stratz, IAsyncDataService db)
+        private readonly IDictionary<int, Image> teamLogos = new Dictionary<int, Image>();
+
+        public DPCService(ILogger<StratzService> logger, IScheduler scheduler, StratzService stratz, IAsyncDataService db, IHttpClientFactory httpClientFactory)
         {
             _logger = logger;
             _scheduler = scheduler;
             _stratz = stratz;
             _db = db;
+            _httpClient = httpClientFactory.CreateClient();
         }
 
 
         public async Task InitialiseAsync()
         {
+            // Update team logos first, then run update bracket.
+            await UpdateTeamLogos();
+            ScheduleUpdateTeamLogos();
+
             ScheduleUpdateBracket();
 
             _logger.LogInformation("DPCService Initialised");
+        }
+
+        private void ScheduleUpdateTeamLogos() => _scheduler.ScheduleAsync(UpdateTeamLogos)
+                                                            .DailyAtHour(3);
+
+        private async Task UpdateTeamLogos()
+        {
+            var league = await _stratz.GetLeagueInfo(berlinId);
+
+            foreach (var team in league.Tables.TableTeams)
+            {
+                if (team.TeamId != null)
+                {
+                    try
+                    {
+                        var teamLogo = Image.Load<Rgba32>(await _httpClient.GetStreamAsync(DotaUrls.GetTeamLogo((int)team.TeamId)));
+                        teamLogo.Mutate(x => x.Resize(32, 32));
+                        teamLogos[(int)team.TeamId] = teamLogo;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to update team logo for {id}", team.TeamId);
+                    }
+                }
+            }
+            _logger.LogInformation("Updated Team Logos");
         }
 
         private void ScheduleUpdateBracket() => _scheduler.ScheduleAsync(UpdateBracket)
@@ -43,10 +77,13 @@ namespace Magus.Bot.Services
 
         private Image BracketImage;
 
+        private bool IsPlayoffNodeGroup(LeagueNodeGroupType x)
+            => x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleSeedLoser || x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner;
+
         private async Task UpdateBracket()
         {
             var league = await _stratz.GetLeagueInfo(berlinId);
-            var playoffNodeGroup = league.NodeGroups.Single(x => x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleSeedLoser || x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner);
+            var playoffNodeGroup = league.NodeGroups.Single(IsPlayoffNodeGroup);
 
             // Grand final node seems to be at the end of the UB node ID series.
             // Similarly, the LB nodes come AFTER the GF nodeId.
@@ -69,25 +106,23 @@ namespace Magus.Bot.Services
             var ubAnchors = new (int x, int y)[] { (250, 60), (250, 170), (250, 280), (250, 390), (700, 115), (700, 335), (1150, 225) };
             var lbAnchors = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 520), (250, 630), (250, 740), (250, 850), (475, 575), (475, 795), (700, 575), (700, 795), (925, 685), (1150, 685) };
 
-            await AddNodeToImage(BracketImage, gfNode, gfAnchor);
+            AddNodeToImage(BracketImage, gfNode, gfAnchor);
 
             for (var i = 0; i < ubNodes.Count; i++)
             {
-                await AddNodeToImage(BracketImage, ubNodes[i], ubAnchors[i]);
+                AddNodeToImage(BracketImage, ubNodes[i], ubAnchors[i]);
             }
             // If skipping seed round, start at the higher index to place correctly on this template.
             // Update this if switching to multiple templates.
             for (var i = skipSeedRound ? 4 : 0; i < lbNodes.Count; i++)
             {
-                await AddNodeToImage(BracketImage, lbNodes[i], lbAnchors[i]);
+                AddNodeToImage(BracketImage, lbNodes[i], lbAnchors[i]);
             }
 
             _logger.LogInformation("Updated DPC Bracket for: {id}. Final node: {node}", berlinId, gfNode.Id);
         }
 
-        private HttpClient _httpClient = new();
-
-        private async Task AddNodeToImage(Image image, LeagueNodeType node, (int x, int y) anchor)
+        private void AddNodeToImage(Image image, LeagueNodeType node, (int x, int y) anchor)
         {
             var timeFont = SystemFonts.CreateFont("Noto Sans", 10); // temporary measure, should include any fonts in resources.
             var nameFont = SystemFonts.CreateFont("Noto Sans", 13); // temporary measure, should include any fonts in resources.
@@ -111,9 +146,8 @@ namespace Magus.Bot.Services
                 scoreOptions.Origin = new Point(180 + anchor.x, 32 + anchor.y);
                 image.Mutate(x => x.DrawText(scoreOptions, node.TeamOneWins.ToString(), Color.GhostWhite));
 
-                var teamLogo = Image.Load<Rgba32>(await _httpClient.GetStreamAsync(DotaUrls.GetTeamLogo(node.TeamOne.Id ?? 0)));
-                teamLogo.Mutate(x => x.Resize(32, 32));
-                image.Mutate(x => x.DrawImage(teamLogo, new Point(anchor.x + 2, anchor.y + 18), 1));
+                if (teamLogos.ContainsKey(node.TeamOne.Id ?? -1))
+                    image.Mutate(x => x.DrawImage(teamLogos[node.TeamOne.Id ?? -1], new Point(anchor.x + 2, anchor.y + 18), 1));
             }
             if (node.TeamTwo != null)
             {
@@ -122,9 +156,8 @@ namespace Magus.Bot.Services
                 scoreOptions.Origin = new Point(180 + anchor.x, 70 + anchor.y);
                 image.Mutate(x => x.DrawText(scoreOptions, node.TeamTwoWins.ToString(), Color.GhostWhite));
 
-                var teamLogo = Image.Load<Rgba32>(await _httpClient.GetStreamAsync(DotaUrls.GetTeamLogo(node.TeamTwo.Id ?? 0)));
-                teamLogo.Mutate(x => x.Resize(32, 32));
-                image.Mutate(x => x.DrawImage(teamLogo, new Point(anchor.x + 2, anchor.y + 56), 1));
+                if (teamLogos.ContainsKey(node.TeamTwo.Id ?? -1))
+                    image.Mutate(x => x.DrawImage(teamLogos[node.TeamTwo.Id ?? -1], new Point(anchor.x + 2, anchor.y + 56), 1));
             }
         }
 

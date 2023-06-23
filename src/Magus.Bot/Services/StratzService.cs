@@ -147,6 +147,15 @@ query ($leagueId: Int!) {{
     tournamentUrl
     basePrizePool
     prizePool
+    tables {{
+      tableTeams {{
+        teamId
+        team {{
+          name
+          id
+        }}
+      }}
+    }}
     liveMatches {{
       matchId
       delay
