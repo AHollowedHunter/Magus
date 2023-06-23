@@ -11,6 +11,7 @@ using Magus.Data.Models.Stratz.Results;
 using Magus.Data.Models.Stratz.Types;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver.Linq;
+using SixLabors.ImageSharp;
 using System.Text.RegularExpressions;
 
 namespace Magus.Bot.Modules
@@ -40,14 +41,15 @@ namespace Magus.Bot.Modules
             _localisationService = localisationService;
         }
 
-        [SlashCommand("bracket", "Get bracket.")]
+        [SlashCommand("bracket", "Get the current event bracket standings. Updates every 5 minutes.")]
         public async Task Bracket()
         {
             await DeferAsync();
 
-            var imagePath = _dpc.GetBracketImagePath();
+            using var imageStream = new MemoryStream();
+            _dpc.GetBracketImage().SaveAsPng(imageStream);
 
-            await FollowupWithFileAsync(imagePath, "Test.png", embed: new EmbedBuilder().WithTitle("Bracket").WithDescription("Upcoming spoiler: ||test vs spoiler||").Build());
+            await FollowupWithFileAsync(imageStream, "Bracket.png", embed: new EmbedBuilder().WithTitle("Bracket").WithDescription("Upcoming spoiler: ||test vs spoiler||").Build());
         }
     }
 }
