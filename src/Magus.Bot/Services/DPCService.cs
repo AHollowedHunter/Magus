@@ -97,26 +97,32 @@ namespace Magus.Bot.Services
             // Can use this to split template to ignore the extra round and save space.
             var skipSeedRound = playoffNodeGroup.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner || playoffNodeGroup.TeamCount <= 12;
 
-            BracketImage = Image.Load<Rgba32>(Common.Images.BracketTemplate);
+            BracketImage = Image.Load<Rgba32>(Common.Images.BaliBracketTemplateWinners);
 
             var font = SystemFonts.CreateFont("Noto Sans", 12); // temporary measure, should include any fonts in resources.
 
             // temp bracket "anchors", the top-left point of each bracket card of template at 1600x1000
-            var gfAnchor = (x: 1375, y:455);
-            var ubAnchors = new (int x, int y)[] { (250, 60), (250, 170), (250, 280), (250, 390), (700, 115), (700, 335), (1150, 225) };
-            var lbAnchors = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 520), (250, 630), (250, 740), (250, 850), (475, 575), (475, 795), (700, 575), (700, 795), (925, 685), (1150, 685) };
+            var gfAnchorSeed = (x: 1375, y:455);
+            var ubAnchorsSeed = new (int x, int y)[] { (250, 60), (250, 170), (250, 280), (250, 390), (700, 115), (700, 335), (1150, 225) };
+            var lbAnchorsSeed = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 520), (250, 630), (250, 740), (250, 850), (475, 575), (475, 795), (700, 575), (700, 795), (925, 685), (1150, 685) };
+            
+            var gfAnchorWinners = (x: 1150, y:455);
+            var ubAnchorsWinners = new (int x, int y)[] { (25, 60), (25, 170), (25, 280), (25, 390), (475, 115), (475, 335), (925, 225) };
+            var lbAnchorsWinners = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 575), (250, 795), (475, 575), (475, 795), (700, 685), (925, 685) };
 
-            AddNodeToImage(BracketImage, gfNode, gfAnchor);
+            AddNodeToImage(BracketImage, gfNode, gfAnchorWinners);
 
             for (var i = 0; i < ubNodes.Count; i++)
             {
-                AddNodeToImage(BracketImage, ubNodes[i], ubAnchors[i]);
+                AddNodeToImage(BracketImage, ubNodes[i], ubAnchorsWinners[i]);
             }
-            // If skipping seed round, start at the higher index to place correctly on this template.
-            // Update this if switching to multiple templates.
-            for (var i = skipSeedRound ? 4 : 0; i < lbNodes.Count; i++)
+
+            // remove the "ghost seed" rounds
+            if (skipSeedRound && lbNodes.Count == 14)
+                lbNodes.RemoveRange(0, 4);
+            for (var i = 0; i < lbNodes.Count; i++)
             {
-                AddNodeToImage(BracketImage, lbNodes[i], lbAnchors[i]);
+                AddNodeToImage(BracketImage, lbNodes[i], lbAnchorsWinners[i]);
             }
 
             _logger.LogInformation("Updated DPC Bracket for: {id}. Final node: {node}", berlinId, gfNode.Id);
@@ -128,7 +134,7 @@ namespace Magus.Bot.Services
             var nameFont = SystemFonts.CreateFont("Noto Sans", 13); // temporary measure, should include any fonts in resources.
             var scoreFont = SystemFonts.CreateFont("Noto Sans", 20, FontStyle.Bold); // temporary measure, should include any fonts in resources.
             var timeOptions = new TextOptions(timeFont) { Dpi = 96, WrappingLength = 192};
-            var nameOptions = new TextOptions(nameFont) { Dpi = 96, LineSpacing = 0.75F, VerticalAlignment = VerticalAlignment.Center, WrappingLength = 150};
+            var nameOptions = new TextOptions(nameFont) { Dpi = 96, LineSpacing = 0.75F, VerticalAlignment = VerticalAlignment.Center, WrappingLength = 140};
             var scoreOptions = new TextOptions(scoreFont) { Dpi = 96, VerticalAlignment = VerticalAlignment.Center };
 
             var time = node.ActualTime ?? node.ScheduledTime;
