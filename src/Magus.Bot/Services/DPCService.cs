@@ -126,9 +126,9 @@ namespace Magus.Bot.Services
         {
             var timeFont = SystemFonts.CreateFont("Noto Sans", 10); // temporary measure, should include any fonts in resources.
             var nameFont = SystemFonts.CreateFont("Noto Sans", 13); // temporary measure, should include any fonts in resources.
-            var scoreFont = SystemFonts.CreateFont("Noto Sans", 16, FontStyle.Bold); // temporary measure, should include any fonts in resources.
+            var scoreFont = SystemFonts.CreateFont("Noto Sans", 20, FontStyle.Bold); // temporary measure, should include any fonts in resources.
             var timeOptions = new TextOptions(timeFont) { Dpi = 96, WrappingLength = 192};
-            var nameOptions = new TextOptions(nameFont) { Dpi = 96, LineSpacing = 0.75F, VerticalAlignment = VerticalAlignment.Center, WrappingLength = 80};
+            var nameOptions = new TextOptions(nameFont) { Dpi = 96, LineSpacing = 0.75F, VerticalAlignment = VerticalAlignment.Center, WrappingLength = 150};
             var scoreOptions = new TextOptions(scoreFont) { Dpi = 96, VerticalAlignment = VerticalAlignment.Center };
 
             var time = node.ActualTime ?? node.ScheduledTime;
