@@ -1,22 +1,15 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Bot.Attributes;
-using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Services;
-using Magus.Common.Emotes;
 using Magus.Data;
-using Magus.Data.Extensions;
-using Magus.Data.Models.Embeds;
-using Magus.Data.Models.Stratz.Results;
-using Magus.Data.Models.Stratz.Types;
 using Microsoft.Extensions.Options;
-using MongoDB.Driver.Linq;
 using SixLabors.ImageSharp;
 using System.Text.RegularExpressions;
 
 namespace Magus.Bot.Modules
 {
-    [Group(GroupName, "Get DPC info")]
+    [Group(GroupName, "Get DPC info (BETA)")]
     [ModuleRegistration(Location.TESTING)]
     public class DPCModule : InteractionModuleBase<SocketInteractionContext>
     {
@@ -41,7 +34,7 @@ namespace Magus.Bot.Modules
             _localisationService = localisationService;
         }
 
-        [SlashCommand("bracket", "Get the current event bracket standings. Updates every 5 minutes.")]
+        [SlashCommand("bracket", "Get the current event bracket standings. Updates every 5 minutes. (BETA)")]
         public async Task Bracket()
         {
             await DeferAsync();

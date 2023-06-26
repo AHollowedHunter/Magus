@@ -63,9 +63,9 @@ namespace Magus.Common {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static byte[] BaliBracketLogoTemplate {
+        public static byte[] BracketTemplateBali {
             get {
-                object obj = ResourceManager.GetObject("BaliBracketLogoTemplate", resourceCulture);
+                object obj = ResourceManager.GetObject("BracketTemplateBali", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -73,59 +73,9 @@ namespace Magus.Common {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static byte[] BaliBracketTemplate {
+        public static byte[] BracketTemplateDefault {
             get {
-                object obj = ResourceManager.GetObject("BaliBracketTemplate", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        public static byte[] BaliBracketTemplateWinners {
-            get {
-                object obj = ResourceManager.GetObject("BaliBracketTemplateWinners", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        public static byte[] BracketTemplate {
-            get {
-                object obj = ResourceManager.GetObject("BracketTemplate", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        public static byte[] DotaAvatar {
-            get {
-                object obj = ResourceManager.GetObject("DotaAvatar", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        public static byte[] DotaLogo {
-            get {
-                object obj = ResourceManager.GetObject("DotaLogo", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        public static byte[] MagusAvatar {
-            get {
-                object obj = ResourceManager.GetObject("MagusAvatar", resourceCulture);
+                object obj = ResourceManager.GetObject("BracketTemplateDefault", resourceCulture);
                 return ((byte[])(obj));
             }
         }

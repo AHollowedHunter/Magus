@@ -1,4 +1,5 @@
 ﻿using Coravel.Scheduling.Schedule.Interfaces;
+using Magus.Common.ImageSharp;
 using Magus.Data;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -97,9 +98,7 @@ namespace Magus.Bot.Services
             // Can use this to split template to ignore the extra round and save space.
             var skipSeedRound = playoffNodeGroup.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner || playoffNodeGroup.TeamCount <= 12;
 
-            BracketImage = Image.Load<Rgba32>(Common.Images.BaliBracketTemplateWinners);
-
-            var font = SystemFonts.CreateFont("Noto Sans", 12); // temporary measure, should include any fonts in resources.
+            var updatedBracket = Image.Load<Rgba32>(Common.Images.BracketTemplateBali);
 
             // temp bracket "anchors", the top-left point of each bracket card of template at 1600x1000
             var gfAnchorSeed = (x: 1375, y:455);
@@ -110,11 +109,11 @@ namespace Magus.Bot.Services
             var ubAnchorsWinners = new (int x, int y)[] { (25, 60), (25, 170), (25, 280), (25, 390), (475, 115), (475, 335), (925, 225) };
             var lbAnchorsWinners = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 575), (250, 795), (475, 575), (475, 795), (700, 685), (925, 685) };
 
-            AddNodeToImage(BracketImage, gfNode, gfAnchorWinners);
+            AddNodeToImage(updatedBracket, gfNode, gfAnchorWinners);
 
             for (var i = 0; i < ubNodes.Count; i++)
             {
-                AddNodeToImage(BracketImage, ubNodes[i], ubAnchorsWinners[i]);
+                AddNodeToImage(updatedBracket, ubNodes[i], ubAnchorsWinners[i]);
             }
 
             // remove the "ghost seed" rounds
@@ -122,17 +121,19 @@ namespace Magus.Bot.Services
                 lbNodes.RemoveRange(0, 4);
             for (var i = 0; i < lbNodes.Count; i++)
             {
-                AddNodeToImage(BracketImage, lbNodes[i], lbAnchorsWinners[i]);
+                AddNodeToImage(updatedBracket, lbNodes[i], lbAnchorsWinners[i]);
             }
+
+            BracketImage = updatedBracket;
 
             _logger.LogInformation("Updated DPC Bracket for: {id}. Final node: {node}", berlinId, gfNode.Id);
         }
 
         private void AddNodeToImage(Image image, LeagueNodeType node, (int x, int y) anchor)
         {
-            var timeFont = SystemFonts.CreateFont("Noto Sans", 10); // temporary measure, should include any fonts in resources.
-            var nameFont = SystemFonts.CreateFont("Noto Sans", 13); // temporary measure, should include any fonts in resources.
-            var scoreFont = SystemFonts.CreateFont("Noto Sans", 20, FontStyle.Bold); // temporary measure, should include any fonts in resources.
+            var timeFont = FontFamilies.NotoSans.CreateFont(10);
+            var nameFont = FontFamilies.NotoSans.CreateFont(13);
+            var scoreFont = FontFamilies.NotoSans.CreateFont(20, FontStyle.Bold);
             var timeOptions = new TextOptions(timeFont) { Dpi = 96, WrappingLength = 192};
             var nameOptions = new TextOptions(nameFont) { Dpi = 96, LineSpacing = 0.75F, VerticalAlignment = VerticalAlignment.Center, WrappingLength = 140};
             var scoreOptions = new TextOptions(scoreFont) { Dpi = 96, VerticalAlignment = VerticalAlignment.Center };

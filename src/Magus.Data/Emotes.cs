@@ -8,6 +8,7 @@ namespace Magus.Data
         // public static Emote Icon => Emote.Parse($"<::00000000>");
         public static Emote Spacer => Emote.Parse("<:spacer:973678534637813760>");
 
+        public static Emote Live => Emote.Parse($"<a:live:1122107083769258015>");
 
         public static Emote AnnouncementChannel => Emote.Parse("<:announcement:1080865323605037108>");
         public static Emote TextChannel         => Emote.Parse("<:text:1080865313110904952>");

@@ -118,10 +118,58 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="BracketTemplateBali" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\Images\BracketTemplateBali.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="NotoSans_Black" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-Black.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="BracketTemplateDefault" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\Images\BracketTemplateDefault.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="NotoSans_BlackItalic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-BlackItalic.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_Bold" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-Bold.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_BoldItalic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-BoldItalic.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_ExtraBold" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-ExtraBold.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_ExtraBoldItalic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-ExtraBoldItalic.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_ExtraLight" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-ExtraLight.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_ExtraLightItalic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-ExtraLightItalic.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_Italic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-Italic.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_Light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-Light.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_LightItalic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-LightItalic.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_Medium" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-Medium.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_MediumItalic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-MediumItalic.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_Regular" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-Regular.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_SemiBold" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-SemiBold.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_SemiBoldItalic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-SemiBoldItalic.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_Thin" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-Thin.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="NotoSans_ThinItalic" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Fonts\Noto_Sans\NotoSans-ThinItalic.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>
