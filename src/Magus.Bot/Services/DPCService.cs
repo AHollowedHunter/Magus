@@ -7,6 +7,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using STRATZ;
+using System.Collections.Immutable;
 
 namespace Magus.Bot.Services
 {
@@ -37,6 +38,7 @@ namespace Magus.Bot.Services
             ScheduleUpdateTeamLogos();
 
             ScheduleUpdateBracket();
+            ScheduleUpdateUpcoming();
 
             _logger.LogInformation("DPCService Initialised");
         }
@@ -67,6 +69,25 @@ namespace Magus.Bot.Services
             _logger.LogInformation("Updated Team Logos");
         }
 
+        private void ScheduleUpdateUpcoming() => _scheduler.ScheduleAsync(UpdateUpcoming)
+                                                           .EveryFifteenSeconds()
+                                                           .RunOnceAtStart();
+
+        private IEnumerable<LeagueNodeType> upcomingNodes;
+
+        public IEnumerable<LeagueNodeType> UpcomingNodes => upcomingNodes.ToArray();
+
+        private async Task UpdateUpcoming()
+        {
+            var league = await _stratz.GetLeagueInfo(baliId);
+
+            var allNodes = league.NodeGroups.SelectMany(x => x.Nodes).ToList();
+
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var allUpcoming = allNodes.Where(x => !x.HasStarted ?? false && x.ScheduledTime >= now);
+            upcomingNodes = allNodes.Where(x => x.ScheduledTime == allNodes.Where(x => x.ScheduledTime >= now).MinBy(x => x.ScheduledTime)?.ScheduledTime);
+        }
+
         private void ScheduleUpdateBracket() => _scheduler.ScheduleAsync(UpdateBracket)
                                                           .EveryFifteenSeconds()
                                                           .RunOnceAtStart();
@@ -76,57 +97,76 @@ namespace Magus.Bot.Services
         const int limaId   = 15089;
         const int ti_22    = 14268;
 
-        private Image BracketImage;
+        private LeagueBracketInfo _bracketInfo;
+
+        public LeagueBracketInfo BracketInfo => _bracketInfo;
 
         private bool IsPlayoffNodeGroup(LeagueNodeGroupType x)
             => x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleSeedLoser || x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner;
 
         private async Task UpdateBracket()
         {
-            var league = await _stratz.GetLeagueInfo(berlinId);
+            var league = await _stratz.GetLeagueInfo(baliId);
             var playoffNodeGroup = league.NodeGroups.Single(IsPlayoffNodeGroup);
 
+            var bracketImage = Image.Load<Rgba32>(Common.Images.BracketTemplateBali);
+
+            PopulateBracketImage(bracketImage, playoffNodeGroup);
+
+            var liveNodes = GetLiveNodes(playoffNodeGroup);
+            var upcomingNodes = GetUpcomingNodes(playoffNodeGroup);
+
+            _bracketInfo = new LeagueBracketInfo((int)league.Id!, league.DisplayName, league.TournamentUrl, league.PrizePool, DateTimeOffset.UtcNow, bracketImage);
+            _logger.LogInformation("Updated DPC Bracket");
+        }
+
+        private void PopulateBracketImage(Image bracketImage, LeagueNodeGroupType playoffNodeGroup)
+        {
             // Grand final node seems to be at the end of the UB node ID series.
             // Similarly, the LB nodes come AFTER the GF nodeId.
             // If this changes in the future, need to use an algorithm to process
             // node order via the winning/losing node IDs
-            var gfNode = playoffNodeGroup.Nodes.Single(IsGrandFinalNode);
-            var ubNodes = playoffNodeGroup.Nodes.Where(x => x.Id < gfNode.Id).ToList();
-            var lbNodes = playoffNodeGroup.Nodes.Where(x => x.Id > gfNode.Id).ToList();
-
-            // Some leagues have it set as SeedLoser but "bye" the LB teams through round 1.
-            // Can use this to split template to ignore the extra round and save space.
-            var skipSeedRound = playoffNodeGroup.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner || playoffNodeGroup.TeamCount <= 12;
-
-            var updatedBracket = Image.Load<Rgba32>(Common.Images.BracketTemplateBali);
-
-            // temp bracket "anchors", the top-left point of each bracket card of template at 1600x1000
-            var gfAnchorSeed = (x: 1375, y:455);
-            var ubAnchorsSeed = new (int x, int y)[] { (250, 60), (250, 170), (250, 280), (250, 390), (700, 115), (700, 335), (1150, 225) };
-            var lbAnchorsSeed = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 520), (250, 630), (250, 740), (250, 850), (475, 575), (475, 795), (700, 575), (700, 795), (925, 685), (1150, 685) };
-            
-            var gfAnchorWinners = (x: 1150, y:455);
-            var ubAnchorsWinners = new (int x, int y)[] { (25, 60), (25, 170), (25, 280), (25, 390), (475, 115), (475, 335), (925, 225) };
-            var lbAnchorsWinners = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 575), (250, 795), (475, 575), (475, 795), (700, 685), (925, 685) };
-
-            AddNodeToImage(updatedBracket, gfNode, gfAnchorWinners);
-
-            for (var i = 0; i < ubNodes.Count; i++)
+            var gfNode = playoffNodeGroup.Nodes.FirstOrDefault(IsGrandFinalNode);
+            if (gfNode == null)
             {
-                AddNodeToImage(updatedBracket, ubNodes[i], ubAnchorsWinners[i]);
+                // If this happens, but other nodes are already populated, then will need to rework
+                // how everything is calculated using winning/losing node IDs
+                // BUT 🤞 as node ids are in a particular order, they should all be generated at once.
+                _logger.LogWarning("Cannot determine Grand Final node.");
             }
-
-            // remove the "ghost seed" rounds
-            if (skipSeedRound && lbNodes.Count == 14)
-                lbNodes.RemoveRange(0, 4);
-            for (var i = 0; i < lbNodes.Count; i++)
+            else
             {
-                AddNodeToImage(updatedBracket, lbNodes[i], lbAnchorsWinners[i]);
+                var ubNodes = playoffNodeGroup.Nodes.Where(x => x.Id < gfNode.Id).ToList();
+                var lbNodes = playoffNodeGroup.Nodes.Where(x => x.Id > gfNode.Id).ToList();
+
+                // Some leagues have it set as SeedLoser but "bye" the LB teams through round 1.
+                // Can use this to split template to ignore the extra round and save space.
+                var skipSeedRound = playoffNodeGroup.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner || playoffNodeGroup.TeamCount <= 12;
+
+                // temp bracket "anchors", the top-left point of each bracket card of template at 1600x1000
+                var gfAnchorSeed = (x: 1375, y:455);
+                var ubAnchorsSeed = new (int x, int y)[] { (250, 60), (250, 170), (250, 280), (250, 390), (700, 115), (700, 335), (1150, 225) };
+                var lbAnchorsSeed = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 520), (250, 630), (250, 740), (250, 850), (475, 575), (475, 795), (700, 575), (700, 795), (925, 685), (1150, 685) };
+
+                var gfAnchorWinners = (x: 1150, y:455);
+                var ubAnchorsWinners = new (int x, int y)[] { (25, 60), (25, 170), (25, 280), (25, 390), (475, 115), (475, 335), (925, 225) };
+                var lbAnchorsWinners = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 575), (250, 795), (475, 575), (475, 795), (700, 685), (925, 685) };
+
+                AddNodeToImage(bracketImage, gfNode, gfAnchorWinners);
+
+                for (var i = 0; i < ubNodes.Count; i++)
+                {
+                    AddNodeToImage(bracketImage, ubNodes[i], ubAnchorsWinners[i]);
+                }
+
+                // remove the "ghost seed" rounds
+                if (skipSeedRound && lbNodes.Count == 14)
+                    lbNodes.RemoveRange(0, 4);
+                for (var i = 0; i < lbNodes.Count; i++)
+                {
+                    AddNodeToImage(bracketImage, lbNodes[i], lbAnchorsWinners[i]);
+                }
             }
-
-            BracketImage = updatedBracket;
-
-            _logger.LogInformation("Updated DPC Bracket for: {id}. Final node: {node}", berlinId, gfNode.Id);
         }
 
         private void AddNodeToImage(Image image, LeagueNodeType node, (int x, int y) anchor)
@@ -168,9 +208,42 @@ namespace Magus.Bot.Services
             }
         }
 
-        public Image GetBracketImage() => BracketImage;
-
         private static bool IsGrandFinalNode(LeagueNodeType node)
             => node.NodeType == LeagueNodeDefaultGroupEnum.BestOfFive || (node.LosingNodeId == null && node.WinningNodeId == null && node.ScheduledTime != null);
+
+        private IEnumerable<LeagueNodeType> GetLiveNodes(LeagueNodeGroupType nodeGroup)
+        {
+            var currentNodes = nodeGroup.Nodes.Where(x => (x.HasStarted ?? false) && (!x.IsCompleted ?? false)).OrderBy(x => x.ActualTime ?? x.ScheduledTime);
+            return currentNodes;
+        }
+        private IEnumerable<LeagueNodeType> GetUpcomingNodes(LeagueNodeGroupType nodeGroup)
+        {
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var upcomingNodes = nodeGroup.Nodes.Where(x => !x.HasStarted ?? false && x.ScheduledTime >= now).OrderBy(x => x.ScheduledTime);
+            return upcomingNodes;
+        }
+    }
+
+    public readonly struct LeagueBracketInfo
+    {
+        public LeagueBracketInfo(int leagueId, string Name, string url, int? prizePool, DateTimeOffset lastUpdated, Image image)
+        {
+            LeagueId = leagueId;
+            LeagueName = Name;
+            Url = url;
+            PrizePool = prizePool;
+            LastUpdated = lastUpdated;
+            _bracketImage = image;
+        }
+
+        public int LeagueId { get; init; }
+        public string LeagueName { get; init; }
+        public string Url { get; init; }
+        public int? PrizePool { get; init; }
+        public DateTimeOffset LastUpdated { get; init; }
+
+        private Image _bracketImage { get; init; }
+
+        public void GetBracketPng(Stream stream) => _bracketImage.SaveAsPng(stream);
     }
 }

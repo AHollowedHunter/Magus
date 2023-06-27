@@ -17,15 +17,18 @@ namespace Magus.Data.Models.Discord
         public bool IsPartnered { get; set; }
         public bool IsVerified { get; set; }
         public bool IsCurrentMember { get; set; } = true;
+        public bool HideDpcSpoilers { get; set; } = true;
+        public bool HasBeenToldOfSpoilers { get; set; } = false;
         public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
-
         public IList<Snapshot> JoinedInfo { get; init; } = new List<Snapshot>();
         public IList<Snapshot> LeftInfo { get; init; } = new List<Snapshot>();
-
-        public record Snapshot(DateTimeOffset Date, int MemberCount, string Name, ulong OwnerId);
-
         public IList<Announcement> Announcements { get; init; } = new List<Announcement>();
 
+        // Sub-records
+        public record Snapshot(DateTimeOffset Date, int MemberCount, string Name, ulong OwnerId);
+
         public record Announcement(Topic Topic, ulong WebhookId);
+
+        public record GuildConfig(bool DpcSpoilers);
     }
 }

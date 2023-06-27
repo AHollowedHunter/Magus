@@ -178,6 +178,7 @@ query ($leagueId: Int!) {{
       advancingTeamCount
       nodes {{
         id
+        nodeGroupId
         seriesId
         nodeType
         winningNodeId
