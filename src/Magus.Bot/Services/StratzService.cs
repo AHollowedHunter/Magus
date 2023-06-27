@@ -21,10 +21,10 @@ namespace Magus.Bot.Services
 
         public StratzService(ILogger<StratzService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
         {
-            _logger      = logger;
-            _scheduler   = scheduler;
+            _logger = logger;
+            _scheduler = scheduler;
             _botSettings = botSettings.Value;
-            _httpClient  = httpClientFactory.CreateClient();
+            _httpClient = httpClientFactory.CreateClient();
             _httpClient.DefaultRequestHeaders.Authorization = new("Bearer", _botSettings.StratzToken);
             _httpClient.BaseAddress = new Uri(StratzApiUrl);
 

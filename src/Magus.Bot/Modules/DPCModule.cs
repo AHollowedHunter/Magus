@@ -68,13 +68,52 @@ namespace Magus.Bot.Modules
         {
             var eb = new EmbedBuilder()
                 .WithTitle(info.LeagueName)
+                .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})")
                 .WithColor(0x102a4c)
                 .WithTimestamp(info.LastUpdated)
                 .WithFooter("Powered by STRATZ", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
 
-            eb.AddField("_ _", $"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId})", true);
-            eb.AddField("_ _", $"[Official Website]({info.Url})", true);
+            if (info.LiveNodes.Any())
+            {
+                eb.AddField("_ _", Emotes.Live + " **Live Games**");
+                foreach (var node in info.LiveNodes)
+                {
+                    eb.AddField(MakeNodeFieldBuilder(node, spoilerMode));
+                }
+            }
+            if (info.UpcomingNodes.Any())
+            {
+                eb.AddField("_ _", "**Upcoming Games**");
+                foreach (var node in info.UpcomingNodes.Take(3))
+                {
+                    eb.AddField(MakeNodeFieldBuilder(node, spoilerMode).WithIsInline(true));
+                }
+            }
+
             return eb.Build();
+        }
+
+        private static EmbedFieldBuilder MakeNodeFieldBuilder(LeagueNodeType node, bool spoilerMode)
+        {
+            string? format(string? text) => text is not null && spoilerMode ? Format.Spoiler(text) : text;
+
+            var name = new StringBuilder()
+                        .Append(format(node.TeamOne?.Name.PadRight(8, '\u2002')) ?? "*TBD*")
+                        .Append(" vs ")
+                        .Append(format(node.TeamTwo?.Name.PadRight(8, '\u2002')) ?? "*TBD*")
+                        .ToString();
+            var value = new StringBuilder()
+                        .Append(node.HasStarted ?? false ? "Started" : "Starts")
+                        .Append(" <t:")
+                        .Append(node.ActualTime ?? node.ScheduledTime)
+                        .AppendLine(":R>");
+            if (node.HasStarted ?? false)
+            {
+                value.Append("Score: ")
+                    .Append(format(node.TeamOneWins + " - " + node.TeamTwoWins));
+            }
+
+            return new EmbedFieldBuilder() { Name = name, Value = value };
         }
 
         private static string MakeFileName(bool spoilerMode, LeagueBracketInfo info)

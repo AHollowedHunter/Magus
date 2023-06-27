@@ -116,9 +116,14 @@ namespace Magus.Bot.Services
             var liveNodes = GetLiveNodes(playoffNodeGroup);
             var upcomingNodes = GetUpcomingNodes(playoffNodeGroup);
 
-            _bracketInfo = new LeagueBracketInfo((int)league.Id!, league.DisplayName, league.TournamentUrl, league.PrizePool, DateTimeOffset.UtcNow, bracketImage);
+            _bracketInfo = new LeagueBracketInfo((int)league.Id!, league.DisplayName, league.TournamentUrl, league.PrizePool, DateTimeOffset.UtcNow, bracketImage, liveNodes, upcomingNodes);
             _logger.LogInformation("Updated DPC Bracket");
         }
+
+        // Some leagues have it set as SeedLoser but "bye" the LB teams through round 1.
+        // Can use this to split template to ignore the extra round and save space.
+        private static bool SkipSeedRound(LeagueNodeGroupType nodeGroup)
+            => nodeGroup.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner || nodeGroup.TeamCount <= 12;
 
         private void PopulateBracketImage(Image bracketImage, LeagueNodeGroupType playoffNodeGroup)
         {
@@ -139,10 +144,6 @@ namespace Magus.Bot.Services
                 var ubNodes = playoffNodeGroup.Nodes.Where(x => x.Id < gfNode.Id).ToList();
                 var lbNodes = playoffNodeGroup.Nodes.Where(x => x.Id > gfNode.Id).ToList();
 
-                // Some leagues have it set as SeedLoser but "bye" the LB teams through round 1.
-                // Can use this to split template to ignore the extra round and save space.
-                var skipSeedRound = playoffNodeGroup.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner || playoffNodeGroup.TeamCount <= 12;
-
                 // temp bracket "anchors", the top-left point of each bracket card of template at 1600x1000
                 var gfAnchorSeed = (x: 1375, y:455);
                 var ubAnchorsSeed = new (int x, int y)[] { (250, 60), (250, 170), (250, 280), (250, 390), (700, 115), (700, 335), (1150, 225) };
@@ -160,7 +161,7 @@ namespace Magus.Bot.Services
                 }
 
                 // remove the "ghost seed" rounds
-                if (skipSeedRound && lbNodes.Count == 14)
+                if (SkipSeedRound(playoffNodeGroup) && lbNodes.Count == 14)
                     lbNodes.RemoveRange(0, 4);
                 for (var i = 0; i < lbNodes.Count; i++)
                 {
@@ -219,14 +220,27 @@ namespace Magus.Bot.Services
         private IEnumerable<LeagueNodeType> GetUpcomingNodes(LeagueNodeGroupType nodeGroup)
         {
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var upcomingNodes = nodeGroup.Nodes.Where(x => !x.HasStarted ?? false && x.ScheduledTime >= now).OrderBy(x => x.ScheduledTime);
+            var upcomingNodes = nodeGroup.Nodes.Where(x => !x.HasStarted ?? false && x.ScheduledTime >= now).OrderBy(x => x.ScheduledTime).ToList();
+            // If there are 'any' nodes, it should be all of them. But who knows 🤷
+            if (upcomingNodes.Any() && SkipSeedRound(nodeGroup))
+            {
+                try
+                {
+                    // the ghost seed nodes should now be first, as they would have already been "played".
+                    upcomingNodes.RemoveRange(0, 4);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed removing 'seed nodes' in GetUpcomingNodes... Reliant output will likely be wrong or throw.");
+                }
+            }
             return upcomingNodes;
         }
     }
 
     public readonly struct LeagueBracketInfo
     {
-        public LeagueBracketInfo(int leagueId, string Name, string url, int? prizePool, DateTimeOffset lastUpdated, Image image)
+        public LeagueBracketInfo(int leagueId, string Name, string url, int? prizePool, DateTimeOffset lastUpdated, Image image, IEnumerable<LeagueNodeType> liveNodes, IEnumerable<LeagueNodeType> upcomingNodes)
         {
             LeagueId = leagueId;
             LeagueName = Name;
@@ -234,6 +248,8 @@ namespace Magus.Bot.Services
             PrizePool = prizePool;
             LastUpdated = lastUpdated;
             _bracketImage = image;
+            LiveNodes = liveNodes.ToImmutableList();
+            UpcomingNodes = upcomingNodes.ToImmutableList();
         }
 
         public int LeagueId { get; init; }
@@ -241,6 +257,8 @@ namespace Magus.Bot.Services
         public string Url { get; init; }
         public int? PrizePool { get; init; }
         public DateTimeOffset LastUpdated { get; init; }
+        public IImmutableList<LeagueNodeType> LiveNodes { get; init; }
+        public IImmutableList<LeagueNodeType> UpcomingNodes { get; init; }
 
         private Image _bracketImage { get; init; }
 
