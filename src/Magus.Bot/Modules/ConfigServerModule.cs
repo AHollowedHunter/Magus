@@ -219,7 +219,7 @@ namespace Magus.Bot.Modules
             }
 
             [SlashCommand("spoilers", "Configure whether to hide recent DPC results behind spoiler tags. Defaults to \"On\" to hide results.")]
-            public async Task Spoilers([Summary(description: "The heroes name to lookup")] SpoilerMode hideSpoilers)
+            public async Task Spoilers([Summary(description: "'On' will hide results behind spoiler tags. 'Off' will show all results.")] SpoilerMode hideSpoilers)
             {
                 await DeferAsync(ephemeral: true);
 
