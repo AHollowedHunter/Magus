@@ -69,7 +69,7 @@ namespace Magus.Bot.Services
         }
 
         private void ScheduleUpdateLeague() => _scheduler.ScheduleAsync(UpdateLeague)
-                                                         .EveryFifteenSeconds()
+                                                         .EveryFiveMinutes()
                                                          .RunOnceAtStart();
 
         const int berlinId = 15251;
