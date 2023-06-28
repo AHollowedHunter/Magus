@@ -162,6 +162,9 @@ query ($leagueId: Int!) {{
       gameState
       gameTime
       completed
+      createdDateTime
+      radiantScore
+      direScore
       direTeam {{
         name
       }}

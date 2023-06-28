@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 namespace Magus.Bot.Modules
 {
     [Group(GroupName, "Get DPC info (BETA)")]
-    [ModuleRegistration(Location.TESTING)]
+    [ModuleRegistration(Location.GLOBAL)]
     public class DPCModule : InteractionModuleBase<SocketInteractionContext>
     {
         const string GroupName = "dpc";
@@ -47,13 +47,13 @@ namespace Magus.Bot.Modules
             bracketInfo.GetBracketPng(imageStream);
 
             var guild = await getGuildTask;
-            var spoilerMode = guild.HideDpcSpoilers;
+            var spoilerMode = guild?.HideDpcSpoilers ?? false;
 
             var embeds = new List<Embed>
             {
                 MakeBracketEmbed(bracketInfo, spoilerMode)
             };
-            if (!guild.HasBeenToldOfSpoilers)
+            if (guild is not null && guild.HasBeenToldOfSpoilers is false)
             {
                 embeds.Add(SpoilerModeWarning());
                 guild.HasBeenToldOfSpoilers = true;
@@ -64,7 +64,7 @@ namespace Magus.Bot.Modules
             await FollowupWithFileAsync(imageStream, MakeFileName(spoilerMode, bracketInfo), embeds: embeds.ToArray());
         }
 
-        private static Embed MakeBracketEmbed(LeagueBracketInfo info, bool spoilerMode)
+        private static Embed MakeBracketEmbed(LeagueInfo info, bool spoilerMode)
         {
             var eb = new EmbedBuilder()
                 .WithTitle(info.LeagueName)
@@ -73,18 +73,18 @@ namespace Magus.Bot.Modules
                 .WithTimestamp(info.LastUpdated)
                 .WithFooter("Powered by STRATZ", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
 
-            if (info.LiveNodes.Any())
+            if (info.Playoffs.LiveNodes.Any())
             {
                 eb.AddField("_ _", Emotes.Live + " **Live Games**");
-                foreach (var node in info.LiveNodes)
+                foreach (var node in info.Playoffs.LiveNodes)
                 {
                     eb.AddField(MakeNodeFieldBuilder(node, spoilerMode));
                 }
             }
-            if (info.UpcomingNodes.Any())
+            if (info.Playoffs.UpcomingNodes.Any())
             {
                 eb.AddField("_ _", "**Upcoming Games**");
-                foreach (var node in info.UpcomingNodes.Take(3))
+                foreach (var node in info.Playoffs.UpcomingNodes.Take(3))
                 {
                     eb.AddField(MakeNodeFieldBuilder(node, spoilerMode).WithIsInline(true));
                 }
@@ -116,7 +116,7 @@ namespace Magus.Bot.Modules
             return new EmbedFieldBuilder() { Name = name, Value = value };
         }
 
-        private static string MakeFileName(bool spoilerMode, LeagueBracketInfo info)
+        private static string MakeFileName(bool spoilerMode, LeagueInfo info)
             => new StringBuilder()
             .Append(spoilerMode ? "SPOILER_" : string.Empty)
             .Append("Bracket_")
@@ -129,7 +129,7 @@ namespace Magus.Bot.Modules
         private static Embed SpoilerModeWarning()
             => new EmbedBuilder()
             .WithTitle("Spoiler Mode is turned on")
-            .WithDescription("By default, spoiler mode is switched on for ongoing and recent events. A server admin can use `/config-server dpc spoilers` to disable this.")
+            .WithDescription("In servers spoiler mode is switched on by default for results, live games, and main events. A server admin can use `/config-server dpc spoilers` to disable this. In DMs spoiler mode is off.")
             .WithColor(Color.DarkGreen)
             .Build();
 
@@ -138,34 +138,104 @@ namespace Magus.Bot.Modules
         {
             await DeferAsync();
 
-            var upcoming = _dpc.UpcomingNodes;
+            var getGuildTask =_db.GetGuild(Context.Guild);
+
+            var info = _dpc.BracketInfo;
 
             var embed = new EmbedBuilder()
-                .WithTitle("UPCOMING MATCHES")
-                .WithDescription($"<t:{upcoming.First().ScheduledTime}:f>");
+                .WithTitle(info.LeagueName)
+                .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})\n**Upcoming Matches**")
+                .WithColor(0x102a4c)
+                .WithTimestamp(info.LastUpdated)
+                .WithFooter("Powered by STRATZ", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
 
-            foreach (var node in upcoming)
+            var guild = await getGuildTask;
+            var spoilerMode = guild?.HideDpcSpoilers ?? false;
+
+            foreach (var node in info.AllUpcomingNodes.Take(4))
             {
-                embed.AddField(UpcomingNodeField(node));
+                // Only hide spoilers for main event playoffs, which for bali is 9.
+                // long term this should be covered with a proper set of structs etc. for this data.
+                embed.AddField(MakeNodeFieldBuilder(node, node.NodeGroupId == 9 ? spoilerMode : false));
+            }
+            var embeds = new List<Embed>
+            {
+                embed.Build()
+            };
+            if (guild is not null && guild.HasBeenToldOfSpoilers is false)
+            {
+                embeds.Add(SpoilerModeWarning());
+                guild.HasBeenToldOfSpoilers = true;
+                // No need to wait for this and delay response. If it fails the guild will get another notification
+                _ = _db.UpsertRecord(guild);
             }
 
-            await FollowupAsync(embed: embed.Build());
+            await FollowupAsync(embeds: embeds.ToArray());
         }
 
-        private static EmbedFieldBuilder UpcomingNodeField(LeagueNodeType node)
+        [SlashCommand("live", "Get live games. Updates every 5 minutes. (BETA)")]
+        public async Task Live()
         {
-            var name = new StringBuilder()
-                .Append(node.TeamOne.Name)
-                .Append(" vs ")
-                .Append(node.TeamTwo.Name)
-                .Append(" (")
-                .Append(node.NodeGroupId)
-                .Append(')')
-                .ToString();
-            var value = "_ _";
-            return new EmbedFieldBuilder()
-                .WithName(name)
-                .WithValue(value);
+            await DeferAsync();
+
+            var getGuildTask =_db.GetGuild(Context.Guild);
+
+            var info = _dpc.BracketInfo;
+
+            var mainEmbed = new EmbedBuilder()
+                .WithTitle(info.LeagueName)
+                .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})\n{Emotes.Live} **Live Games**")
+                .WithColor(0x102a4c)
+                .WithTimestamp(info.LastUpdated)
+                .WithFooter("Powered by STRATZ", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
+
+            var guild = await getGuildTask;
+            var spoilerMode = guild?.HideDpcSpoilers ?? false;
+
+            if (info.LiveMatches.Any())
+            {
+                foreach (var match in info.LiveMatches)
+                {
+                    mainEmbed.AddField(MakeLiveGameFieldBuilder(match, spoilerMode));
+                }
+            }
+            else
+            {
+                mainEmbed.AddField("No Live Games Right Now", "Use `/dpc upcoming` to see when the next series is starting.");
+            }
+            var embeds = new List<Embed>
+            {
+                mainEmbed.Build()
+            };
+            if (guild is not null && guild.HasBeenToldOfSpoilers is false)
+            {
+                embeds.Add(SpoilerModeWarning());
+                guild.HasBeenToldOfSpoilers = true;
+                // No need to wait for this and delay response. If it fails the guild will get another notification
+                _ = _db.UpsertRecord(guild);
+            }
+
+            await FollowupAsync(embeds: embeds.ToArray());
+        }
+        private static EmbedFieldBuilder MakeLiveGameFieldBuilder(MatchLiveType match, bool spoilerMode)
+        {
+            string? format(string? text) => text is not null && spoilerMode ? Format.Spoiler(text) : text;
+
+            var name = new StringBuilder().Append(format(match.RadiantTeam?.Name.PadRight(8, '\u2002')) ?? "*UNKNOWN*")
+                                          .Append(" vs ")
+                                          .Append(format(match.DireTeam?.Name.PadRight(8, '\u2002')) ?? "*UNKNOWN*")
+                                          .ToString();
+            var duration = TimeSpan.FromSeconds(match.GameTime ?? 0).ToString("h\\:mm\\:ss");
+            var value = new StringBuilder().Append("Started <t:")
+                                           .Append(match.CreatedDateTime)
+                                           .AppendLine(":R>")
+                                           .Append("Match Duration: ")
+                                           .AppendLine(duration)
+                                           .Append("Score: ")
+                                           .Append(format(match.RadiantScore + " - " + match.DireScore));
+
+
+            return new EmbedFieldBuilder() { Name = name, Value = value };
         }
     }
 }

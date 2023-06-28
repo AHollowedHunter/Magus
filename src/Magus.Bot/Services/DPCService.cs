@@ -37,8 +37,7 @@ namespace Magus.Bot.Services
             await UpdateTeamLogos();
             ScheduleUpdateTeamLogos();
 
-            ScheduleUpdateBracket();
-            ScheduleUpdateUpcoming();
+            ScheduleUpdateLeague();
 
             _logger.LogInformation("DPCService Initialised");
         }
@@ -69,42 +68,23 @@ namespace Magus.Bot.Services
             _logger.LogInformation("Updated Team Logos");
         }
 
-        private void ScheduleUpdateUpcoming() => _scheduler.ScheduleAsync(UpdateUpcoming)
-                                                           .EveryFifteenSeconds()
-                                                           .RunOnceAtStart();
-
-        private IEnumerable<LeagueNodeType> upcomingNodes;
-
-        public IEnumerable<LeagueNodeType> UpcomingNodes => upcomingNodes.ToArray();
-
-        private async Task UpdateUpcoming()
-        {
-            var league = await _stratz.GetLeagueInfo(baliId);
-
-            var allNodes = league.NodeGroups.SelectMany(x => x.Nodes).ToList();
-
-            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var allUpcoming = allNodes.Where(x => !x.HasStarted ?? false && x.ScheduledTime >= now);
-            upcomingNodes = allNodes.Where(x => x.ScheduledTime == allNodes.Where(x => x.ScheduledTime >= now).MinBy(x => x.ScheduledTime)?.ScheduledTime);
-        }
-
-        private void ScheduleUpdateBracket() => _scheduler.ScheduleAsync(UpdateBracket)
-                                                          .EveryFifteenSeconds()
-                                                          .RunOnceAtStart();
+        private void ScheduleUpdateLeague() => _scheduler.ScheduleAsync(UpdateLeague)
+                                                         .EveryFifteenSeconds()
+                                                         .RunOnceAtStart();
 
         const int berlinId = 15251;
         const int baliId   = 15438;
         const int limaId   = 15089;
         const int ti_22    = 14268;
 
-        private LeagueBracketInfo _bracketInfo;
+        private LeagueInfo _bracketInfo;
 
-        public LeagueBracketInfo BracketInfo => _bracketInfo;
+        public LeagueInfo BracketInfo => _bracketInfo;
 
         private bool IsPlayoffNodeGroup(LeagueNodeGroupType x)
             => x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleSeedLoser || x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner;
 
-        private async Task UpdateBracket()
+        private async Task UpdateLeague()
         {
             var league = await _stratz.GetLeagueInfo(baliId);
             var playoffNodeGroup = league.NodeGroups.Single(IsPlayoffNodeGroup);
@@ -113,10 +93,17 @@ namespace Magus.Bot.Services
 
             PopulateBracketImage(bracketImage, playoffNodeGroup);
 
-            var liveNodes = GetLiveNodes(playoffNodeGroup);
-            var upcomingNodes = GetUpcomingNodes(playoffNodeGroup);
+            var playoffInfo = new LeagueStageInfo(GetLiveGroupNodes(playoffNodeGroup), GetUpcomingGroupNodes(playoffNodeGroup));
 
-            _bracketInfo = new LeagueBracketInfo((int)league.Id!, league.DisplayName, league.TournamentUrl, league.PrizePool, DateTimeOffset.UtcNow, bracketImage, liveNodes, upcomingNodes);
+            _bracketInfo = new LeagueInfo((int)league.Id!,
+                                          league.DisplayName,
+                                          league.TournamentUrl,
+                                          league.PrizePool,
+                                          DateTimeOffset.UtcNow,
+                                          bracketImage,
+                                          playoffInfo,
+                                          GetAllUpcomingNodes(league),
+                                          league.LiveMatches);
             _logger.LogInformation("Updated DPC Bracket");
         }
 
@@ -212,12 +199,12 @@ namespace Magus.Bot.Services
         private static bool IsGrandFinalNode(LeagueNodeType node)
             => node.NodeType == LeagueNodeDefaultGroupEnum.BestOfFive || (node.LosingNodeId == null && node.WinningNodeId == null && node.ScheduledTime != null);
 
-        private IEnumerable<LeagueNodeType> GetLiveNodes(LeagueNodeGroupType nodeGroup)
+        private IEnumerable<LeagueNodeType> GetLiveGroupNodes(LeagueNodeGroupType nodeGroup)
         {
             var currentNodes = nodeGroup.Nodes.Where(x => (x.HasStarted ?? false) && (!x.IsCompleted ?? false)).OrderBy(x => x.ActualTime ?? x.ScheduledTime);
             return currentNodes;
         }
-        private IEnumerable<LeagueNodeType> GetUpcomingNodes(LeagueNodeGroupType nodeGroup)
+        private IEnumerable<LeagueNodeType> GetUpcomingGroupNodes(LeagueNodeGroupType nodeGroup)
         {
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var upcomingNodes = nodeGroup.Nodes.Where(x => !x.HasStarted ?? false && x.ScheduledTime >= now).OrderBy(x => x.ScheduledTime).ToList();
@@ -236,20 +223,43 @@ namespace Magus.Bot.Services
             }
             return upcomingNodes;
         }
+
+        private IEnumerable<LeagueNodeType> GetAllUpcomingNodes(LeagueType league)
+        {
+            var allNodes = league.NodeGroups.SelectMany(x => x.Nodes).ToList();
+
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var allUpcoming = allNodes.Where(x => !x.HasStarted ?? false && x.ScheduledTime >= now);
+            return allNodes.Where(x =>
+                    x.HasStarted is false &&
+                    x.ScheduledTime is not null &&
+                    x.ScheduledTime >= now)
+                .OrderBy(x => x.ScheduledTime)
+                .ToList();
+        }
     }
 
-    public readonly struct LeagueBracketInfo
+    public readonly struct LeagueInfo
     {
-        public LeagueBracketInfo(int leagueId, string Name, string url, int? prizePool, DateTimeOffset lastUpdated, Image image, IEnumerable<LeagueNodeType> liveNodes, IEnumerable<LeagueNodeType> upcomingNodes)
+        public LeagueInfo(int leagueId,
+                          string Name,
+                          string url,
+                          int? prizePool,
+                          DateTimeOffset lastUpdated,
+                          Image image,
+                          LeagueStageInfo playoffs,
+                          IEnumerable<LeagueNodeType> allUpcomingNodes,
+                          IEnumerable<MatchLiveType> liveMatches)
         {
             LeagueId = leagueId;
             LeagueName = Name;
             Url = url;
             PrizePool = prizePool;
             LastUpdated = lastUpdated;
+            Playoffs = playoffs;
+            AllUpcomingNodes = allUpcomingNodes.ToImmutableList();
+            LiveMatches = liveMatches.ToImmutableList();
             _bracketImage = image;
-            LiveNodes = liveNodes.ToImmutableList();
-            UpcomingNodes = upcomingNodes.ToImmutableList();
         }
 
         public int LeagueId { get; init; }
@@ -257,11 +267,24 @@ namespace Magus.Bot.Services
         public string Url { get; init; }
         public int? PrizePool { get; init; }
         public DateTimeOffset LastUpdated { get; init; }
-        public IImmutableList<LeagueNodeType> LiveNodes { get; init; }
-        public IImmutableList<LeagueNodeType> UpcomingNodes { get; init; }
+        public LeagueStageInfo Playoffs { get; init; }
+        public IImmutableList<LeagueNodeType> AllUpcomingNodes { get; init; }
+        public IImmutableList<MatchLiveType> LiveMatches { get; init; }
 
         private Image _bracketImage { get; init; }
 
         public void GetBracketPng(Stream stream) => _bracketImage.SaveAsPng(stream);
+    }
+
+    public readonly struct LeagueStageInfo
+    {
+        public LeagueStageInfo(IEnumerable<LeagueNodeType> liveNodes, IEnumerable<LeagueNodeType> upcomingNodes)
+        {
+            LiveNodes = liveNodes.ToImmutableList();
+            UpcomingNodes = upcomingNodes.ToImmutableList();
+        }
+
+        public IImmutableList<LeagueNodeType> LiveNodes { get; init; }
+        public IImmutableList<LeagueNodeType> UpcomingNodes { get; init; }
     }
 }
