@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 namespace Magus.Bot.Modules
 {
     [Group(GroupName, "Get statistics")]
-    [ModuleRegistration(Location.TESTING, isEnabled: true)]
+    [ModuleRegistration(Location.GLOBAL)]
     public class StatsModule : InteractionModuleBase<SocketInteractionContext>
     {
         const string GroupName = "stats";

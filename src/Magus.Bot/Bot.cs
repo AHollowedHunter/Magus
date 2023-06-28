@@ -3,8 +3,6 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using GraphQL;
-using GraphQL.Client.Http;
-using GraphQL.Client.Serializer.SystemTextJson;
 using Magus.Bot.Services;
 using Magus.Common.Options;
 using Magus.Data;
@@ -60,6 +58,7 @@ namespace Magus.Bot
 
             await interactionHandler.InitialiseAsync();
             //await services.GetRequiredService<TIService>().Initialise();
+            await _services.GetRequiredService<DPCService>().InitialiseAsync();
             await _services.GetRequiredService<LocalisationService>().InitialiseAsync();
             await _services.GetRequiredService<AnnouncementService>().InitialiseAsync();
 
@@ -124,6 +123,7 @@ namespace Magus.Bot
                 .AddSingleton<InteractionHandler>()
                 .AddSingleton<LocalisationService>()
                 .AddSingleton<StratzService>()
+                .AddSingleton<DPCService>()
                 .AddSingleton<TIService>()
                 .AddSingleton<AnnouncementService>();
 

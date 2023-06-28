@@ -63,9 +63,9 @@ namespace Magus.Common {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static byte[] DotaAvatar {
+        public static byte[] BracketTemplateBali {
             get {
-                object obj = ResourceManager.GetObject("DotaAvatar", resourceCulture);
+                object obj = ResourceManager.GetObject("BracketTemplateBali", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -73,19 +73,9 @@ namespace Magus.Common {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static byte[] DotaLogo {
+        public static byte[] BracketTemplateDefault {
             get {
-                object obj = ResourceManager.GetObject("DotaLogo", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        public static byte[] MagusAvatar {
-            get {
-                object obj = ResourceManager.GetObject("MagusAvatar", resourceCulture);
+                object obj = ResourceManager.GetObject("BracketTemplateDefault", resourceCulture);
                 return ((byte[])(obj));
             }
         }

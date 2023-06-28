@@ -10,7 +10,7 @@ namespace Magus.Bot.Services
 {
     public sealed class StratzService
     {
-        private readonly ILogger<AnnouncementService> _logger;
+        private readonly ILogger<StratzService> _logger;
         private readonly IScheduler _scheduler;
         private readonly BotSettings _botSettings;
         private readonly HttpClient _httpClient;
@@ -19,12 +19,12 @@ namespace Magus.Bot.Services
 
         const string StratzApiUrl = "https://api.stratz.com/graphql";
 
-        public StratzService(ILogger<AnnouncementService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
+        public StratzService(ILogger<StratzService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
         {
-            _logger      = logger;
-            _scheduler   = scheduler;
+            _logger = logger;
+            _scheduler = scheduler;
             _botSettings = botSettings.Value;
-            _httpClient  = httpClientFactory.CreateClient();
+            _httpClient = httpClientFactory.CreateClient();
             _httpClient.DefaultRequestHeaders.Authorization = new("Bearer", _botSettings.StratzToken);
             _httpClient.BaseAddress = new Uri(StratzApiUrl);
 
@@ -135,6 +135,82 @@ query ($steamid: Long!)
 
             var response = await _stratz.SendQueryAsync<AccountCheckResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = accountId}));
             return response.Data;
+        }
+
+        public async Task<LeagueType> GetLeagueInfo(int leagueId)
+        {
+            var query = $@"
+query ($leagueId: Int!) {{
+  league(id: $leagueId) {{
+    id
+    displayName
+    tournamentUrl
+    basePrizePool
+    prizePool
+    tables {{
+      tableTeams {{
+        teamId
+        team {{
+          name
+          id
+        }}
+      }}
+    }}
+    liveMatches {{
+      matchId
+      delay
+      gameState
+      gameTime
+      completed
+      createdDateTime
+      radiantScore
+      direScore
+      direTeam {{
+        name
+      }}
+      radiantTeam {{
+        name
+      }}
+    }}
+    nodeGroups {{
+      id
+      name
+      teamCount
+      nodeGroupType
+      advancingNodeGroupId
+      advancingTeamCount
+      nodes {{
+        id
+        nodeGroupId
+        seriesId
+        nodeType
+        winningNodeId
+        losingNodeId
+        hasStarted
+        isCompleted
+        scheduledTime
+        actualTime
+        teamOneWins
+        teamTwoWins
+        teamOne {{
+          id
+          name
+          tag
+        }}
+        teamTwo {{
+          id
+          name
+          tag
+        }}
+      }}
+    }}
+  }}
+}}
+
+";
+
+            var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query, variables: new { leagueId }), () => new { League = new LeagueType() });
+            return response.Data.League;
         }
     }
 }

@@ -14,7 +14,7 @@ using System.Text.RegularExpressions;
 namespace Magus.Bot.Modules
 {
     [Group(GroupName, "Configure User settings")]
-    [ModuleRegistration(Location.TESTING)]
+    [ModuleRegistration(Location.GLOBAL)]
     public class ConfigUserModule : ModuleBase
     {
         public const string GroupName = "config-user";

@@ -43,15 +43,20 @@ namespace Magus.Data.Extensions
             await db.UpsertRecord(guildRecord);
         }
 
-        public async static Task<Guild> GetGuild(this IAsyncDataService db, SocketGuild guild)
+        public async static Task<Guild?> GetGuild(this IAsyncDataService db, SocketGuild guild)
         {
-            var guildRecord = await db.GetRecord<Guild>(guild.Id);
-            if (guildRecord == null)
+            if (guild is not null)
             {
-                await db.UpsertGuildRecord(guild, DiscordGuildAction.Joined);
-                guildRecord = await db.GetRecord<Guild>(guild.Id);
+                var guildRecord = await db.GetRecord<Guild>(guild.Id);
+                if (guildRecord == null)
+                {
+                    await db.UpsertGuildRecord(guild, DiscordGuildAction.Joined);
+                    guildRecord = await db.GetRecord<Guild>(guild.Id);
+                }
+
+                return guildRecord;
             }
-            return guildRecord;
+            return null;
         }
 
 

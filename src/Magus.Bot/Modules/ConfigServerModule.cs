@@ -8,6 +8,7 @@ using Magus.Common.Enums;
 using Magus.Data;
 using Magus.Data.Extensions;
 using Microsoft.Extensions.Options;
+using SteamWebAPI2.Utilities;
 
 namespace Magus.Bot.Modules
 {
@@ -201,6 +202,40 @@ namespace Magus.Bot.Modules
 
                 await FollowupAsync($"Removed **{topic}** announcements from this server.", ephemeral: true);
             }
+        }
+
+        [Group(SubGroupName, "server DPC settings")]
+        public class DPCGroup : InteractionModuleBase<SocketInteractionContext>
+        {
+            public const string SubGroupName = "dpc";
+
+            private readonly ILogger<DPCGroup> _logger;
+            private readonly IAsyncDataService _db;
+
+            public DPCGroup(ILogger<DPCGroup> logger, IAsyncDataService db)
+            {
+                _logger = logger;
+                _db = db;
+            }
+
+            [SlashCommand("spoilers", "Configure whether to hide recent DPC results behind spoiler tags. Defaults to \"On\" to hide results.")]
+            public async Task Spoilers([Summary(description: "'On' will hide results behind spoiler tags. 'Off' will show all results.")] SpoilerMode hideSpoilers)
+            {
+                await DeferAsync(ephemeral: true);
+
+                var guild = await _db.GetGuild(Context.Guild);
+                guild.HideDpcSpoilers = hideSpoilers == SpoilerMode.On;
+                guild.HasBeenToldOfSpoilers = true;
+                await _db.UpsertRecord(guild);
+
+                await FollowupAsync($"Now {(guild.HideDpcSpoilers ? "hiding" : "showing")} spoilers!");
+            }
+        }
+
+        public enum SpoilerMode
+        {
+            On = 0,
+            Off = 1,
         }
     }
 }
