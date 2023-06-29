@@ -194,7 +194,7 @@ namespace Magus.Bot.Modules
 
             if (info.LiveMatches.Any())
             {
-                foreach (var match in info.LiveMatches)
+                foreach (var match in info.LiveMatches.Where(x => x.GameState is not MatchLiveGameState.PostGame))
                 {
                     mainEmbed.AddField(MakeLiveGameFieldBuilder(match, spoilerMode));
                 }
@@ -228,8 +228,11 @@ namespace Magus.Bot.Modules
             var duration = TimeSpan.FromSeconds(match.GameTime ?? 0).ToString("h\\:mm\\:ss");
             var value = new StringBuilder().Append("Started <t:")
                                            .Append(match.CreatedDateTime)
-                                           .AppendLine(":R>")
-                                           .Append("Match Duration: ")
+                                           .Append(":R>")
+                                           .Append(WideSpace)
+                                           .Append("State: ")
+                                           .AppendLine(match.GameState.ToString())
+                                           .Append("Game Time: ")
                                            .AppendLine(duration)
                                            .Append("Score: ")
                                            .Append(format(match.RadiantScore + " - " + match.DireScore));
