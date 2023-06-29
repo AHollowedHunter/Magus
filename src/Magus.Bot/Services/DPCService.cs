@@ -47,7 +47,7 @@ namespace Magus.Bot.Services
 
         private async Task UpdateTeamLogos()
         {
-            var league = await _stratz.GetLeagueInfo(berlinId);
+            var league = await _stratz.GetLeagueInfo(baliId);
 
             foreach (var team in league.Tables.TableTeams)
             {
@@ -72,10 +72,7 @@ namespace Magus.Bot.Services
                                                          .EveryFiveMinutes()
                                                          .RunOnceAtStart();
 
-        const int berlinId = 15251;
-        const int baliId   = 15438;
-        const int limaId   = 15089;
-        const int ti_22    = 14268;
+        const int baliId = 15438;
 
         private LeagueInfo _bracketInfo;
 
