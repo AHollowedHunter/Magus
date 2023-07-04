@@ -18,6 +18,7 @@ namespace Magus.Bot.Services
         private readonly GraphQLHttpClient _stratz;
 
         const string StratzApiUrl = "https://api.stratz.com/graphql";
+        //const string StratzApiUrl = "http://127.0.0.1:8000";
 
         public StratzService(ILogger<StratzService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
         {

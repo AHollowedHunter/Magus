@@ -79,7 +79,11 @@ namespace Magus.Bot.Services
         public LeagueInfo BracketInfo => _bracketInfo;
 
         private bool IsPlayoffNodeGroup(LeagueNodeGroupType x)
-            => x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleSeedLoser || x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner;
+            //=> x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleSeedLoser || x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner;
+            => x.Id == 13; // For Bali, as there is two nodegroups that match the above...
+        // in the long run, this needs to accommodate anomalies or old data.
+        // maybe need to use a combination of stratz + dotawebapi https://www.dota2.com/webapi/IDOTA2League/GetLeagueData/v001?league_id=15438
+        // also on stratz discord https://discord.com/channels/268890221943324677/647693746757959682/1125752061062041650
 
         private async Task UpdateLeague()
         {
@@ -204,9 +208,12 @@ namespace Magus.Bot.Services
         private IEnumerable<LeagueNodeType> GetUpcomingGroupNodes(LeagueNodeGroupType nodeGroup)
         {
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var upcomingNodes = nodeGroup.Nodes.Where(x => !x.HasStarted ?? false && x.ScheduledTime >= now).OrderBy(x => x.ScheduledTime).ToList();
+            // BALI: 313-316 are ghost seed rounds, will manually exclude them now but need to work on this as before event scheduled times are all null. check during event if they get filled right
+            //var upcomingNodes = nodeGroup.Nodes.Where(x => x.HasStarted is false && x.ScheduledTime >= now).OrderBy(x => x.ScheduledTime).ToList();
+            var upcomingNodes = nodeGroup.Nodes.Where(x => x.HasStarted is false && x.ScheduledTime >= now && x.Id < 313 && x.Id > 316).OrderBy(x => x.ScheduledTime).ToList();
             // If there are 'any' nodes, it should be all of them. But who knows 🤷
-            if (upcomingNodes.Any() && SkipSeedRound(nodeGroup))
+            //if (upcomingNodes.Any() && SkipSeedRound(nodeGroup))
+            if (upcomingNodes.Any())
             {
                 try
                 {
