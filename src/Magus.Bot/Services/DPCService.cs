@@ -210,21 +210,22 @@ namespace Magus.Bot.Services
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             // BALI: 313-316 are ghost seed rounds, will manually exclude them now but need to work on this as before event scheduled times are all null. check during event if they get filled right
             //var upcomingNodes = nodeGroup.Nodes.Where(x => x.HasStarted is false && x.ScheduledTime >= now).OrderBy(x => x.ScheduledTime).ToList();
-            var upcomingNodes = nodeGroup.Nodes.Where(x => x.HasStarted is false && x.ScheduledTime >= now && x.Id < 313 && x.Id > 316).OrderBy(x => x.ScheduledTime).ToList();
+            var upcomingNodes = nodeGroup.Nodes.Where(x => x.HasStarted is false && x.ScheduledTime >= now && (x.Id < 313 || x.Id > 316)).OrderBy(x => x.ScheduledTime).ToList();
+
             // If there are 'any' nodes, it should be all of them. But who knows 🤷
             //if (upcomingNodes.Any() && SkipSeedRound(nodeGroup))
-            if (upcomingNodes.Any())
-            {
-                try
-                {
-                    // the ghost seed nodes should now be first, as they would have already been "played".
-                    upcomingNodes.RemoveRange(0, 4);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed removing 'seed nodes' in GetUpcomingNodes... Reliant output will likely be wrong or throw.");
-                }
-            }
+            //{
+            //    try
+            //    {
+            //        // the ghost seed nodes should now be first, as they would have already been "played".
+            //        upcomingNodes.RemoveRange(0, 4);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        _logger.LogWarning(ex, "Failed removing 'seed nodes' in GetUpcomingNodes... Reliant output will likely be wrong or throw.");
+            //    }
+            //}
+
             return upcomingNodes;
         }
 

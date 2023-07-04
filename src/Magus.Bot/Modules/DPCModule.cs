@@ -154,9 +154,9 @@ namespace Magus.Bot.Modules
 
             foreach (var node in info.AllUpcomingNodes.Take(4))
             {
-                // Only hide spoilers for main event playoffs, which for bali is 9.
+                // Only hide spoilers for main event playoffs, which for bali is NOW 13.
                 // long term this should be covered with a proper set of structs etc. for this data.
-                embed.AddField(MakeNodeFieldBuilder(node, node.NodeGroupId == 9 ? spoilerMode : false));
+                embed.AddField(MakeNodeFieldBuilder(node, node.NodeGroupId == 13 ? spoilerMode : false));
             }
             var embeds = new List<Embed>
             {
