@@ -47,7 +47,7 @@ namespace Magus.Bot.Services
 
         private async Task UpdateTeamLogos()
         {
-            var league = await _stratz.GetLeagueInfo(baliId);
+            var league = await _stratz.GetLeagueInfo(ti2023ID);
 
             foreach (var team in league.Tables.TableTeams)
             {
@@ -73,26 +73,34 @@ namespace Magus.Bot.Services
                                                          .RunOnceAtStart();
 
         const int baliId = 15438;
+        const int ti2023ID = 15728;
 
         private LeagueInfo _bracketInfo;
 
         public LeagueInfo BracketInfo => _bracketInfo;
 
         private bool IsPlayoffNodeGroup(LeagueNodeGroupType x)
-            //=> x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleSeedLoser || x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner;
-            => x.Id == 13; // For Bali, as there is two nodegroups that match the above...
+            => x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleSeedLoser || x.NodeGroupType == LeagueNodeGroupTypeEnum.BracketDoubleAllWinner;
+            //=> x.Id == 13; // For Bali, as there is two nodegroups that match the above...
         // in the long run, this needs to accommodate anomalies or old data.
         // maybe need to use a combination of stratz + dotawebapi https://www.dota2.com/webapi/IDOTA2League/GetLeagueData/v001?league_id=15438
         // also on stratz discord https://discord.com/channels/268890221943324677/647693746757959682/1125752061062041650
 
         private async Task UpdateLeague()
         {
-            var league = await _stratz.GetLeagueInfo(baliId);
+            var league = await _stratz.GetLeagueInfo(ti2023ID);
             var playoffNodeGroup = league.NodeGroups.Single(IsPlayoffNodeGroup);
 
-            var bracketImage = Image.Load<Rgba32>(Common.Images.BracketTemplateBali);
+            var bracketImage = Image.Load<Rgba32>(Common.Images.BracketTemplateDefault);
 
-            PopulateBracketImage(bracketImage, playoffNodeGroup);
+            try
+            {
+                PopulateBracketImage(bracketImage, playoffNodeGroup);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Can't populate bracket image.");
+            }
 
             var playoffInfo = new LeagueStageInfo(GetLiveGroupNodes(playoffNodeGroup), GetUpcomingGroupNodes(playoffNodeGroup));
 
@@ -139,7 +147,7 @@ namespace Magus.Bot.Services
 
                 var gfAnchorWinners = (x: 1150, y:455);
                 var ubAnchorsWinners = new (int x, int y)[] { (25, 60), (25, 170), (25, 280), (25, 390), (475, 115), (475, 335), (925, 225) };
-                var lbAnchorsWinners = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 575), (250, 795), (475, 575), (475, 795), (700, 685), (925, 685) };
+                var lbAnchorsWinners = new (int x, int y)[] { (25, 520), (25, 630), (25, 740), (25, 850), (250, 575), (250, 795), (475, 575), (475, 795), (700, 685), (925, 685), (700, 685), (925, 685), (700, 685), (925, 685) };
 
                 AddNodeToImage(bracketImage, gfNode, gfAnchorWinners);
 
