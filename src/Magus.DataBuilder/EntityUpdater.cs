@@ -105,7 +105,7 @@ namespace Magus.DataBuilder
         {
             _logger.LogInformation("Setting Entities");
 
-            var mixedAbilities = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcAbilities);
+            var mixedAbilities = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcAbilities, false);
             var heroes         = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcHeroes);
             var items          = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Items);
             var neutralItems   = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NeutralItems);

@@ -9,7 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Discord.Net.Core" Version="3.10.0" />
+		<PackageReference Include="Discord.Net.Core" Version="3.12.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
@@ -22,8 +22,8 @@
 		<PackageReference Include="Serilog.Settings.Configuration" Version="7.0.0" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="4.1.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-		<PackageReference Include="ValveKeyValue" Version="0.8.2.162" />
-		<PackageReference Include="ValveResourceFormat" Version="0.3.2.1621" />
+		<PackageReference Include="ValveKeyValue" Version="0.9.0.267" />
+		<PackageReference Include="ValveResourceFormat" Version="5.0.2120" />
 	</ItemGroup>
 
 	<ItemGroup>

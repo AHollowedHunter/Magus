@@ -11,7 +11,7 @@ using System.Net.Http.Json;
 
 namespace Magus.Bot.Modules
 {
-    [Group("ti", "The International commands")]
+    //[Group("ti", "The International commands")]
     [ModuleRegistration(Location.GLOBAL, isEnabled: false)]
     public sealed class TIModule : ModuleBase
     {

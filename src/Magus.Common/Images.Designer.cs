@@ -79,5 +79,15 @@ namespace Magus.Common {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] BracketTemplateTI2023 {
+            get {
+                object obj = ResourceManager.GetObject("BracketTemplateTI2023", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }
