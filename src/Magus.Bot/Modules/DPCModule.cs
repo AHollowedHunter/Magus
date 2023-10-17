@@ -14,7 +14,7 @@ namespace Magus.Bot.Modules
     [ModuleRegistration(Location.GLOBAL)]
     public class DPCModule : InteractionModuleBase<SocketInteractionContext>
     {
-        const string GroupName = "dpc";
+        const string GroupName = "ti";
 
         const string WideSpace = "\u2007\u2007\u2007";
 

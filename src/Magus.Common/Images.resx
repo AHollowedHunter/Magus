@@ -124,4 +124,7 @@
   <data name="BracketTemplateDefault" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Images\BracketTemplateDefault.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="BracketTemplateTI2023" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Images\BracketTemplateTI2023.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

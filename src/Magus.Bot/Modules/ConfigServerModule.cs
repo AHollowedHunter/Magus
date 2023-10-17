@@ -83,7 +83,7 @@ namespace Magus.Bot.Modules
             if (announcement != null)
             {
                 webhook = await Context.Guild.GetWebhookAsync(announcement.WebhookId);
-                channel = Context.Guild.GetTextChannel(webhook.ChannelId);
+                channel = Context.Guild.GetTextChannel(webhook?.ChannelId ?? 0); // TODO CHECK DEFAULT AFTER NULL CHANGE
             }
             var message = new StringBuilder()
                     .AppendFormat("Choose a targetChannel to receive **{0}** related news and updates.", topic)
