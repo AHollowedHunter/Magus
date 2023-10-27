@@ -149,7 +149,7 @@ namespace Magus.Bot.Services
                 var ubAnchorsWinners = new (int x, int y)[]{(25, 60),(25, 170),(25, 280),(25, 390),(475, 115),(475, 335),(925, 225)};
                 var lbAnchorsWinners = new (int x, int y)[]{(25, 520),(25, 630),(25, 740),(25, 850),(250, 575),(250, 795),(475, 575),(475, 795),(700, 685),(925, 685)};
 
-                AddNodeToImage(bracketImage, gfNode, gfAnchorWinners);
+                AddNodeToImage(bracketImage, gfNode, gfAnchorSeed);
 
                 for (var i = 0; i < ubNodes.Count; i++)
                 {
