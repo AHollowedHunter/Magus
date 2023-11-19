@@ -1,7 +1,6 @@
-﻿namespace Magus.Data.Models.Embeds
-{
-    public record SummonInfoEmbed : EntityInfoEmbed
-    {
+﻿namespace Magus.Data.Models.Embeds;
 
-    }
+public record SummonInfoEmbed : EntityInfoEmbed
+{
+
 }

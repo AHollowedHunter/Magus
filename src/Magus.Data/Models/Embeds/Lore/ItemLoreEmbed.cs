@@ -1,7 +1,6 @@
-﻿namespace Magus.Data.Models.Embeds
-{
-    public record ItemLoreEmbed : EntityLoreEmbed
-    {
+﻿namespace Magus.Data.Models.Embeds;
 
-    }
+public record ItemLoreEmbed : EntityLoreEmbed
+{
+
 }

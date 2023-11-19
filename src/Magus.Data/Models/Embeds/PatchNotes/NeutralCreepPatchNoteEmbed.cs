@@ -1,7 +1,6 @@
-﻿namespace Magus.Data.Models.Embeds
-{
-    public record NeutralCreepPatchNoteEmbed : EntityPatchNoteEmbed
-    {
+﻿namespace Magus.Data.Models.Embeds;
 
-    }
+public record NeutralCreepPatchNoteEmbed : EntityPatchNoteEmbed
+{
+
 }

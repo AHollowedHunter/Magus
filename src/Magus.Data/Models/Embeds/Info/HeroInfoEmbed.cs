@@ -1,7 +1,6 @@
-﻿namespace Magus.Data.Models.Embeds
-{
-    public record HeroInfoEmbed : EntityInfoEmbed
-    {
+﻿namespace Magus.Data.Models.Embeds;
 
-    }
+public record HeroInfoEmbed : EntityInfoEmbed
+{
+
 }

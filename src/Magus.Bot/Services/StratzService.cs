@@ -6,67 +6,67 @@ using Magus.Data.Models.Stratz.Results;
 using Microsoft.Extensions.Options;
 using STRATZ;
 
-namespace Magus.Bot.Services
+namespace Magus.Bot.Services;
+
+public sealed class StratzService
 {
-    public sealed class StratzService
+    private readonly ILogger<StratzService> _logger;
+    private readonly IScheduler _scheduler;
+    private readonly BotSettings _botSettings;
+    private readonly HttpClient _httpClient;
+
+    private readonly GraphQLHttpClient _stratz;
+
+    const string StratzApiUrl = "https://api.stratz.com/graphql";
+    //const string StratzApiUrl = "http://127.0.0.1:8000";
+
+    public StratzService(ILogger<StratzService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
     {
-        private readonly ILogger<StratzService> _logger;
-        private readonly IScheduler _scheduler;
-        private readonly BotSettings _botSettings;
-        private readonly HttpClient _httpClient;
+        _logger = logger;
+        _scheduler = scheduler;
+        _botSettings = botSettings.Value;
+        _httpClient = httpClientFactory.CreateClient();
+        _httpClient.DefaultRequestHeaders.Authorization = new("Bearer", _botSettings.StratzToken);
+        _httpClient.BaseAddress = new Uri(StratzApiUrl);
 
-        private readonly GraphQLHttpClient _stratz;
+        _stratz = new GraphQLHttpClient(new(), new SystemTextJsonSerializer(), _httpClient);
+    }
 
-        const string StratzApiUrl = "https://api.stratz.com/graphql";
-        //const string StratzApiUrl = "http://127.0.0.1:8000";
+    public async Task<PlayerType> GetPlayerHeroStats(long steamId, int heroIds, IList<long>? friendIds = null) =>
+        await GetPlayerHeroStats(steamId, new List<int>() { heroIds }, friendIds);
 
-        public StratzService(ILogger<StratzService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory)
+    public async Task<PlayerType> GetPlayerHeroStats(long steamId, IList<int> heroIds, IList<long>? friendIds = null)
+    {
+        var playerHeroPerformanceMatchesRequest = new PlayerHeroPerformanceMatchesRequestType()
         {
-            _logger = logger;
-            _scheduler = scheduler;
-            _botSettings = botSettings.Value;
-            _httpClient = httpClientFactory.CreateClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new("Bearer", _botSettings.StratzToken);
-            _httpClient.BaseAddress = new Uri(StratzApiUrl);
+            HeroIds = heroIds.Cast<object>().ToList(),
+        };
+        if (friendIds != null)
+            playerHeroPerformanceMatchesRequest.WithFriendSteamAccountIds = friendIds.Cast<object>().ToList();
 
-            _stratz = new GraphQLHttpClient(new(), new SystemTextJsonSerializer(), _httpClient);
-        }
+        var query = new DotaQueryQueryBuilder()
+            .WithPlayer(new PlayerTypeQueryBuilder()
+                .WithSteamAccount(new SteamAccountTypeQueryBuilder()
+                    .WithName())
+                .WithHeroesPerformance(
+                    new PlayerHeroesPerformanceTypeQueryBuilder()
+                        .WithHero(new HeroTypeQueryBuilder()
+                            .WithName()
+                            .WithId())
+                        .WithAllScalarFields()
+                    , playerHeroPerformanceMatchesRequest
+                    , take: int.MaxValue)
+                , steamId)
+            .Build();
 
-        public async Task<PlayerType> GetPlayerHeroStats(long steamId, int heroIds, IList<long>? friendIds = null) =>
-            await GetPlayerHeroStats(steamId, new List<int>() { heroIds }, friendIds);
+        var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query), () => new { Player = new PlayerType() });
+        return response.Data.Player;
+    }
 
-        public async Task<PlayerType> GetPlayerHeroStats(long steamId, IList<int> heroIds, IList<long>? friendIds = null)
-        {
-            var playerHeroPerformanceMatchesRequest = new PlayerHeroPerformanceMatchesRequestType()
-            {
-                HeroIds = heroIds.Cast<object>().ToList(),
-            };
-            if (friendIds != null)
-                playerHeroPerformanceMatchesRequest.WithFriendSteamAccountIds = friendIds.Cast<object>().ToList();
-
-            var query = new DotaQueryQueryBuilder()
-                .WithPlayer(new PlayerTypeQueryBuilder()
-                    .WithSteamAccount(new SteamAccountTypeQueryBuilder()
-                        .WithName())
-                    .WithHeroesPerformance(
-                        new PlayerHeroesPerformanceTypeQueryBuilder()
-                            .WithHero(new HeroTypeQueryBuilder()
-                                .WithName()
-                                .WithId())
-                            .WithAllScalarFields()
-                        , playerHeroPerformanceMatchesRequest
-                        , take: int.MaxValue)
-                    , steamId)
-                .Build();
-
-            var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query), () => new { Player = new PlayerType() });
-            return response.Data.Player;
-        }
-
-        public async Task<StatsRecentResult> GetRecentStats(long accountId)
-        {
-            var query =
-                @"query ($steamid: Long!)
+    public async Task<StatsRecentResult> GetRecentStats(long accountId)
+    {
+        var query =
+            @"query ($steamid: Long!)
 {
   player(steamAccountId: $steamid) {
     MatchGroupBySteamId: matchesGroupBy( request: {
@@ -115,13 +115,13 @@ namespace Magus.Bot.Services
   }
 }";
 
-            var response = await _stratz.SendQueryAsync<StatsRecentResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = accountId}));
-            return response.Data;
-        }
+        var response = await _stratz.SendQueryAsync<StatsRecentResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = accountId}));
+        return response.Data;
+    }
 
-        public async Task<AccountCheckResult> GetAccountInfo(long accountId)
-        {
-            var query = @"
+    public async Task<AccountCheckResult> GetAccountInfo(long accountId)
+    {
+        var query = @"
 query ($steamid: Long!)
 {
     player(steamAccountId: $steamid) {
@@ -134,13 +134,13 @@ query ($steamid: Long!)
     }
 }";
 
-            var response = await _stratz.SendQueryAsync<AccountCheckResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = accountId}));
-            return response.Data;
-        }
+        var response = await _stratz.SendQueryAsync<AccountCheckResult>(new GraphQL.GraphQLRequest(query, variables: new { steamid = accountId}));
+        return response.Data;
+    }
 
-        public async Task<LeagueType> GetLeagueInfo(int leagueId)
-        {
-            var query = $@"
+    public async Task<LeagueType> GetLeagueInfo(int leagueId)
+    {
+        var query = $@"
 query ($leagueId: Int!) {{
   league(id: $leagueId) {{
     id
@@ -210,8 +210,7 @@ query ($leagueId: Int!) {{
 
 ";
 
-            var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query, variables: new { leagueId }), () => new { League = new LeagueType() });
-            return response.Data.League;
-        }
+        var response = await _stratz.SendQueryAsync(new GraphQL.GraphQLRequest(query, variables: new { leagueId }), () => new { League = new LeagueType() });
+        return response.Data.League;
     }
 }

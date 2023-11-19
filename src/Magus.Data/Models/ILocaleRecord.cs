@@ -1,7 +1,6 @@
-﻿namespace Magus.Data.Models
+﻿namespace Magus.Data.Models;
+
+public interface ILocaleRecord
 {
-    public interface ILocaleRecord
-    {
-        public string Locale { get; set; }
-    }
+    public string Locale { get; set; }
 }

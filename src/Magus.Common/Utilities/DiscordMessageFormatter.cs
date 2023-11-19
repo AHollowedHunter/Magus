@@ -1,43 +1,42 @@
 ﻿using Ganss.Xss;
 using System.Text.RegularExpressions;
 
-namespace Magus.Common.Utilities
+namespace Magus.Common.Utilities;
+
+public static class DiscordMessageFormatter
 {
-    public static class DiscordMessageFormatter
+    private static readonly Regex _rssRegex = new(@"\[[^\]]*\](?:.*)\[/[^\]]*\]");
+
+    private static readonly HtmlSanitizer _sanitizer;
+    private static readonly ReverseMarkdown.Converter _markdownConverter;
+    static DiscordMessageFormatter()
     {
-        private static readonly Regex _rssRegex = new(@"\[[^\]]*\](?:.*)\[/[^\]]*\]");
-
-        private static readonly HtmlSanitizer _sanitizer;
-        private static readonly ReverseMarkdown.Converter _markdownConverter;
-        static DiscordMessageFormatter()
+        var sanitizerOptions = new HtmlSanitizerOptions
         {
-            var sanitizerOptions = new HtmlSanitizerOptions
-            {
-                AllowedTags = AllowedTags,
-                AllowedAttributes = AllowedAttributes,
-            };
-            _sanitizer = new HtmlSanitizer(sanitizerOptions);
-            _markdownConverter = new();
-        }
-
-        public static string HtmlToDiscordEmbedMarkdown(string htmlSource)
-        {
-            var sanitizedSource = _sanitizer.Sanitize(htmlSource);
-
-            sanitizedSource = _rssRegex.Replace(sanitizedSource, ""); // DO this first to prevent inadverently removing markdown URLs
-            sanitizedSource = _markdownConverter.Convert(sanitizedSource);
-
-            return sanitizedSource;
-        }
-
-        static ISet<string> AllowedTags { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "a", "b", "br", "div", "i", "li", "ol", "strong", "ul"
+            AllowedTags = AllowedTags,
+            AllowedAttributes = AllowedAttributes,
         };
-
-        static ISet<string> AllowedAttributes { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "href"
-        };
+        _sanitizer = new HtmlSanitizer(sanitizerOptions);
+        _markdownConverter = new();
     }
+
+    public static string HtmlToDiscordEmbedMarkdown(string htmlSource)
+    {
+        var sanitizedSource = _sanitizer.Sanitize(htmlSource);
+
+        sanitizedSource = _rssRegex.Replace(sanitizedSource, ""); // DO this first to prevent inadverently removing markdown URLs
+        sanitizedSource = _markdownConverter.Convert(sanitizedSource);
+
+        return sanitizedSource;
+    }
+
+    static ISet<string> AllowedTags { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "a", "b", "br", "div", "i", "li", "ol", "strong", "ul"
+    };
+
+    static ISet<string> AllowedAttributes { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "href"
+    };
 }

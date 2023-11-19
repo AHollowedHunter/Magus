@@ -1,7 +1,6 @@
-﻿namespace Magus.Data.Models.Embeds
-{
-    public record GeneralPatchNoteEmbed : BasePatchNoteEmbed
-    {
+﻿namespace Magus.Data.Models.Embeds;
 
-    }
+public record GeneralPatchNoteEmbed : BasePatchNoteEmbed
+{
+
 }

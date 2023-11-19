@@ -1,9 +1,8 @@
-﻿namespace Magus.Data.Models
+﻿namespace Magus.Data.Models;
+
+internal interface ILocalisedEntity : IEntity
 {
-    internal interface ILocalisedEntity : IEntity
-    {
-        public string Name { get; set; }
-        public string? RealName { get; set; }
-        public IEnumerable<string>? Aliases { get; set; }
-    }
+    public string Name { get; set; }
+    public string? RealName { get; set; }
+    public IEnumerable<string>? Aliases { get; set; }
 }

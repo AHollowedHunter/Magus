@@ -1,7 +1,6 @@
-﻿namespace Magus.Data.Models.Embeds
+﻿namespace Magus.Data.Models.Embeds;
+
+public record TalentInfoEmbed : EntityInfoEmbed
 {
-    public record TalentInfoEmbed : EntityInfoEmbed
-    {
-        public ulong HeroId { get; set; }
-    }
+    public ulong HeroId { get; set; }
 }

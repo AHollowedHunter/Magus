@@ -1,8 +1,7 @@
-﻿namespace Magus.Common.Enums
+﻿namespace Magus.Common.Enums;
+
+public enum Topic
 {
-    public enum Topic
-    {
-        Dota     = 0,
-        MagusBot = 1,
-    }
+    Dota     = 0,
+    MagusBot = 1,
 }

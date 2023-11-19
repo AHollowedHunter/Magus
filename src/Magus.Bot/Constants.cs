@@ -1,8 +1,7 @@
-﻿namespace Magus.Bot
+﻿namespace Magus.Bot;
+
+public static class Constants
 {
-    public static class Constants
-    {
-        public const char CustomIdGroupDelimiter = '→';
-        public const char CustomIdParamDelimiter = ':';
-    }
+    public const char CustomIdGroupDelimiter = '→';
+    public const char CustomIdParamDelimiter = ':';
 }
