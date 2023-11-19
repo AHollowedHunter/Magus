@@ -25,10 +25,10 @@ namespace Magus.Bot.Services
 
         public AnnouncementService(IAsyncDataService db, DiscordSocketClient discord, ILogger<AnnouncementService> logger, IScheduler scheduler, IOptions<BotSettings> botSettings)
         {
-            _db          = db;
-            _discord     = discord.Rest;
-            _logger      = logger;
-            _scheduler   = scheduler;
+            _db = db;
+            _discord = discord.Rest;
+            _logger = logger;
+            _scheduler = scheduler;
             _botSettings = botSettings.Value;
         }
 

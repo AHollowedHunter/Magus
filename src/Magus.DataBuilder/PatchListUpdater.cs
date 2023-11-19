@@ -13,8 +13,8 @@ namespace Magus.DataBuilder
 
         public PatchListUpdater(IAsyncDataService db, ILogger<PatchNoteUpdater> logger)
         {
-            _db         = db;
-            _logger     = logger;
+            _db = db;
+            _logger = logger;
 
             _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
         }
@@ -60,9 +60,9 @@ namespace Magus.DataBuilder
         private Patch CreatePatchInfo(KVObject patch)
            => new()
            {
-               Id          = GetPatchTimestamp(patch),
+               Id = GetPatchTimestamp(patch),
                PatchNumber = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", ""),
-               Timestamp   = GetPatchTimestamp(patch),
+               Timestamp = GetPatchTimestamp(patch),
            };
 
         private ulong GetPatchTimestamp(KVObject patch)

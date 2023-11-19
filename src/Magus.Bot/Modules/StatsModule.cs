@@ -31,10 +31,10 @@ namespace Magus.Bot.Modules
 
         public StatsModule(ILogger<StatsModule> logger, IOptions<BotSettings> config, IAsyncDataService db, StratzService stratz, LocalisationService localisationService)
         {
-            _logger                        = logger;
-            _db                            = db;
-            _config                        = config.Value;
-            _stratz                        = stratz;
+            _logger = logger;
+            _db = db;
+            _config = config.Value;
+            _stratz = stratz;
             _localisationService = localisationService;
         }
 
@@ -190,7 +190,7 @@ namespace Magus.Bot.Modules
         private static string WinRate(double matchCount, double wins)
         => new StringBuilder()
             .Append("WR: **")
-            .Append((wins /matchCount * 100).ToString("0.#"))
+            .Append((wins / matchCount * 100).ToString("0.#"))
             .Append("%** in **")
             .Append(matchCount)
             .Append("** matches")

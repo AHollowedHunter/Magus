@@ -171,7 +171,7 @@ namespace Magus.DataBuilder.Extensions
                 return default;
 
             var value = kvValue.ToString() ?? "";
-            value     = value.Replace("|", ",");
+            value = value.Replace("|", ",");
             Enum.TryParse<T>(value, true, out var result);
             return result;
         }

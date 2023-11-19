@@ -3,11 +3,7 @@ using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
 using Magus.Data;
-using Magus.Data.Models.Embeds;
-using Magus.Data.Models.OpenDota;
 using Microsoft.Extensions.Options;
-using Steam.Models;
-using System.Net.Http.Json;
 
 namespace Magus.Bot.Modules
 {
@@ -23,9 +19,9 @@ namespace Magus.Bot.Modules
 
         public TIModule(IAsyncDataService db, IOptions<BotSettings> config, TIService tiService)
         {
-            _db         = db;
-            _config     = config.Value;
-            _tiService  = tiService;
+            _db = db;
+            _config = config.Value;
+            _tiService = tiService;
         }
 
         [SlashCommand("prize-pool", "Get current TI Prize pool.")]

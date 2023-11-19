@@ -1,14 +1,14 @@
 ﻿using Coravel.Scheduling.Schedule.Interfaces;
 using Magus.Data;
-using System.Net.Http.Json;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.OpenDota;
-using SteamWebAPI2.Utilities;
-using SteamWebAPI2.Interfaces;
-using System.Text.Json.Serialization;
-using System.Collections.Immutable;
-using Steam.Models.DOTA2;
 using Microsoft.Extensions.Options;
+using Steam.Models.DOTA2;
+using SteamWebAPI2.Interfaces;
+using SteamWebAPI2.Utilities;
+using System.Collections.Immutable;
+using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 
 namespace Magus.Bot.Services
 {
@@ -201,7 +201,7 @@ namespace Magus.Bot.Services
                 //    playerStats.Add(new PlayerStats() { PlayerId = player.AccountId, PlayerName = player.Name });
 
                 HeroPickCount = GetTotalPicksBans(matches);
-                HeroBanCount  = GetTotalPicksBans(matches, false);
+                HeroBanCount = GetTotalPicksBans(matches, false);
                 IgnoredHeroes = HeroNames.Where(x => HeroPickCount[x.Value] == 0 && HeroBanCount[x.Value] == 0)
                                          .Select(x => x.Value);
 
@@ -210,12 +210,12 @@ namespace Magus.Bot.Services
                 var mostBanned  = HeroBanCount.Where(x => x.Value == HeroBanCount.Values.Max());
                 var leastBanned = HeroBanCount.Where(x => x.Value == HeroBanCount.Values.Min() && !IgnoredHeroes.Contains(x.Key));
 
-                MostPickedHero  = new HeroesCount(mostPicked.Select(x => x.Key).ToArray(), mostPicked.First().Value);
+                MostPickedHero = new HeroesCount(mostPicked.Select(x => x.Key).ToArray(), mostPicked.First().Value);
                 LeastPickedHero = new HeroesCount(leastPicked.Select(x => x.Key).ToArray(), leastPicked.First().Value);
-                MostBannedHero  = new HeroesCount(mostBanned.Select(x => x.Key).ToArray(), mostBanned.First().Value);
+                MostBannedHero = new HeroesCount(mostBanned.Select(x => x.Key).ToArray(), mostBanned.First().Value);
                 LeastBannedHero = new HeroesCount(leastBanned.Select(x => x.Key).ToArray(), leastBanned.First().Value);
 
-                LongestMatches  = matches.Where(match => match.Duration == matches.Select(x => x.Duration).Max());
+                LongestMatches = matches.Where(match => match.Duration == matches.Select(x => x.Duration).Max());
                 ShortestMatches = matches.Where(match => match.Duration == matches.Select(x => x.Duration).Min());
 
 
@@ -356,7 +356,7 @@ namespace Magus.Bot.Services
             public HeroesCount(string[] names, int count)
             {
                 HeroNames = names;
-                Count     = count;
+                Count = count;
             }
             public string[] HeroNames { get; }
             public int Count { get; }

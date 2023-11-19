@@ -23,9 +23,9 @@ namespace Magus.Bot.Services
 
         public LocalisationService(IAsyncDataService db, ILogger<LocalisationService> logger, IScheduler scheduler, IOptions<LocalisationOptions> localisationOptions)
         {
-            _db                  = db;
-            _logger              = logger;
-            _scheduler           = scheduler;
+            _db = db;
+            _logger = logger;
+            _scheduler = scheduler;
             _localisationOptions = localisationOptions.Value;
         }
 

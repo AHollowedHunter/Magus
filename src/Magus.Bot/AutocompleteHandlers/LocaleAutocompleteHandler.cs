@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Magus.Common;
 using Magus.Common.Options;
 using Microsoft.Extensions.Options;
 

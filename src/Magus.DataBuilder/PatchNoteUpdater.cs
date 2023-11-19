@@ -23,15 +23,15 @@ namespace Magus.DataBuilder
 
         public PatchNoteUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger)
         {
-            _db                  = db;
+            _db = db;
             _localisationOptions = localisationOptions.Value;
-            _logger              = logger;
+            _logger = logger;
 
-            _kvSerializer    = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+            _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
             _patchNoteValues = new();
-            _dotaValues      = new();
-            _patchNotes      = new();
-            _abilityValues   = new();
+            _dotaValues = new();
+            _patchNotes = new();
+            _abilityValues = new();
         }
 
         public async Task Update()
@@ -103,8 +103,8 @@ namespace Magus.DataBuilder
 
             patchNote.PatchName = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", "");
             patchNote.Timestamp = GetPatchTimestamp(patch);
-            patchNote.Language  = language;
-            patchNote.Website   = patch.Children.FirstOrDefault(x => x.Name == "website")?.Value.ToString();
+            patchNote.Language = language;
+            patchNote.Website = patch.Children.FirstOrDefault(x => x.Name == "website")?.Value.ToString();
 
             foreach (var genericNote in patch.Children.First(x => x.Name == "generic"))
             {
@@ -134,8 +134,8 @@ namespace Magus.DataBuilder
                     patchNote.ItemNotes.Add(new()
                     {
                         InternalName = item.Name,
-                        Title        = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
-                        Notes        = notes,
+                        Title = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
+                        Notes = notes,
                     });
                 }
             }
@@ -150,8 +150,8 @@ namespace Magus.DataBuilder
                 patchNote.NeutralItemNotes.Add(new()
                 {
                     InternalName = item.Name,
-                    Title        = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
-                    Notes        = notes,
+                    Title = item.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
+                    Notes = notes,
                 });
             }
 
@@ -177,8 +177,8 @@ namespace Magus.DataBuilder
                     abilityNotes.Add(new()
                     {
                         InternalName = ability.Name,
-                        Notes        = notes,
-                        Title        = ability.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString()
+                        Notes = notes,
+                        Title = ability.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString()
                     });
                 }
                 foreach (var talent in hero.Children.Where(x => x.Name == "talent"))
@@ -194,7 +194,7 @@ namespace Magus.DataBuilder
                     InternalName = hero.Name,
                     GeneralNotes = generalNotes,
                     AbilityNotes = abilityNotes,
-                    TalentNotes  = talentNotes,
+                    TalentNotes = talentNotes,
                 });
             }
 
@@ -208,8 +208,8 @@ namespace Magus.DataBuilder
                 patchNote.NeutralCreepNotes.Add(new()
                 {
                     InternalName = creep.Name,
-                    Title        = creep.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
-                    Notes        = notes,
+                    Title = creep.Children.FirstOrDefault(x => x.Name == "Title")?.Value.ToString(),
+                    Notes = notes,
                 });
             }
 

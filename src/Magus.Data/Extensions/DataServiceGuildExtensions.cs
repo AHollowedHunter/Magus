@@ -17,16 +17,16 @@ namespace Magus.Data.Extensions
         {
             var guildRecord = await db.GetRecord<Guild>(guild.Id) ?? new Guild(guild.Id);
 
-            guildRecord.CurrentName       = guild.Name;
-            guildRecord.OwnerId           = guild.OwnerId;
+            guildRecord.CurrentName = guild.Name;
+            guildRecord.OwnerId = guild.OwnerId;
             guildRecord.LatestMemberCount = guild.MemberCount;
-            guildRecord.LastUpdated       = DateTime.UtcNow;
+            guildRecord.LastUpdated = DateTime.UtcNow;
 
-            guildRecord.IsCommunity    = guild.Features.HasFeature(GuildFeature.Community);
+            guildRecord.IsCommunity = guild.Features.HasFeature(GuildFeature.Community);
             guildRecord.IsDiscoverable = guild.Features.HasFeature(GuildFeature.Discoverable);
-            guildRecord.IsFeatureable  = guild.Features.HasFeature(GuildFeature.Featureable);
-            guildRecord.IsPartnered    = guild.Features.IsPartnered;
-            guildRecord.IsVerified     = guild.Features.IsVerified;
+            guildRecord.IsFeatureable = guild.Features.HasFeature(GuildFeature.Featureable);
+            guildRecord.IsPartnered = guild.Features.IsPartnered;
+            guildRecord.IsVerified = guild.Features.IsVerified;
 
 
             if (action == DiscordGuildAction.Joined)

@@ -1,6 +1,6 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using Magus.Data.Enums;
 using MongoDB.Bson;
-using Magus.Data.Enums;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace Magus.Data.Models.Magus
 {

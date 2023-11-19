@@ -10,9 +10,9 @@ namespace Magus.DataBuilder
 
         public DotaUpdater(IAsyncDataService db, ILogger<PatchNoteUpdater> logger, IServiceProvider services)
         {
-            _db         = db;
-            _logger     = logger;
-            _services   = services;
+            _db = db;
+            _logger = logger;
+            _services = services;
         }
 
         public async Task Update(DotaInfo dotaInfo = DotaInfo.ALL)

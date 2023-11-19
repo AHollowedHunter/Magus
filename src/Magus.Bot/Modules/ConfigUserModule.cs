@@ -25,8 +25,8 @@ namespace Magus.Bot.Modules
 
         public ConfigUserModule(ILogger<ConfigUserModule> logger, IAsyncDataService db, IOptions<BotSettings> botSettings)
         {
-            _logger      = logger;
-            _db          = db;
+            _logger = logger;
+            _db = db;
             _botSettings = botSettings.Value;
         }
 
@@ -88,11 +88,11 @@ namespace Magus.Bot.Modules
 
             public SteamGroup(ILogger<SteamGroup> logger, IAsyncDataService db, IOptions<BotSettings> botSettings, IHttpClientFactory httpClientFactory, StratzService stratz)
             {
-                _logger      = logger;
-                _db          = db;
+                _logger = logger;
+                _db = db;
                 _botSettings = botSettings.Value;
-                _httpClient  = httpClientFactory.CreateClient();
-                _stratz      = stratz;
+                _httpClient = httpClientFactory.CreateClient();
+                _stratz = stratz;
 
                 webInterfaceFactory = new(_botSettings.Steam.SteamKey);
             }

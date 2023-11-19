@@ -24,55 +24,55 @@ namespace Magus.DataBuilder.Extensions
             // Attributes
             heroInfoFields.Add(new()
             {
-                Name     = $"{Emotes.StrengthIcon} Strength {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_STRENGTH ? "⭐" : "")}",
-                Value    = $"{hero.AttributeBaseStrength} +{hero.AttributeStrengthGain}",
+                Name = $"{Emotes.StrengthIcon} Strength {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_STRENGTH ? "⭐" : "")}",
+                Value = $"{hero.AttributeBaseStrength} +{hero.AttributeStrengthGain}",
                 IsInline = true
             });
 
             heroInfoFields.Add(new()
             {
-                Name     = $"{Emotes.AgilityIcon} Agility {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_AGILITY ? "⭐" : "")}",
-                Value    = $" {hero.AttributeBaseAgility} +{hero.AttributeAgilityGain}",
+                Name = $"{Emotes.AgilityIcon} Agility {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_AGILITY ? "⭐" : "")}",
+                Value = $" {hero.AttributeBaseAgility} +{hero.AttributeAgilityGain}",
                 IsInline = true
             });
             heroInfoFields.Add(new()
             {
-                Name     = $"{Emotes.IntelligenceIcon} Intelligence {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_INTELLECT ? "⭐" : "")}",
-                Value    = $"{hero.AttributeBaseIntelligence} +{hero.AttributeIntelligenceGain}",
+                Name = $"{Emotes.IntelligenceIcon} Intelligence {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_INTELLECT ? "⭐" : "")}",
+                Value = $"{hero.AttributeBaseIntelligence} +{hero.AttributeIntelligenceGain}",
                 IsInline = true
             });
 
             //Stats
             heroInfoFields.Add(new()
             {
-                Name     = "Attack",
-                Value    = $"{Emotes.DamageIcon} {hero.GetAttackDamageMin():n0} - {hero.GetAttackDamageMax():n0}\n{Emotes.AttackTimeIcon} {hero.GetAttackTime():n2}{Emotes.Spacer}({hero.AttackRate:n1} Base)\n{Emotes.AttackRangeIcon} {hero.AttackRange}\n{Emotes.ProjectileSpeedIcon} {hero.ProjectileSpeed}",
+                Name = "Attack",
+                Value = $"{Emotes.DamageIcon} {hero.GetAttackDamageMin():n0} - {hero.GetAttackDamageMax():n0}\n{Emotes.AttackTimeIcon} {hero.GetAttackTime():n2}{Emotes.Spacer}({hero.AttackRate:n1} Base)\n{Emotes.AttackRangeIcon} {hero.AttackRange}\n{Emotes.ProjectileSpeedIcon} {hero.ProjectileSpeed}",
                 IsInline = true
             });
             heroInfoFields.Add(new()
             {
-                Name     = "Defence",
-                Value    = $"{Emotes.ArmourIcon} {hero.GetArmor():n1}\n{Emotes.MagicResistIcon} {hero.MagicalResistance}",
+                Name = "Defence",
+                Value = $"{Emotes.ArmourIcon} {hero.GetArmor():n1}\n{Emotes.MagicResistIcon} {hero.MagicalResistance}",
                 IsInline = true
             });
             heroInfoFields.Add(new()
             {
-                Name     = "Mobility",
-                Value    = $"{Emotes.MoveSpeedIcon} {hero.MovementSpeed}\n{Emotes.TurnRateIcon} {hero.MovementTurnRate}\n{Emotes.VisionIcon} {hero.VisionDaytimeRange} / {hero.VisionNighttimeRange}",
-                IsInline = true
-            });
-
-            heroInfoFields.Add(new()
-            {
-                Name     = "Attack Type",
-                Value    = $"{hero.AttackCapabilities.GetAttackTypeIcon()} {hero.AttackCapabilities.GetDisplayName()}",
+                Name = "Mobility",
+                Value = $"{Emotes.MoveSpeedIcon} {hero.MovementSpeed}\n{Emotes.TurnRateIcon} {hero.MovementTurnRate}\n{Emotes.VisionIcon} {hero.VisionDaytimeRange} / {hero.VisionNighttimeRange}",
                 IsInline = true
             });
 
             heroInfoFields.Add(new()
             {
-                Name     = "Complexity",
-                Value    = $"{new string('\u25c6', hero.Complexity)}{new string('\u25c7', 3 - hero.Complexity)}",
+                Name = "Attack Type",
+                Value = $"{hero.AttackCapabilities.GetAttackTypeIcon()} {hero.AttackCapabilities.GetDisplayName()}",
+                IsInline = true
+            });
+
+            heroInfoFields.Add(new()
+            {
+                Name = "Complexity",
+                Value = $"{new string('\u25c6', hero.Complexity)}{new string('\u25c7', 3 - hero.Complexity)}",
                 IsInline = true
             });
 
@@ -87,8 +87,8 @@ namespace Magus.DataBuilder.Extensions
             var roleValue = string.Join(" | ", roleValues);
             heroInfoFields.Add(new()
             {
-                Name     = "Roles",
-                Value    = roleValue,
+                Name = "Roles",
+                Value = roleValue,
                 IsInline = true,
             });
 
@@ -111,8 +111,8 @@ namespace Magus.DataBuilder.Extensions
             var abilityValue = String.Join(" | ", abilityValues);
             heroInfoFields.Add(new()
             {
-                Name     = "Abilities",
-                Value    = abilityValue,
+                Name = "Abilities",
+                Value = abilityValue,
                 IsInline = false
             });
 
@@ -123,14 +123,14 @@ namespace Magus.DataBuilder.Extensions
             {
                 heroInfoEmbedList.Add(new()
                 {
-                    Id           = GetEntityId(hero.Id, hero.InternalName, locale),
-                    EntityId     = hero.Id,
-                    Locale       = locale,
+                    Id = GetEntityId(hero.Id, hero.InternalName, locale),
+                    EntityId = hero.Id,
+                    Locale = locale,
                     InternalName = hero.InternalName,
-                    Aliases      = hero.NameAliases,
-                    RealName     = hero.RealName,
-                    Name         = hero.Name,
-                    Embed        = heroInfoEmbed,
+                    Aliases = hero.NameAliases,
+                    RealName = hero.RealName,
+                    Name = hero.Name,
+                    Embed = heroInfoEmbed,
                 });
             }
             return heroInfoEmbedList;
@@ -260,15 +260,15 @@ namespace Magus.DataBuilder.Extensions
             {
                 abilityInfoEmbedList.Add(new()
                 {
-                    Id           = GetEntityId(ability.Id, ability.InternalName, locale),
-                    EntityId     = ability.Id,
-                    Locale       = locale,
+                    Id = GetEntityId(ability.Id, ability.InternalName, locale),
+                    EntityId = ability.Id,
+                    Locale = locale,
                     InternalName = ability.InternalName,
-                    Name         = ability.Name,
-                    Embed        = embed,
-                    HeroId       = hero.Id,
-                    Scepter      = ability.AbilityHasScepter || ability.AbilityIsGrantedByScepter,
-                    Shard        = ability.AbilityHasShard || ability.AbilityIsGrantedByShard
+                    Name = ability.Name,
+                    Embed = embed,
+                    HeroId = hero.Id,
+                    Scepter = ability.AbilityHasScepter || ability.AbilityIsGrantedByScepter,
+                    Shard = ability.AbilityHasShard || ability.AbilityIsGrantedByShard
                 });
             }
             return abilityInfoEmbedList;
@@ -390,12 +390,12 @@ namespace Magus.DataBuilder.Extensions
             {
                 itemInfoEmbedList.Add(new()
                 {
-                    Id           = GetEntityId(item.Id, item.InternalName, locale),
-                    EntityId     = item.Id,
-                    Locale       = locale,
+                    Id = GetEntityId(item.Id, item.InternalName, locale),
+                    EntityId = item.Id,
+                    Locale = locale,
                     InternalName = item.InternalName,
-                    Name         = item.Name,
-                    Embed        = embed,
+                    Name = item.Name,
+                    Embed = embed,
                 });
             }
             return itemInfoEmbedList;

@@ -6,7 +6,6 @@ using Magus.Data;
 using Magus.Data.Extensions;
 using Magus.Data.Models.Discord;
 using Microsoft.Extensions.Options;
-using System;
 
 namespace Magus.Bot.Modules
 {
