@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magus.Data", "src\Magus.Dat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magus.DataBuilder", "src\Magus.DataBuilder\Magus.DataBuilder.csproj", "{0BFF66C6-BC90-4800-9805-52BB2F8F61F9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magus.Web", "src\Magus.Web\Magus.Web.csproj", "{9E23714C-0AF4-4240-81A8-93C5B27F528C}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magus.Common", "src\Magus.Common\Magus.Common.csproj", "{3E0981B6-7F0B-4D7D-B4F8-E7D79DFB4AA0}"
 EndProject
 Global
@@ -31,10 +29,6 @@ Global
 		{0BFF66C6-BC90-4800-9805-52BB2F8F61F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0BFF66C6-BC90-4800-9805-52BB2F8F61F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0BFF66C6-BC90-4800-9805-52BB2F8F61F9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9E23714C-0AF4-4240-81A8-93C5B27F528C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9E23714C-0AF4-4240-81A8-93C5B27F528C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9E23714C-0AF4-4240-81A8-93C5B27F528C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9E23714C-0AF4-4240-81A8-93C5B27F528C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3E0981B6-7F0B-4D7D-B4F8-E7D79DFB4AA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3E0981B6-7F0B-4D7D-B4F8-E7D79DFB4AA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E0981B6-7F0B-4D7D-B4F8-E7D79DFB4AA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
