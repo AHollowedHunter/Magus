@@ -149,7 +149,7 @@ namespace Magus.Bot.Services
                 var ubAnchorsWinners = new (int x, int y)[]{(25, 60),(25, 170),(25, 280),(25, 390),(475, 115),(475, 335),(925, 225)};
                 var lbAnchorsWinners = new (int x, int y)[]{(25, 520),(25, 630),(25, 740),(25, 850),(250, 575),(250, 795),(475, 575),(475, 795),(700, 685),(925, 685)};
 
-                AddNodeToImage(bracketImage, gfNode, gfAnchorWinners);
+                AddNodeToImage(bracketImage, gfNode, gfAnchorSeed);
 
                 for (var i = 0; i < ubNodes.Count; i++)
                 {
@@ -171,15 +171,15 @@ namespace Magus.Bot.Services
             var timeFont = FontFamilies.NotoSans.CreateFont(10);
             var nameFont = FontFamilies.NotoSans.CreateFont(13);
             var scoreFont = FontFamilies.NotoSans.CreateFont(20, FontStyle.Bold);
-            var timeOptions = new TextOptions(timeFont) { Dpi = 96, WrappingLength = 192};
-            var nameOptions = new TextOptions(nameFont) { Dpi = 96, LineSpacing = 0.75F, VerticalAlignment = VerticalAlignment.Center, WrappingLength = 140};
-            var scoreOptions = new TextOptions(scoreFont) { Dpi = 96, VerticalAlignment = VerticalAlignment.Center };
+            var timeOptions = new RichTextOptions(timeFont) { Dpi = 96, WrappingLength = 192};
+            var nameOptions = new RichTextOptions(nameFont) { Dpi = 96, LineSpacing = 1F, VerticalAlignment = VerticalAlignment.Center, WrappingLength = 140};
+            var scoreOptions = new RichTextOptions(scoreFont) { Dpi = 96, VerticalAlignment = VerticalAlignment.Center };
 
             var time = node.ActualTime ?? node.ScheduledTime;
             if (time != null)
             {
                 var displayTime = DateTimeOffset.FromUnixTimeSeconds((long)time).ToString("ddd dd HH:mm");
-                var textSize = TextMeasurer.Measure(displayTime, timeOptions);
+                var textSize = TextMeasurer.MeasureSize(displayTime, timeOptions);
                 timeOptions.Origin = new Point(anchor.x + 100 - (int)(textSize.Width / 2), anchor.y);
                 image.Mutate(x => x.DrawText(timeOptions, displayTime, new Color(new Rgb24(230, 230, 240))));
             }
@@ -188,7 +188,7 @@ namespace Magus.Bot.Services
                 nameOptions.Origin = new Point(36 + anchor.x, 32 + anchor.y);
                 image.Mutate(x => x.DrawText(nameOptions, node.TeamOne.Name, Color.GhostWhite));
                 scoreOptions.Origin = new Point(180 + anchor.x, 32 + anchor.y);
-                image.Mutate(x => x.DrawText(scoreOptions, node.TeamOneWins.ToString(), Color.GhostWhite));
+                image.Mutate(x => x.DrawText(scoreOptions, node.TeamOneWins?.ToString() ?? "", Color.GhostWhite));
 
                 if (teamLogos.ContainsKey(node.TeamOne.Id ?? -1))
                     image.Mutate(x => x.DrawImage(teamLogos[node.TeamOne.Id ?? -1], new Point(anchor.x + 2, anchor.y + 18), 1));
@@ -198,7 +198,7 @@ namespace Magus.Bot.Services
                 nameOptions.Origin = new Point(36 + anchor.x, 70 + anchor.y);
                 image.Mutate(x => x.DrawText(nameOptions, node.TeamTwo.Name, Color.GhostWhite));
                 scoreOptions.Origin = new Point(180 + anchor.x, 70 + anchor.y);
-                image.Mutate(x => x.DrawText(scoreOptions, node.TeamTwoWins.ToString(), Color.GhostWhite));
+                image.Mutate(x => x.DrawText(scoreOptions, node.TeamTwoWins?.ToString() ?? "", Color.GhostWhite));
 
                 if (teamLogos.ContainsKey(node.TeamTwo.Id ?? -1))
                     image.Mutate(x => x.DrawImage(teamLogos[node.TeamTwo.Id ?? -1], new Point(anchor.x + 2, anchor.y + 56), 1));
