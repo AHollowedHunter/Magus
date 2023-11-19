@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>1.2.2</Version>
+		<Version>1.3.0</Version>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<UserSecretsId>9c319f12-f222-494a-ab6b-e65e38a0003e</UserSecretsId>
 	</PropertyGroup>
