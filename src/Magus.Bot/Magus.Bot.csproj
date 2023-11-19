@@ -42,9 +42,9 @@
 		<PackageReference Include="Serilog.Settings.Configuration" Version="8.0.0" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-		<PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta19" />
-		<PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
-		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta15" />
+		<PackageReference Include="SixLabors.Fonts" Version="2.0.0" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.0.2" />
+		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.0.1" />
 		<PackageReference Include="SteamWebAPI2" Version="4.4.1" />
 		<PackageReference Include="System.ServiceModel.Syndication" Version="8.0.0" />
 	</ItemGroup>

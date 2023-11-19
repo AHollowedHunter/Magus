@@ -13,7 +13,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
     <PackageReference Include="ReverseMarkdown" Version="3.25.0" />
-    <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta19" />
+    <PackageReference Include="SixLabors.Fonts" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
