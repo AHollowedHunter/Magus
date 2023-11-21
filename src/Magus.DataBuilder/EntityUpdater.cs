@@ -14,6 +14,11 @@ using static Magus.Data.Models.Dota.BaseSpell;
 
 namespace Magus.DataBuilder;
 
+/// <summary>
+/// This class is held together with virtual duct tape and hope.
+/// 
+/// Maybe once day it will be rewritten ¯\_(ツ)_/¯
+/// </summary>
 public class EntityUpdater
 {
     private readonly IAsyncDataService _db;
