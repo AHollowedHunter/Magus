@@ -19,7 +19,7 @@ public class DPCService
     private readonly IAsyncDataService _db;
     private readonly HttpClient _httpClient;
 
-    private readonly IDictionary<int, Image> teamLogos = new Dictionary<int, Image>();
+    private readonly Dictionary<int, Image> teamLogos = [];
 
     public DPCService(ILogger<StratzService> logger, IScheduler scheduler, StratzService stratz, IAsyncDataService db, IHttpClientFactory httpClientFactory)
     {
@@ -208,17 +208,17 @@ public class DPCService
     private static bool IsGrandFinalNode(LeagueNodeType node)
         => node.NodeType == LeagueNodeDefaultGroupEnum.BestOfFive || (node.LosingNodeId == null && node.WinningNodeId == null && node.ScheduledTime != null);
 
-    private IEnumerable<LeagueNodeType> GetLiveGroupNodes(LeagueNodeGroupType nodeGroup)
+    private static IEnumerable<LeagueNodeType> GetLiveGroupNodes(LeagueNodeGroupType nodeGroup)
     {
         var currentNodes = nodeGroup.Nodes.Where(x => (x.HasStarted ?? false) && (!x.IsCompleted ?? false)).OrderBy(x => x.ActualTime ?? x.ScheduledTime);
         return currentNodes;
     }
-    private IEnumerable<LeagueNodeType> GetUpcomingGroupNodes(LeagueNodeGroupType nodeGroup)
+    private static IEnumerable<LeagueNodeType> GetUpcomingGroupNodes(LeagueNodeGroupType nodeGroup)
     {
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         // BALI: 313-316 are ghost seed rounds, will manually exclude them now but need to work on this as before event scheduled times are all null. check during event if they get filled right
         //var upcomingNodes = nodeGroup.Nodes.Where(x => x.HasStarted is false && x.ScheduledTime >= now).OrderBy(x => x.ScheduledTime).ToList();
-        var upcomingNodes = nodeGroup.Nodes.Where(x => x.HasStarted is false && x.ScheduledTime >= now && (x.Id < 313 || x.Id > 316)).OrderBy(x => x.ScheduledTime).ToList();
+        var upcomingNodes = nodeGroup.Nodes.Where(x => x.HasStarted is false && x.ScheduledTime >= now && (x.Id < 313 || x.Id > 316)).OrderBy(x => x.ScheduledTime);
 
         // If there are 'any' nodes, it should be all of them. But who knows 🤷
         //if (upcomingNodes.Any() && SkipSeedRound(nodeGroup))
@@ -237,9 +237,9 @@ public class DPCService
         return upcomingNodes;
     }
 
-    private IEnumerable<LeagueNodeType> GetAllUpcomingNodes(LeagueType league)
+    private static IEnumerable<LeagueNodeType> GetAllUpcomingNodes(LeagueType league)
     {
-        var allNodes = league.NodeGroups.SelectMany(x => x.Nodes).ToList();
+        var allNodes = league.NodeGroups.SelectMany(x => x.Nodes);
 
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var allUpcoming = allNodes.Where(x => !x.HasStarted ?? false && x.ScheduledTime >= now);
@@ -247,8 +247,7 @@ public class DPCService
                 x.HasStarted is false &&
                 x.ScheduledTime is not null &&
                 x.ScheduledTime >= now)
-            .OrderBy(x => x.ScheduledTime)
-            .ToList();
+            .OrderBy(x => x.ScheduledTime);
     }
 }
 
@@ -272,7 +271,7 @@ public readonly struct LeagueInfo
         Playoffs = playoffs;
         AllUpcomingNodes = allUpcomingNodes.ToImmutableList();
         LiveMatches = liveMatches.ToImmutableList();
-        _bracketImage = image;
+        BracketImage = image;
     }
 
     public int LeagueId { get; init; }
@@ -284,9 +283,9 @@ public readonly struct LeagueInfo
     public IImmutableList<LeagueNodeType> AllUpcomingNodes { get; init; }
     public IImmutableList<MatchLiveType> LiveMatches { get; init; }
 
-    private Image _bracketImage { get; init; }
+    private Image BracketImage { get; init; }
 
-    public void GetBracketPng(Stream stream) => _bracketImage.SaveAsPng(stream);
+    public void GetBracketPng(Stream stream) => BracketImage.SaveAsPng(stream);
 }
 
 public readonly struct LeagueStageInfo

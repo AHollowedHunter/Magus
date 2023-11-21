@@ -14,12 +14,20 @@ using static Magus.Data.Models.Dota.BaseSpell;
 
 namespace Magus.DataBuilder;
 
+/// <summary>
+/// This class is held together with virtual duct tape and hope.
+/// 
+/// Maybe once day it will be rewritten ¯\_(ツ)_/¯
+/// </summary>
 public class EntityUpdater
 {
     private readonly IAsyncDataService _db;
     private readonly LocalisationOptions _localisationOptions;
     private readonly ILogger<PatchNoteUpdater> _logger;
     private readonly KVSerializer _kvSerializer;
+
+    private readonly Dictionary<string, int> _abilityIds = [];
+    private readonly Dictionary<string, int> _ItemIds = [];
 
     private readonly Dictionary<(string Language, string Key), string> _abilityValues;
     private readonly Dictionary<(string Language, string Key), string> _dotaValues;
@@ -38,21 +46,21 @@ public class EntityUpdater
 
     public EntityUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger)
     {
-        _db                  = db;
+        _db = db;
         _localisationOptions = localisationOptions.Value;
-        _logger              = logger;
+        _logger = logger;
 
-        _kvSerializer          = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
-        _abilityValues         = new();
-        _dotaValues            = new();
-        _heroLoreValues        = new();
-        _abilities             = new();
-        _heroAbilities         = new();
-        _talents               = new();
-        _heroes                = new();
-        _items                 = new();
-        _neutralItemTiers      = new();
-        _baseHero              = new();
+        _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+        _abilityValues = new();
+        _dotaValues = new();
+        _heroLoreValues = new();
+        _abilities = new();
+        _heroAbilities = new();
+        _talents = new();
+        _heroes = new();
+        _items = new();
+        _neutralItemTiers = new();
+        _baseHero = new();
     }
 
     public async Task Update()
@@ -105,7 +113,27 @@ public class EntityUpdater
     {
         _logger.LogInformation("Setting Entities");
 
-        var mixedAbilities = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcAbilities, false);
+        var abilityIds = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcAbilityIds);
+        _abilityIds.Clear();
+        foreach (var ability in abilityIds.Children.Single(x => x.Name == "UnitAbilities").Children.Single(x => x.Name == "Locked"))
+        {
+            _abilityIds.Add(ability.Name, ability.ParseValue<int>());
+        }
+        _ItemIds.Clear();
+        foreach (var item in abilityIds.Children.Single(x => x.Name == "ItemAbilities").Children.Single(x => x.Name == "Locked"))
+        {
+            _ItemIds.Add(item.Name, item.ParseValue<int>());
+        }
+
+        // bodge this
+        var mixedAbilities = (await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcAbilities, false)).Children.ToList();
+        var heroAbilityFiles = Directory.GetFiles(Dota2GameFiles.BasePath + "/scripts/npc/heroes");
+        foreach (var file in heroAbilityFiles)
+        {
+            mixedAbilities.AddRange(await _kvSerializer.GetKVObjectFromLocalUri(file, false));
+        }
+        //
+
         var heroes         = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcHeroes);
         var items          = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Items);
         var neutralItems   = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NeutralItems);
@@ -118,9 +146,9 @@ public class EntityUpdater
         _heroes.Clear();
         _items.Clear();
 
-        foreach (var ability in mixedAbilities.Children.Where(x => x.Name != "Version"))
+        foreach (var ability in mixedAbilities.Where(x => x.Name != "Version"))
         {
-            if (ability.Children.Count() == 0)
+            if (!ability.Children.Any())
                 continue;
             if (!talentRegex.IsMatch(ability.Name))
             {
@@ -131,7 +159,14 @@ public class EntityUpdater
             _logger.LogDebug("Processing talent {0}", ability.Name);
             foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
             {
-                _talents.Add(CreateTalent(language, ability));
+                try
+                {
+                    _talents.Add(CreateTalent(language, ability));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating talent");
+                }
             }
         }
 
@@ -140,7 +175,14 @@ public class EntityUpdater
             _logger.LogDebug("Processing ability {0}", ability.Name);
             foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
             {
-                _abilities.Add(CreateAbility(language, ability));
+                try
+                {
+                    _abilities.Add(CreateAbility(language, ability));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating ability");
+                }
             }
         }
 
@@ -151,7 +193,14 @@ public class EntityUpdater
             _logger.LogDebug("Processing hero {0}", hero.Name);
             foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
             {
-                _heroes.Add(CreateHero(language, hero));
+                try
+                {
+                    _heroes.Add(CreateHero(language, hero));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating hero");
+                }
             }
         }
 
@@ -168,7 +217,14 @@ public class EntityUpdater
             _logger.LogDebug("Processing item {0}", item.Name);
             foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
             {
-                _items.Add(CreateItem(language, item));
+                try
+                {
+                    _items.Add(CreateItem(language, item));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating item");
+                }
             }
         }
 
@@ -226,15 +282,15 @@ public class EntityUpdater
     {
         var talent = new Talent();
 
-        talent.Id              = (int)kvTalent.Children.First(x => x.Name == "ID").Value!;
-        talent.InternalName    = kvTalent.Name;
-        talent.Language        = language;
-        talent.AbilityType     = kvTalent.ParseChildEnum<AbilityType>("AbilityType");
+        talent.Id = _abilityIds[kvTalent.Name];
+        talent.InternalName = kvTalent.Name;
+        talent.Language = language;
+        talent.AbilityType = kvTalent.ParseChildEnum<AbilityType>("AbilityType");
         talent.AbilityBehavior = kvTalent.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
 
         talent.TalentValues = GetTalentValues(kvTalent);
-        talent.Description  = GetAbilityValue(language, talent.InternalName);
-        talent.Note         = GetAbilityValue(language, talent.InternalName, "Description");
+        talent.Description = GetAbilityValue(language, talent.InternalName);
+        talent.Note = GetAbilityValue(language, talent.InternalName, "Description");
 
         _logger.LogTrace("Processed {0,8} {1,-64} in {2}", "talent", talent.InternalName, language);
         return talent;
@@ -283,7 +339,7 @@ public class EntityUpdater
             }
         }
         talent.Description = doubleSymbols.Replace(talent.Description, string.Empty);
-        talent.Note        = doubleSymbols.Replace(talent.Note, string.Empty);
+        talent.Note = doubleSymbols.Replace(talent.Note, string.Empty);
     }
 
     private IEnumerable<Talent.TalentValue> GetTalentValues(KVObject kvTalent)
@@ -301,8 +357,8 @@ public class EntityUpdater
                     var value = item.First(x => x.Name != "var_type" && x.Name != "ad_linked_abilities");
                     talentValues.Add(new()
                     {
-                        Name              = value.Name,
-                        Value             = value.ParseValue<string>() ?? "",
+                        Name = value.Name,
+                        Value = value.ParseValue<string>() ?? "",
                         AdLinkedAbilities = item.ParseChildValue<string>("ad_linked_abilities"),
                     });
                 }
@@ -310,8 +366,8 @@ public class EntityUpdater
                 {
                     talentValues.Add(new()
                     {
-                        Name   = item.Name,
-                        Value  = item.ParseValue<string>() ?? "",
+                        Name = item.Name,
+                        Value = item.ParseValue<string>() ?? "",
                     });
                 }
             }
@@ -323,44 +379,44 @@ public class EntityUpdater
     {
         var ability = new Ability();
 
-        ability.Id           = (int)kvAbility.Children.First(x => x.Name == "ID").Value!;
+        ability.Id = _abilityIds[kvAbility.Name];
         ability.InternalName = kvAbility.Name;
-        ability.Language     = language;
-        ability.Name         = GetAbilityValue(language, ability.InternalName)!;
-        ability.Description  = GetAbilityValue(language, ability.InternalName, "Description");
-        ability.Lore         = GetAbilityValue(language, ability.InternalName, "Lore");
-        ability.Notes        = GetAbilityNoteValues(language, ability.InternalName);
+        ability.Language = language;
+        ability.Name = GetAbilityValue(language, ability.InternalName)!;
+        ability.Description = GetAbilityValue(language, ability.InternalName, "Description");
+        ability.Lore = GetAbilityValue(language, ability.InternalName, "Lore");
+        ability.Notes = GetAbilityNoteValues(language, ability.InternalName);
 
-        ability.AbilityType           = kvAbility.ParseChildEnum<AbilityType>("AbilityType");
-        ability.AbilityBehavior       = kvAbility.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
+        ability.AbilityType = kvAbility.ParseChildEnum<AbilityType>("AbilityType");
+        ability.AbilityBehavior = kvAbility.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
         ability.AbilityUnitTargetTeam = kvAbility.ParseChildEnum<AbilityUnitTargetTeam>("AbilityUnitTargetTeam");
         ability.AbilityUnitTargetType = kvAbility.ParseChildEnum<AbilityUnitTargetType>("AbilityUnitTargetType");
         ability.AbilityUnitDamageType = kvAbility.ParseChildEnum<AbilityUnitDamageType>("AbilityUnitDamageType");
-        ability.SpellImmunityType     = kvAbility.ParseChildEnum<SpellImmunityType>("SpellImmunityType");
-        ability.SpellDispellableType  = kvAbility.ParseChildEnum<SpellDispellableType>("SpellDispellableType");
+        ability.SpellImmunityType = kvAbility.ParseChildEnum<SpellImmunityType>("SpellImmunityType");
+        ability.SpellDispellableType = kvAbility.ParseChildEnum<SpellDispellableType>("SpellDispellableType");
 
-        ability.AbilityCastRange         = kvAbility.ParseChildValueList<float>("AbilityCastRange");
-        ability.AbilityCastPoint         = kvAbility.ParseChildValueList<float>("AbilityCastPoint");
-        ability.AbilityChannelTime       = kvAbility.ParseChildValueList<float>("AbilityChannelTime");
-        ability.AbilityCharges           = kvAbility.ParseChildValueList<float>("AbilityCharges");
+        ability.AbilityCastRange = kvAbility.ParseChildValueList<float>("AbilityCastRange");
+        ability.AbilityCastPoint = kvAbility.ParseChildValueList<float>("AbilityCastPoint");
+        ability.AbilityChannelTime = kvAbility.ParseChildValueList<float>("AbilityChannelTime");
+        ability.AbilityCharges = kvAbility.ParseChildValueList<float>("AbilityCharges");
         ability.AbilityChargeRestoreTime = kvAbility.ParseChildValueList<float>("AbilityChargeRestoreTime");
-        ability.AbilityCooldown          = kvAbility.ParseChildValueList<float>("AbilityCooldown");
-        ability.AbilityDuration          = kvAbility.ParseChildValueList<float>("AbilityDuration");
-        ability.AbilityDamage            = kvAbility.ParseChildValueList<float>("AbilityDamage");
-        ability.AbilityManaCost          = kvAbility.ParseChildValueList<float>("AbilityManaCost");
-        ability.AbilityHealthCost        = kvAbility.ParseChildValueList<float>("AbilityHealthCost");
+        ability.AbilityCooldown = kvAbility.ParseChildValueList<float>("AbilityCooldown");
+        ability.AbilityDuration = kvAbility.ParseChildValueList<float>("AbilityDuration");
+        ability.AbilityDamage = kvAbility.ParseChildValueList<float>("AbilityDamage");
+        ability.AbilityManaCost = kvAbility.ParseChildValueList<float>("AbilityManaCost");
+        ability.AbilityHealthCost = kvAbility.ParseChildValueList<float>("AbilityHealthCost");
 
         ability.AbilityIsGrantedByScepter = kvAbility.ParseChildValue<bool>("IsGrantedByScepter");
-        ability.AbilityIsGrantedByShard   = kvAbility.ParseChildValue<bool>("IsGrantedByShard");
-        ability.AbilityHasScepter         = kvAbility.ParseChildValue<bool>("HasScepterUpgrade");
-        ability.AbilityHasShard           = kvAbility.ParseChildValue<bool>("HasShardUpgrade");
-        ability.ScepterDescription        = GetAbilityValue(language, ability.InternalName, "scepter_description");
-        ability.ShardDescription          = GetAbilityValue(language, ability.InternalName, "shard_description");
+        ability.AbilityIsGrantedByShard = kvAbility.ParseChildValue<bool>("IsGrantedByShard");
+        ability.AbilityHasScepter = kvAbility.ParseChildValue<bool>("HasScepterUpgrade");
+        ability.AbilityHasShard = kvAbility.ParseChildValue<bool>("HasShardUpgrade");
+        ability.ScepterDescription = GetAbilityValue(language, ability.InternalName, "scepter_description");
+        ability.ShardDescription = GetAbilityValue(language, ability.InternalName, "shard_description");
 
-        ability.AbilityValues   = GetAbilityValues(language, kvAbility);
+        ability.AbilityValues = GetAbilityValues(language, kvAbility);
         ability.DisplayedValues = GetDisplayedValues(language, kvAbility);
-        ability.ScepterValues   = GetUpgradeValue(language, kvAbility);
-        ability.ShardValues     = GetUpgradeValue(language, kvAbility, "Shard");
+        ability.ScepterValues = GetUpgradeValue(language, kvAbility);
+        ability.ShardValues = GetUpgradeValue(language, kvAbility, "Shard");
 
         _logger.LogTrace("Processed {0,7} {1,-64} in {2}\"", "ability", ability.InternalName, language);
         return ability;
@@ -401,11 +457,11 @@ public class EntityUpdater
 
                     abilityValue = new()
                     {
-                        Name                = valueName,
-                        Values              = values,
-                        LinkedSpecialBonus  = linkedBonus?.Name,
-                        SpecialBonusValue   = linkedBonus?.ParseValue<string>(),
-                        Description         = GetAbilityValue(language, kvAbility.Name, valueName),
+                        Name = valueName,
+                        Values = values,
+                        LinkedSpecialBonus = linkedBonus?.Name,
+                        SpecialBonusValue = linkedBonus?.ParseValue<string>(),
+                        Description = GetAbilityValue(language, kvAbility.Name, valueName),
                     };
 
                 }
@@ -413,8 +469,8 @@ public class EntityUpdater
                 {
                     abilityValue = new()
                     {
-                        Name        = kvAbilityValue.Name,
-                        Values      = kvAbilityValue.ParseList<float>(true),
+                        Name = kvAbilityValue.Name,
+                        Values = kvAbilityValue.ParseList<float>(true),
                         Description = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
                     };
                 }
@@ -488,7 +544,7 @@ public class EntityUpdater
                         for (var i = 0; i < mainValues.Count; i++)
                         {
                             var percentage = values.Count == 1 ? values.First() : values[i];
-                            mainValues[i] = mainValues[i] + (mainValues[i] * (percentage/100));
+                            mainValues[i] = mainValues[i] + (mainValues[i] * (percentage / 100));
                         }
                         values = mainValues;
                     }
@@ -500,8 +556,8 @@ public class EntityUpdater
 
                     abilityValue = new()
                     {
-                        Name        = valueName,
-                        Values      = values,
+                        Name = valueName,
+                        Values = values,
                         Description = GetAbilityValue(language, kvAbility.Name, valueName),
                     };
 
@@ -510,8 +566,8 @@ public class EntityUpdater
                 {
                     abilityValue = new()
                     {
-                        Name        = kvAbilityValue.Name,
-                        Values      = kvAbilityValue.ParseList<float>(),
+                        Name = kvAbilityValue.Name,
+                        Values = kvAbilityValue.ParseList<float>(),
                         Description = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
                     };
                 }
@@ -540,7 +596,7 @@ public class EntityUpdater
                 var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
                 if (Regex.IsMatch(ability.Description, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
                 {
-                    formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
+                    formattedValue = Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                 }
                 ability.Description = Regex.Replace(ability.Description,
                                                     @$"%{valueKey.Value}%",
@@ -567,7 +623,7 @@ public class EntityUpdater
             }
 
             ability.DisplayedValues[value.Key] += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
-            ability.DisplayedValues[value.Key]  = CleanSimple(ability.DisplayedValues[value.Key]);
+            ability.DisplayedValues[value.Key] = CleanSimple(ability.DisplayedValues[value.Key]);
         }
 
         foreach (var value in ability.ShardValues.Where(x => !string.IsNullOrEmpty(x.Description)))
@@ -595,7 +651,7 @@ public class EntityUpdater
             var joinedValue = string.Join(ValueSeparator, values);
 
             value.Description += $" {Discord.Format.Bold(joinedValue)}"; // Append value after header
-            value.Description  = CleanSimple(value.Description);
+            value.Description = CleanSimple(value.Description);
         }
         if (ability.AbilityHasShard && string.IsNullOrEmpty(ability.ShardDescription))
         {
@@ -624,7 +680,7 @@ public class EntityUpdater
                         var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
                         if (Regex.IsMatch(ability.ShardDescription!, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
                         {
-                            formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
+                            formattedValue = Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                         }
                         ability.ShardDescription = Regex.Replace(ability.ShardDescription!,
                                                             @$"%{valueKey.Value}%",
@@ -657,7 +713,7 @@ public class EntityUpdater
                     var formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct()));
                     if (Regex.IsMatch(ability.ScepterDescription!, String.Format(@"(?<=%?){0}(?=%%%)", valueKey.Value)))
                     {
-                        formattedValue =  Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
+                        formattedValue = Discord.Format.Bold(string.Join(ValueSeparator, value.Distinct().Select(x => x.ToString() + "%")));
                     }
                     ability.ScepterDescription = Regex.Replace(ability.ScepterDescription!,
                                                         @$"%{valueKey.Value}%",
@@ -718,49 +774,49 @@ public class EntityUpdater
         var hero = new Hero();
 
         hero.InternalName = kvhero.Name;
-        hero.Language     = language;
-        hero.Id           = kvhero.ParseChildValue<int>("HeroID");
-        hero.Name         = NameGender.Replace(GetHeroValue(language, hero.InternalName, isName: true), string.Empty);
-        hero.NameAliases  = kvhero.ParseChildValueList<string>("NameAliases");
-        hero.Bio          = GetHeroValue(language, hero.InternalName, "bio");
-        hero.Hype         = GetHeroValue(language, hero.InternalName, "hype");
-        hero.NpeDesc      = GetHeroValue(language, hero.InternalName, "npedesc1");
-        hero.HeroOrderID  = kvhero.ParseChildValue<short>("HeroOrderID");
+        hero.Language = language;
+        hero.Id = kvhero.ParseChildValue<int>("HeroID");
+        hero.Name = NameGender.Replace(GetHeroValue(language, hero.InternalName, isName: true), string.Empty);
+        hero.NameAliases = kvhero.ParseChildValueList<string>("NameAliases");
+        hero.Bio = GetHeroValue(language, hero.InternalName, "bio");
+        hero.Hype = GetHeroValue(language, hero.InternalName, "hype");
+        hero.NpeDesc = GetHeroValue(language, hero.InternalName, "npedesc1");
+        hero.HeroOrderID = kvhero.ParseChildValue<short>("HeroOrderID");
 
-        hero.AttributeBaseAgility      = kvhero.ParseChildValue<byte>("AttributeBaseAgility");
-        hero.AttributeBaseStrength     = kvhero.ParseChildValue<byte>("AttributeBaseStrength");
+        hero.AttributeBaseAgility = kvhero.ParseChildValue<byte>("AttributeBaseAgility");
+        hero.AttributeBaseStrength = kvhero.ParseChildValue<byte>("AttributeBaseStrength");
         hero.AttributeBaseIntelligence = kvhero.ParseChildValue<byte>("AttributeBaseIntelligence");
-        hero.AttributeAgilityGain      = kvhero.ParseChildValue<float>("AttributeAgilityGain");
-        hero.AttributeStrengthGain     = kvhero.ParseChildValue<float>("AttributeStrengthGain");
+        hero.AttributeAgilityGain = kvhero.ParseChildValue<float>("AttributeAgilityGain");
+        hero.AttributeStrengthGain = kvhero.ParseChildValue<float>("AttributeStrengthGain");
         hero.AttributeIntelligenceGain = kvhero.ParseChildValue<float>("AttributeIntelligenceGain");
-        hero.AttributePrimary          = kvhero.ParseChildEnum<AttributePrimary>("AttributePrimary");
+        hero.AttributePrimary = kvhero.ParseChildEnum<AttributePrimary>("AttributePrimary");
 
         hero.Complexity = kvhero.ParseChildValue<byte>("Complexity");
-        hero.Role       = kvhero.ParseChildEnumList<Role>("Role").ToArray();
+        hero.Role = kvhero.ParseChildEnumList<Role>("Role").ToArray();
         hero.Rolelevels = kvhero.ParseChildValueList<byte>("Rolelevels").ToArray();
 
         // Where defaults defined below, these are known to be defaults. Ignoring the rest at my own peril
-        hero.AttackCapabilities   = kvhero.ParseChildEnum<AttackCapabilities>("AttackCapabilities");
-        hero.AttackDamageMin      = kvhero.ParseChildValue<short>("AttackDamageMin");
-        hero.AttackDamageMax      = kvhero.ParseChildValue<short>("AttackDamageMax");
-        hero.AttackRate           = kvhero.ParseChildValue<float>("AttackRate", _baseHero.AttackRate);
-        hero.BaseAttackSpeed      = kvhero.ParseChildValue<short>("BaseAttackSpeed", _baseHero.BaseAttackSpeed);
+        hero.AttackCapabilities = kvhero.ParseChildEnum<AttackCapabilities>("AttackCapabilities");
+        hero.AttackDamageMin = kvhero.ParseChildValue<short>("AttackDamageMin");
+        hero.AttackDamageMax = kvhero.ParseChildValue<short>("AttackDamageMax");
+        hero.AttackRate = kvhero.ParseChildValue<float>("AttackRate", _baseHero.AttackRate);
+        hero.BaseAttackSpeed = kvhero.ParseChildValue<short>("BaseAttackSpeed", _baseHero.BaseAttackSpeed);
         hero.AttackAnimationPoint = kvhero.ParseChildValue<float>("AttackAnimationPoint");
-        hero.AttackRange          = kvhero.ParseChildValue<float>("AttackRange");
-        hero.ProjectileSpeed      = kvhero.ParseChildValue<float>("ProjectileSpeed", _baseHero.ProjectileSpeed);
-        hero.ArmorPhysical        = kvhero.ParseChildValue<short>("ArmorPhysical", _baseHero.ArmorPhysical);
-        hero.MagicalResistance    = kvhero.ParseChildValue<short>("MagicalResistance", _baseHero.MagicalResistance);
-        hero.MovementSpeed        = kvhero.ParseChildValue<short>("MovementSpeed");
-        hero.MovementTurnRate     = kvhero.ParseChildValue<float>("MovementTurnRate", _baseHero.MovementTurnRate);
-        hero.VisionDaytimeRange   = kvhero.ParseChildValue<short>("VisionDaytimeRange", _baseHero.VisionDaytimeRange);
+        hero.AttackRange = kvhero.ParseChildValue<float>("AttackRange");
+        hero.ProjectileSpeed = kvhero.ParseChildValue<float>("ProjectileSpeed", _baseHero.ProjectileSpeed);
+        hero.ArmorPhysical = kvhero.ParseChildValue<short>("ArmorPhysical", _baseHero.ArmorPhysical);
+        hero.MagicalResistance = kvhero.ParseChildValue<short>("MagicalResistance", _baseHero.MagicalResistance);
+        hero.MovementSpeed = kvhero.ParseChildValue<short>("MovementSpeed");
+        hero.MovementTurnRate = kvhero.ParseChildValue<float>("MovementTurnRate", _baseHero.MovementTurnRate);
+        hero.VisionDaytimeRange = kvhero.ParseChildValue<short>("VisionDaytimeRange", _baseHero.VisionDaytimeRange);
         hero.VisionNighttimeRange = kvhero.ParseChildValue<short>("VisionNighttimeRange", _baseHero.VisionNighttimeRange);
-        hero.StatusHealth         = kvhero.ParseChildValue<short>("StatusHealth", _baseHero.StatusHealth);
-        hero.StatusHealthRegen    = kvhero.ParseChildValue<float>("StatusHealthRegen", _baseHero.StatusHealthRegen);
-        hero.StatusMana           = kvhero.ParseChildValue<short>("StatusMana", _baseHero.StatusMana);
-        hero.StatusManaRegen      = kvhero.ParseChildValue<float>("StatusManaRegen", _baseHero.StatusHealthRegen);
+        hero.StatusHealth = kvhero.ParseChildValue<short>("StatusHealth", _baseHero.StatusHealth);
+        hero.StatusHealthRegen = kvhero.ParseChildValue<float>("StatusHealthRegen", _baseHero.StatusHealthRegen);
+        hero.StatusMana = kvhero.ParseChildValue<short>("StatusMana", _baseHero.StatusMana);
+        hero.StatusManaRegen = kvhero.ParseChildValue<float>("StatusManaRegen", _baseHero.StatusHealthRegen);
 
         hero.Abilities = GetHeroAbilities(language, kvhero);
-        hero.Talents   = GetHeroTalents(language, kvhero);
+        hero.Talents = GetHeroTalents(language, kvhero);
 
         _heroAbilities.AddRange(hero.Abilities);
 
@@ -791,10 +847,10 @@ public class EntityUpdater
         var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*>");
         var italicsRegex = new Regex(@"(?i)<[/]?\s*i\s*>");
         var htmlTagRegex = new Regex(@"(?i)<[/]?\s*[^>]*>");
-        value            = value.Replace("<br>", "\n");
-        value            = boldRegex.Replace(value, "**");
-        value            = italicsRegex.Replace(value, "*");
-        value            = htmlTagRegex.Replace(value, "");
+        value = value.Replace("<br>", "\n");
+        value = boldRegex.Replace(value, "**");
+        value = italicsRegex.Replace(value, "*");
+        value = htmlTagRegex.Replace(value, "");
 
         return value;
     }
@@ -840,10 +896,10 @@ public class EntityUpdater
         var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*/?>");
         var italicsRegex = new Regex(@"(?i)<[/]?\s*i\s*>");
         var htmlTagRegex = new Regex(@"(?i)<[/]?\s*[^>]*>");
-        value            = value.Replace("<br>", "\n");
-        value            = boldRegex.Replace(value, "**");
-        value            = italicsRegex.Replace(value, "*");
-        value            = htmlTagRegex.Replace(value, "");
+        value = value.Replace("<br>", "\n");
+        value = boldRegex.Replace(value, "**");
+        value = italicsRegex.Replace(value, "*");
+        value = htmlTagRegex.Replace(value, "");
 
         return value;
     }
@@ -912,7 +968,7 @@ public class EntityUpdater
         var abilities          = new List<Ability>();
         foreach (var name in abilityNames)
         {
-            if (string.IsNullOrEmpty(name)  || name == "special_bonus_attributes" || hiddenOrEmptyRegex.IsMatch(name))
+            if (string.IsNullOrEmpty(name) || name == "special_bonus_attributes" || hiddenOrEmptyRegex.IsMatch(name))
                 continue;
             var ability = _abilities.FirstOrDefault(x => x.InternalName == name && x.Language == language);
 
@@ -970,9 +1026,9 @@ public class EntityUpdater
     {
         var item = new Item();
 
-        item.Id           = (int)kvItem.Children.First(x => x.Name == "ID").Value!;
+        item.Id = _ItemIds[kvItem.Name];
         item.InternalName = kvItem.Name;
-        item.Language     = language;
+        item.Language = language;
 
         var itemName = string.Empty;
         if (item.InternalName.StartsWith("item_dagon_")) // Damn dagon
@@ -981,46 +1037,46 @@ public class EntityUpdater
             itemName = GetAbilityValue(language, item.InternalName);
         item.Name = itemName;
 
-        item.Description  = GetAbilityValue(language, item.InternalName, "Description");
-        item.Lore         = GetAbilityValue(language, item.InternalName, "Lore");
-        item.Notes        = GetAbilityNoteValues(language, item.InternalName);
+        item.Description = GetAbilityValue(language, item.InternalName, "Description");
+        item.Lore = GetAbilityValue(language, item.InternalName, "Lore");
+        item.Notes = GetAbilityNoteValues(language, item.InternalName);
 
-        item.AbilityType           = kvItem.ParseChildEnum<AbilityType>("AbilityType");
-        item.AbilityBehavior       = kvItem.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
+        item.AbilityType = kvItem.ParseChildEnum<AbilityType>("AbilityType");
+        item.AbilityBehavior = kvItem.ParseChildEnum<AbilityBehavior>("AbilityBehavior");
         item.AbilityUnitTargetTeam = kvItem.ParseChildEnum<AbilityUnitTargetTeam>("AbilityUnitTargetTeam");
         item.AbilityUnitTargetType = kvItem.ParseChildEnum<AbilityUnitTargetType>("AbilityUnitTargetType");
         item.AbilityUnitDamageType = kvItem.ParseChildEnum<AbilityUnitDamageType>("AbilityUnitDamageType");
-        item.SpellImmunityType     = kvItem.ParseChildEnum<SpellImmunityType>("SpellImmunityType");
-        item.SpellDispellableType  = kvItem.ParseChildEnum<SpellDispellableType>("SpellDispellableType");
+        item.SpellImmunityType = kvItem.ParseChildEnum<SpellImmunityType>("SpellImmunityType");
+        item.SpellDispellableType = kvItem.ParseChildEnum<SpellDispellableType>("SpellDispellableType");
 
-        item.AbilityCastRange         = kvItem.ParseChildValueList<float>("AbilityCastRange");
-        item.AbilityCastPoint         = kvItem.ParseChildValueList<float>("AbilityCastPoint");
-        item.AbilityChannelTime       = kvItem.ParseChildValueList<float>("AbilityChannelTime");
-        item.AbilityCharges           = kvItem.ParseChildValueList<float>("AbilityCharges");
+        item.AbilityCastRange = kvItem.ParseChildValueList<float>("AbilityCastRange");
+        item.AbilityCastPoint = kvItem.ParseChildValueList<float>("AbilityCastPoint");
+        item.AbilityChannelTime = kvItem.ParseChildValueList<float>("AbilityChannelTime");
+        item.AbilityCharges = kvItem.ParseChildValueList<float>("AbilityCharges");
         item.AbilityChargeRestoreTime = kvItem.ParseChildValueList<float>("AbilityChargeRestoreTime");
-        item.AbilityCooldown          = kvItem.ParseChildValueList<float>("AbilityCooldown");
-        item.AbilityDuration          = kvItem.ParseChildValueList<float>("AbilityDuration");
-        item.AbilityDamage            = kvItem.ParseChildValueList<float>("AbilityDamage");
-        item.AbilityManaCost          = kvItem.ParseChildValueList<float>("AbilityManaCost");
-        item.AbilityHealthCost        = kvItem.ParseChildValueList<float>("AbilityHealthCost");
+        item.AbilityCooldown = kvItem.ParseChildValueList<float>("AbilityCooldown");
+        item.AbilityDuration = kvItem.ParseChildValueList<float>("AbilityDuration");
+        item.AbilityDamage = kvItem.ParseChildValueList<float>("AbilityDamage");
+        item.AbilityManaCost = kvItem.ParseChildValueList<float>("AbilityManaCost");
+        item.AbilityHealthCost = kvItem.ParseChildValueList<float>("AbilityHealthCost");
 
-        item.ItemAliases          = kvItem.ParseChildValueList<string>("ItemAliases");
-        item.ItemBaseLevel        = kvItem.ParseChildValue<byte>("ItemBaseLevel");
-        item.MaxUpgradeLevel      = kvItem.ParseChildValue<byte>("MaxUpgradeLevel");
-        item.ItemCost             = kvItem.ParseChildValue<short>("ItemCost", emptyValueReturnDefault: true);
-        item.ItemInitialCharges   = kvItem.ParseChildValue<byte>("ItemInitialCharges");
+        item.ItemAliases = kvItem.ParseChildValueList<string>("ItemAliases");
+        item.ItemBaseLevel = kvItem.ParseChildValue<byte>("ItemBaseLevel");
+        item.MaxUpgradeLevel = kvItem.ParseChildValue<byte>("MaxUpgradeLevel");
+        item.ItemCost = kvItem.ParseChildValue<short>("ItemCost", emptyValueReturnDefault: true);
+        item.ItemInitialCharges = kvItem.ParseChildValue<byte>("ItemInitialCharges");
         item.ItemInitialStockTime = kvItem.ParseChildValue<float>("ItemInitialStockTime");
-        item.ItemIsNeutralDrop    = kvItem.ParseChildValue<bool>("ItemIsNeutralDrop");
-        item.ItemNeutralTier      = _neutralItemTiers.FirstOrDefault(x => x.Key == item.InternalName).Value;
-        item.ItemPurchasable      = kvItem.ParseChildValue<bool>("ItemPurchasable", true);
-        item.ItemRecipe           = kvItem.ParseChildValue<bool>("ItemRecipe");
+        item.ItemIsNeutralDrop = kvItem.ParseChildValue<bool>("ItemIsNeutralDrop");
+        item.ItemNeutralTier = _neutralItemTiers.FirstOrDefault(x => x.Key == item.InternalName).Value;
+        item.ItemPurchasable = kvItem.ParseChildValue<bool>("ItemPurchasable", true);
+        item.ItemRecipe = kvItem.ParseChildValue<bool>("ItemRecipe");
         //item.ItemRequirements   = kvItem.ParseChildValueList<string[]>("ItemRequirements");
-        item.ItemResult           = kvItem.ParseChildValue<string>("ItemResult");
-        item.ItemStockInitial     = kvItem.ParseChildValue<byte>("ItemStockInitial");
-        item.ItemStockMax         = kvItem.ParseChildValue<byte>("ItemStockMax");
-        item.ItemStockTime        = kvItem.ParseChildValue<float>("ItemStockTime");
+        item.ItemResult = kvItem.ParseChildValue<string>("ItemResult");
+        item.ItemStockInitial = kvItem.ParseChildValue<byte>("ItemStockInitial");
+        item.ItemStockMax = kvItem.ParseChildValue<byte>("ItemStockMax");
+        item.ItemStockTime = kvItem.ParseChildValue<float>("ItemStockTime");
 
-        item.AbilityValues   = GetAbilityValues(language, kvItem);
+        item.AbilityValues = GetAbilityValues(language, kvItem);
         item.DisplayedValues = GetItemDisplayedValues(language, kvItem);
 
         _logger.LogTrace("Processed {0,7} {1,-64} in {2}\"", "ability", item.InternalName, language);
@@ -1057,7 +1113,7 @@ public class EntityUpdater
                 var joinedValue = string.Empty;
                 if (item.InternalName.StartsWith("item_dagon"))
                 {
-                    values[item.ItemBaseLevel-1] = Discord.Format.Bold(values[item.ItemBaseLevel-1]);
+                    values[item.ItemBaseLevel - 1] = Discord.Format.Bold(values[item.ItemBaseLevel - 1]);
                     joinedValue = string.Join(ValueSeparator, values);
                 }
                 else
@@ -1087,7 +1143,7 @@ public class EntityUpdater
             var joinedValue = string.Empty;
             if (item.InternalName.StartsWith("item_dagon"))
             {
-                values![item.ItemBaseLevel-1] = Discord.Format.Bold(values[item.ItemBaseLevel-1]);
+                values![item.ItemBaseLevel - 1] = Discord.Format.Bold(values[item.ItemBaseLevel - 1]);
                 joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
             }
             else
@@ -1095,7 +1151,7 @@ public class EntityUpdater
                 joinedValue = Discord.Format.Bold(string.Join(ValueSeparator, values ?? Enumerable.Empty<string>()));
             }
             var displayedValue = item.DisplayedValues[value.Key];
-            displayedValue     = CleanPlaceholders(displayedValue, joinedValue, item.Language);
+            displayedValue = CleanPlaceholders(displayedValue, joinedValue, item.Language);
 
             item.DisplayedValues[value.Key] = displayedValue;
         }

@@ -10,6 +10,7 @@ public static class Dota2GameFiles
     public static string Items        => BasePath + "/scripts/npc/items.txt";
     public static string NeutralItems => BasePath + "/scripts/npc/neutral_items.txt";
     public static string NpcUnits     => BasePath + "/scripts/npc/npc_units.txt";
+    public static string NpcAbilityIds     => BasePath + "/scripts/npc/npc_ability_ids.txt";
 
     public static class Localization
     {
