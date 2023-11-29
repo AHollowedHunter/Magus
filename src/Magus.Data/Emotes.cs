@@ -66,15 +66,14 @@ public static class Emotes
     public static Emote FilterRanged     => Emote.Parse("<:f_ranged:1099073803612606594>");
 
     public static Emote GetAttributeEmote(this AttributePrimary attribute)
-#pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
         => attribute switch
         {
             AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => StrengthIcon,
             AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AgilityIcon,
             AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => IntelligenceIcon,
             AttributePrimary.DOTA_ATTRIBUTE_ALL       => UniversalIcon,
+            _                                         => throw new NotImplementedException(),
         };
-#pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 
 
     public static Emote GetAttackTypeIcon(this AttackCapabilities attackType)
