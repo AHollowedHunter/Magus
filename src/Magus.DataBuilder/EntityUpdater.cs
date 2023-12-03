@@ -1,6 +1,7 @@
 ﻿using Magus.Common.Options;
 using Magus.Data;
 using Magus.Data.Enums;
+using Magus.Data.Enums.Dota;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Magus;

@@ -1,0 +1,14 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Magus.Data.Enums.Dota;
+
+public enum SpellDispellableType : byte
+{
+    SPELL_DISPELLABLE_NONE       = 0,
+    [Display(Name = "Strong Dispels")]
+    SPELL_DISPELLABLE_YES_STRONG = 1,
+    [Display(Name = "Basic Dispel")]
+    SPELL_DISPELLABLE_YES        = 2,
+    [Display(Name = "No")]
+    SPELL_DISPELLABLE_NO         = 3,
+}

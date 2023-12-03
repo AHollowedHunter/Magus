@@ -1,4 +1,6 @@
-﻿namespace Magus.Data.Models.Dota;
+﻿using Magus.Data.Enums.Dota;
+
+namespace Magus.Data.Models.Dota;
 
 public record Talent
 {
