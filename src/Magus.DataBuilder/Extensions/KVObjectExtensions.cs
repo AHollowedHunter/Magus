@@ -3,7 +3,7 @@ using ValveKeyValue;
 
 namespace Magus.DataBuilder.Extensions;
 
-public static class KVObjectExtensions
+public static partial class KVObjectExtensions
 {
 
     /// <summary>
@@ -47,13 +47,13 @@ public static class KVObjectExtensions
     /// <param name="name"></param>
     /// <param name="defaultValue"></param>
     /// <returns></returns>
-    public static IList<T> ParseChildValueList<T>(this KVObject kvObject, string name, bool ignoreNoNumeric = false, IEnumerable<T> defaultValue = null!) where T : IConvertible
+    public static IList<T> ParseChildValueList<T>(this KVObject kvObject, string name, bool ignoreNoNumeric = false, bool spaceIsSeparator = true, IEnumerable<T> defaultValue = null!) where T : IConvertible // why redundant
     {
         var child = kvObject.Children.FirstOrDefault(x => x.Name == name);
         if (child == null)
             return Array.Empty<T>();
 
-        return child.ParseList<T>(ignoreNoNumeric);
+        return child.ParseList<T>(ignoreNoNumeric, spaceIsSeparator);
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ public static class KVObjectExtensions
         return child.ParseEnumList<TEnum>();
     }
 
-    public static IList<T> ParseList<T>(this KVObject? kvObject, bool ignoreNoNumeric = false) where T : IConvertible
+    public static IList<T> ParseList<T>(this KVObject? kvObject, bool ignoreNoNumeric = false, bool spaceIsSeparator = true) where T : IConvertible
     {
         List<T> result = new();
         if (kvObject == null)
@@ -85,7 +85,7 @@ public static class KVObjectExtensions
             var nonNumeric = new Regex(@"[^\d\-+.,:\s]*");
             kvValue = nonNumeric.Replace(kvValue, "");
         }
-        var separators = new Regex(@"[,;\s]+");
+        var separators = spaceIsSeparator ? SeparatorsWithSpace() : SeparatorsWithoutSpace();
         var values     = separators.Split(kvValue);
 
         foreach (var value in values)
@@ -95,6 +95,12 @@ public static class KVObjectExtensions
         }
         return result;
     }
+
+    [GeneratedRegex(@"[,;\s]+")]
+    private static partial Regex SeparatorsWithSpace();
+
+    [GeneratedRegex(@"[,;]+")]
+    private static partial Regex SeparatorsWithoutSpace();
 
     private static bool IsNumericType(Type type)
     {
@@ -175,4 +181,5 @@ public static class KVObjectExtensions
         Enum.TryParse<T>(value, true, out var result);
         return result;
     }
+
 }
