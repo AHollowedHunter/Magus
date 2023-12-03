@@ -1,5 +1,5 @@
-﻿using Magus.Data;
-using Magus.Data.Models.Dota;
+﻿using Magus.Data.Models.Dota;
+using Magus.Data.Services;
 using System.Diagnostics;
 using ValveKeyValue;
 

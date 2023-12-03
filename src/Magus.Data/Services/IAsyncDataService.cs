@@ -7,7 +7,7 @@ using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Magus;
 using System.Linq.Expressions;
 
-namespace Magus.Data;
+namespace Magus.Data.Services;
 
 public interface IAsyncDataService
 {

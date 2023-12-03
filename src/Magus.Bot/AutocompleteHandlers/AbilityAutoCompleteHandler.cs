@@ -1,8 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Bot.Services;
-using Magus.Data;
 using Magus.Data.Models.Embeds;
+using Magus.Data.Services;
 
 namespace Magus.Bot.AutocompleteHandlers;
 

@@ -1,7 +1,7 @@
 ﻿using Magus.Common.Options;
-using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
+using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Text.RegularExpressions;

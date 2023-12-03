@@ -2,9 +2,9 @@
 using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Common.Enums;
-using Magus.Data;
 using Magus.Data.Extensions;
 using Magus.Data.Models.Discord;
+using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 
 namespace Magus.Bot.Modules;

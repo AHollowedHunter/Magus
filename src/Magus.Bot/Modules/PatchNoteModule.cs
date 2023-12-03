@@ -3,8 +3,8 @@ using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Extensions;
 using Magus.Bot.Services;
-using Magus.Data;
 using Magus.Data.Models.Embeds;
+using Magus.Data.Services;
 
 namespace Magus.Bot.Modules;
 

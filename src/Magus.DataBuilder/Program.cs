@@ -1,5 +1,6 @@
 ﻿using Magus.Common.Options;
 using Magus.Data;
+using Magus.Data.Services;
 using Serilog;
 using System.Diagnostics;
 

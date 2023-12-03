@@ -7,6 +7,7 @@ using Magus.Bot.Extensions;
 using Magus.Common.Enums;
 using Magus.Data;
 using Magus.Data.Extensions;
+using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using SteamWebAPI2.Utilities;
 

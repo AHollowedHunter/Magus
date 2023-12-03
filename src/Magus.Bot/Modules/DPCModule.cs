@@ -4,6 +4,7 @@ using Magus.Bot.Attributes;
 using Magus.Bot.Services;
 using Magus.Data;
 using Magus.Data.Extensions;
+using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using STRATZ;
 using System.Text.RegularExpressions;

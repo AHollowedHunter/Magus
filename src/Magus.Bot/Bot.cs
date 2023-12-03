@@ -8,6 +8,7 @@ using Magus.Common.Options;
 using Magus.Data;
 using Magus.Data.Enums;
 using Magus.Data.Extensions;
+using Magus.Data.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Prometheus;

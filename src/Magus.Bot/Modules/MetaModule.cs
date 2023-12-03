@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Data;
+using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using System.Reflection;
 

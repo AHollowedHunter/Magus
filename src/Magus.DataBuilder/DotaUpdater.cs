@@ -1,4 +1,4 @@
-﻿using Magus.Data;
+﻿using Magus.Data.Services;
 
 namespace Magus.DataBuilder;
 

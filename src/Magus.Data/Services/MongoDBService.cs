@@ -12,7 +12,7 @@ using MongoDB.Driver.Linq;
 using System.Linq.Expressions;
 using System.Security.Authentication;
 
-namespace Magus.Data;
+namespace Magus.Data.Services;
 
 public sealed class MongoDBService : IAsyncDataService
 {

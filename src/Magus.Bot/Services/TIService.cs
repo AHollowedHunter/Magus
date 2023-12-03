@@ -1,7 +1,7 @@
 ﻿using Coravel.Scheduling.Schedule.Interfaces;
-using Magus.Data;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.OpenDota;
+using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using Steam.Models.DOTA2;
 using SteamWebAPI2.Interfaces;

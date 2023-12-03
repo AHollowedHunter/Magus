@@ -1,6 +1,7 @@
 ﻿using Coravel.Scheduling.Schedule.Interfaces;
 using Magus.Common.ImageSharp;
 using Magus.Data;
+using Magus.Data.Services;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;

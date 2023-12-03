@@ -1,10 +1,10 @@
 ﻿using Magus.Common.Options;
-using Magus.Data;
 using Magus.Data.Enums;
 using Magus.Data.Enums.Dota;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Magus;
+using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
