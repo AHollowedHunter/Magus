@@ -4,6 +4,7 @@ using Magus.Data.Enums.Dota;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Magus;
+using Magus.Data.Models.V2;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
@@ -27,19 +28,21 @@ public class EntityUpdater
     private readonly ILogger<PatchNoteUpdater> _logger;
     private readonly KVSerializer _kvSerializer;
 
+    private readonly MeilisearchService _meilisearchService = new();
+
     private readonly Dictionary<string, int> _abilityIds = [];
     private readonly Dictionary<string, int> _ItemIds = [];
 
-    private readonly Dictionary<(string Language, string Key), string> _abilityValues;
-    private readonly Dictionary<(string Language, string Key), string> _dotaValues;
-    private readonly Dictionary<(string Language, string Key), string> _heroLoreValues;
-    private readonly List<Ability> _abilities;
-    private readonly List<Ability> _heroAbilities;
-    private readonly List<Talent> _talents;
-    private readonly List<Hero> _heroes;
-    private readonly List<Item> _items;
-    private Dictionary<string, byte> _neutralItemTiers;
-    private Hero _baseHero;
+    private readonly Dictionary<(string Language, string Key), string> _abilityValues = [];
+    private readonly Dictionary<(string Language, string Key), string> _dotaValues = [];
+    private readonly Dictionary<(string Language, string Key), string> _heroLoreValues = [];
+    private readonly List<Ability> _abilities = [];
+    private readonly List<Ability> _heroAbilities = [];
+    private readonly List<Talent> _talents = [];
+    private readonly List<Hero> _heroes = [];
+    private readonly List<Item> _items = [];
+    private Dictionary<string, byte> _neutralItemTiers = [];
+    private Hero _baseHero = new();
 
     private static readonly string ValueSeparator = "\u00A0/\u00A0";
 
@@ -52,16 +55,6 @@ public class EntityUpdater
         _logger = logger;
 
         _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
-        _abilityValues = new();
-        _dotaValues = new();
-        _heroLoreValues = new();
-        _abilities = new();
-        _heroAbilities = new();
-        _talents = new();
-        _heroes = new();
-        _items = new();
-        _neutralItemTiers = new();
-        _baseHero = new();
     }
 
     public async Task Update()
@@ -750,7 +743,7 @@ public class EntityUpdater
         hero.Language = language;
         hero.Id = kvhero.ParseChildValue<int>("HeroID");
         hero.Name = NameGender.Replace(GetHeroValue(language, hero.InternalName, isName: true), string.Empty);
-        hero.NameAliases = kvhero.ParseChildValueList<string>("NameAliases");
+        hero.NameAliases = kvhero.ParseChildValueList<string>("NameAliases", spaceIsSeparator: false);
         hero.Bio = GetHeroValue(language, hero.InternalName, "bio");
         hero.Hype = GetHeroValue(language, hero.InternalName, "hype");
         hero.NpeDesc = GetHeroValue(language, hero.InternalName, "npedesc1");
@@ -1162,43 +1155,26 @@ public class EntityUpdater
     {
         _logger.LogInformation("Creating entity localisation records.");
 
-        var entityLocalisation = new List<EntityLocalisation>();
+        var entityLocalisation = new List<EntityMeta>();
 
-        foreach (var heroLocalisationsGroup in _heroes.GroupBy(x => (x.Id, x.InternalName)))
+        foreach (var heroLocalisationsGroup in _heroes.GroupBy(x => (x.Id, x.InternalName))) // TODO this different
         {
             _logger.LogDebug("Processing hero and ability EntityLocalisations for {key}", heroLocalisationsGroup.Key);
 
-            var heroLocalisation = new EntityLocalisation()
-            {
-                EntityId     = heroLocalisationsGroup.Key.Id,
-                InternalName = heroLocalisationsGroup.Key.InternalName,
-                DefaultTag   = _localisationOptions.DefaultTag,
-                Type         = EntityType.Hero,
-                NameLocalisations = new Dictionary<string, string>(),
-            };
-            SetEntityLocalisationId(heroLocalisation);
+            var hero = heroLocalisationsGroup.First(); // TODO like above, this different.
 
-            // Set the default first, to be compared against after.
-            // This is dirty, to be fixed with localisation + DataBuilder refactor.
-            heroLocalisation.NameLocalisations[_localisationOptions.DefaultTag] = heroLocalisationsGroup.First(x => x.Language == _localisationOptions.DefaultLanguage).Name;
-
+            var localisedNames = new Dictionary<string, string>();
             foreach (var localisedHero in heroLocalisationsGroup)
-            {
-                if (localisedHero.Name != heroLocalisation.DefaultName)
-                {
-                    // now this is filthy... but only language with two tags is english so it won't matter about only accessing one index as its default anyway.
-                    heroLocalisation.NameLocalisations[_localisationOptions.SourceLocaleMappings[localisedHero.Language][0]] = localisedHero.Name;
-                }
-            }
+                localisedNames[_localisationOptions.SourceLocaleMappings[localisedHero.Language][0]] = localisedHero.Name;
+
+            var heroLocalisation = new EntityMeta(heroLocalisationsGroup.Key.InternalName, heroLocalisationsGroup.Key.Id, EntityType.Hero, localisedNames, hero.NameAliases.ToArray(), hero.RealName);
+
             entityLocalisation.Add(heroLocalisation);
         }
 
-        // Ensure indexes
-        _db.CreateCollection<EntityLocalisation>();
-        await _db.EnsureIndex<EntityLocalisation>(x => x.EntityId);
-        await _db.EnsureIndex<EntityLocalisation>(x => x.InternalName, caseSensitive: false);
-        // Add records
-        await _db.UpsertRecords(entityLocalisation);
+        await _meilisearchService.CreateIndex<EntityMeta>("InternalName", [nameof(EntityMeta.Name), nameof(EntityMeta.Aliases), nameof(EntityMeta.InternalName)]);
+
+        await _meilisearchService.AddDocuments(entityLocalisation);
 
         _logger.LogInformation("Finished creating entity localisation records.");
     }
