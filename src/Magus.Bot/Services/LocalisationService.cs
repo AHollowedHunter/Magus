@@ -44,7 +44,7 @@ public class LocalisationService
     {
         try
         {
-            heroLocalisations = await _db.GetEntityLocalisations(Data.Enums.EntityType.HERO);
+            heroLocalisations = await _db.GetEntityLocalisations(Data.Enums.EntityType.Hero);
         }
         catch (Exception ex)
         {

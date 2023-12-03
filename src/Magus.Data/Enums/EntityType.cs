@@ -1,12 +1,11 @@
-﻿
-namespace Magus.Data.Enums;
+﻿namespace Magus.Data.Enums;
 
 public enum EntityType
 {
-    NONE    = 0,
-    HERO    = 1,
-    ABILITY = 2,
-    ITEM    = 3,
-    CREEP   = 4,
-    SUMMON  = 5,
+    None    = 0,
+    Hero    = 1,
+    Ability = 2,
+    Item    = 3,
+    Creep   = 4,
+    Summon  = 5,
 }

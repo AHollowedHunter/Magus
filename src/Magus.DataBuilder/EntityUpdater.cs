@@ -1172,7 +1172,7 @@ public class EntityUpdater
                 EntityId     = heroLocalisationsGroup.Key.Id,
                 InternalName = heroLocalisationsGroup.Key.InternalName,
                 DefaultTag   = _localisationOptions.DefaultTag,
-                Type         = EntityType.HERO,
+                Type         = EntityType.Hero,
                 NameLocalisations = new Dictionary<string, string>(),
             };
             SetEntityLocalisationId(heroLocalisation);
