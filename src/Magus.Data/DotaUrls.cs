@@ -14,8 +14,7 @@ public static class DotaUrls
     public static string StrengthIcon     => BaseUrl + "images/dota_react/icons/hero_strength.png";
     public static string AgilityIcon      => BaseUrl + "images/dota_react/icons/hero_agility.png";
     public static string IntelligenceIcon => BaseUrl + "images/dota_react/icons/hero_intelligence.png";
-    //public static string UniversalIcon    => BaseUrl + "images/dota_react/icons/hero_universal.png";
-    public static string UniversalIcon    => "https://cdn.discordapp.com/emojis/1098920779674030142.png"; // Temporary until valve fix their website assets
+    public static string UniversalIcon    => BaseUrl + "images/dota_react/icons/hero_universal.png";
 
     public static string DamageIcon          => BaseUrl + "images/dota_react/heroes/stats/icon_damage.png";
     public static string AttackTimeIcon      => BaseUrl + "images/dota_react/heroes/stats/icon_attack_time.png";
