@@ -31,9 +31,9 @@ public static class DotaUrls
     public static string DotaWhiteLogo  => "https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/global/dota2_logo_horiz.png";
 
     public static string GetHeroUrl(string heroName)          => $"https://www.dota2.com/hero/{Regex.Replace(heroName.ToLower(), @"[^a-zA-Z0-9-']", string.Empty)}";
-    public static string GetHeroImage(string internalName)    => $"{Hero}{internalName[14..]}.png";
+    public static string GetHeroImage(string internalName)    => $"{Hero}{internalName[14..]}.png"; // ignore "npc_dota_hero_" from internal name
     public static string GetAbilityImage(string internalName) => $"{Ability}{internalName}.png";
-    public static string GetItemImage(string internalName)    => $"{Item}{internalName[5..]}.png";
+    public static string GetItemImage(string internalName)    => $"{Item}{internalName[5..]}.png"; // ignore "item_" from internal name
 
     public static string GetTeamLogo(int teamId) => $"https://cdn.cloudflare.steamstatic.com/apps/dota2/teamlogos/{teamId}.png";
 

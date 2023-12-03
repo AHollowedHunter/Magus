@@ -48,7 +48,7 @@ public enum AbilityBehavior : ulong
     DOTA_ABILITY_BEHAVIOR_UNLOCKED_BY_EFFECT_INDEX       = 17179869184,
     DOTA_ABILITY_BEHAVIOR_SUPPRESS_ASSOCIATED_CONSUMABLE = 34359738368,
     DOTA_ABILITY_BEHAVIOR_FREE_DRAW_TARGETING            = 68719476736,
-    DOTA_ABILITY_BEHAVIOR_NOASSIST                       = 137438953472, // Is this right, valve you F***ers
-    DOTA_ABILITY_BEHAVIOR_OVERSHOOT                      = 274877906944, // Is this right, valve you F***ers
-    DOTA_ABILITY_BEHAVIOR_USE_HP                         = 549755813888, // Lets hope this is right
+    DOTA_ABILITY_BEHAVIOR_NOASSIST                       = 137438953472, // TODO: Ensure correct
+    DOTA_ABILITY_BEHAVIOR_OVERSHOOT                      = 274877906944, // TODO: Ensure correct
+    DOTA_ABILITY_BEHAVIOR_USE_HP                         = 549755813888, // TODO: Ensure correct
 }
