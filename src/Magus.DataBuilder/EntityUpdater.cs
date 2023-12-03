@@ -159,14 +159,7 @@ public class EntityUpdater
             _logger.LogDebug("Processing talent {0}", ability.Name);
             foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
             {
-                try
-                {
-                    _talents.Add(CreateTalent(language, ability));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating talent");
-                }
+                _talents.Add(CreateTalent(language, ability));
             }
         }
 
@@ -175,14 +168,7 @@ public class EntityUpdater
             _logger.LogDebug("Processing ability {0}", ability.Name);
             foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
             {
-                try
-                {
-                    _abilities.Add(CreateAbility(language, ability));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating ability");
-                }
+                _abilities.Add(CreateAbility(language, ability));
             }
         }
 
@@ -193,14 +179,7 @@ public class EntityUpdater
             _logger.LogDebug("Processing hero {0}", hero.Name);
             foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
             {
-                try
-                {
-                    _heroes.Add(CreateHero(language, hero));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating hero");
-                }
+                _heroes.Add(CreateHero(language, hero));
             }
         }
 
@@ -217,14 +196,7 @@ public class EntityUpdater
             _logger.LogDebug("Processing item {0}", item.Name);
             foreach (var language in _localisationOptions.SourceLocaleMappings.Keys)
             {
-                try
-                {
-                    _items.Add(CreateItem(language, item));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating item");
-                }
+                _items.Add(CreateItem(language, item));
             }
         }
 
