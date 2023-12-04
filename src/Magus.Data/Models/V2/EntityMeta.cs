@@ -1,9 +1,11 @@
 ﻿using Magus.Data.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.V2;
 public sealed class EntityMeta
 {
+    [Key]
     [JsonPropertyName(nameof(InternalName))]
     public string InternalName { get; set; }
 
@@ -20,7 +22,7 @@ public sealed class EntityMeta
     public string[]? Aliases { get; set; }
 
     [JsonPropertyName(nameof(RealName))]
-    public string? RealName { get; set; }
+    public string? RealName { get; set; } // TODO needed? how get?
 
     public EntityMeta(string internalName, int entityId, EntityType type, IDictionary<string, string> name, string[]? aliases = null, string? realName = null)
     {

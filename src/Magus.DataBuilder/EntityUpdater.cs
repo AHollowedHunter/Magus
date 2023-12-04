@@ -6,6 +6,7 @@ using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Magus;
 using Magus.Data.Models.V2;
 using Magus.Data.Services;
+using Meilisearch;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -1172,9 +1173,18 @@ public class EntityUpdater
             entityLocalisation.Add(heroLocalisation);
         }
 
-        await _meilisearchService.CreateIndex<EntityMeta>("InternalName", [nameof(EntityMeta.Name), nameof(EntityMeta.Aliases), nameof(EntityMeta.InternalName)]);
+        string[] filterableAttributes = [nameof(EntityMeta.Type)];
+        string[] searchableAttributes = [nameof(EntityMeta.Name), nameof(EntityMeta.Aliases), nameof(EntityMeta.RealName), nameof(EntityMeta.InternalName)];
 
-        await _meilisearchService.AddDocuments(entityLocalisation);
+        Settings settings = new()
+        {
+            FilterableAttributes = filterableAttributes,
+            SearchableAttributes = searchableAttributes,
+        };
+        await _meilisearchService.DeleteIndexAsync(nameof(EntityMeta)); // HACK for testing. Will use a swap index later.
+        await _meilisearchService.CreateIndexAsync(nameof(EntityMeta), "InternalName", settings);
+
+        await _meilisearchService.AddDocumentsAsync(entityLocalisation);
 
         _logger.LogInformation("Finished creating entity localisation records.");
     }

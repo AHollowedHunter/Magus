@@ -11,31 +11,70 @@ public sealed class MeilisearchService
         _client = new MeilisearchClient("http://localhost:7700", "12345678"); // HACK testing
     }
 
-    public async Task CreateIndex<T>(string? primaryKey = null, IEnumerable<string>? searchableAttributes = null) where T : class
+    /// <summary>
+    /// Create a new index. If including a primary key, the index must not exist
+    /// or it should have no documents within it.
+    /// </summary>
+    /// <exception cref="Exception"/>
+    public async Task CreateIndexAsync(string indexUid, string? primaryKey = null, Settings? settings = null)
     {
-        var indexName = typeof(T).Name;
+        var createTask = await _client.CreateIndexAsync(indexUid, primaryKey).ConfigureAwait(false);
+        await WaitForResultAsync(createTask).ConfigureAwait(false);
 
-        await _client.DeleteIndexAsync(indexName); // HACK temp for testing
-
-        var createIndexTask = await _client.CreateIndexAsync(indexName, primaryKey);
-
-        var index = _client.Index(indexName);
-
-        if (searchableAttributes is not null)
+        if (settings is not null)
         {
-            var saTask = await index.UpdateSearchableAttributesAsync(searchableAttributes);
+            var index = _client.Index(indexUid);
+            var updateTask = await index.UpdateSettingsAsync(settings).ConfigureAwait(false);
+            await WaitForResultAsync(updateTask).ConfigureAwait(false);
         }
-
-        // TODO handle task response. Return something?
     }
 
-    public async Task<int> AddDocuments<T>(IEnumerable<T> values) where T : class
+    /// <summary>
+    /// Deletes the Index
+    /// </summary>
+    /// <exception cref="Exception"/>
+    public async Task DeleteIndexAsync(string indexUid)
     {
-        var index = _client.Index(typeof(T).Name);
-        var task = await index.AddDocumentsAsync(values);
+        var index = _client.Index(indexUid);
+        var task = await index.DeleteAsync().ConfigureAwait(false);
+        await WaitForResultAsync(task).ConfigureAwait(false);
+    }
 
-        // TODO handle task response
+    /// <summary>
+    /// Add the documents to the specified index.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="values"></param>
+    /// <param name="indexUid">Defaults to type name of <typeparamref name="T"/></param>
+    /// <exception cref="Exception"/>
+    public async Task AddDocumentsAsync<T>(IEnumerable<T> values, string? indexUid = null) where T : class
+    {
+        indexUid ??= typeof(T).Name;
 
-        return task.TaskUid;
+        var index = await GetIndexAsync(indexUid).ConfigureAwait(false);
+        var task = await index.AddDocumentsAsync(values).ConfigureAwait(false);
+        await WaitForResultAsync(task).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Simple wrapper to get an existing index, or throw if it doesn't.
+    /// </summary>
+    /// <remarks>This is useful to ensure indexes are not created by accident,
+    /// at a slight performance cost due to the http query.</remarks>
+    /// <param name="indexUid"></param>
+    /// <returns>The specified Index</returns>
+    /// <exception cref="MeilisearchApiError">If the Index does not exist</exception>
+    private async Task<Meilisearch.Index> GetIndexAsync(string indexUid)
+        => await _client.GetIndexAsync(indexUid).ConfigureAwait(false);
+
+    /// <summary>
+    /// Wait for the task to finish. Throws if failed.
+    /// </summary>
+    /// <exception cref="Exception">Throws an exception if the task failed, containing the TaskUid</exception>
+    private async Task WaitForResultAsync(TaskInfo taskInfo)
+    {
+        var result = await _client.WaitForTaskAsync(taskInfo.TaskUid).ConfigureAwait(false);
+        if (result.Status is TaskInfoStatus.Failed)
+            throw new Exception($"Task failed: {result.Uid}. Please check Meilisearch for specific error."); // TODO specific exception?
     }
 }
