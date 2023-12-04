@@ -1,7 +1,9 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Bot.Attributes;
+using Magus.Bot.AutocompleteHandlers;
 using Magus.Data;
+using Magus.Data.Models.V2;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using System.Reflection;
@@ -14,6 +16,8 @@ public class MetaModule : ModuleBase
 {
     private readonly IAsyncDataService _db;
     private readonly BotSettings _config;
+
+    private readonly MeilisearchService _meilisearchService = new(); // HACK
 
     readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString(3);
 
@@ -68,5 +72,15 @@ public class MetaModule : ModuleBase
     {
         await DeferAsync();
         await FollowupAsync(text: "To view the terms of service for MagusBot, please follow the link below:\n" + _config.BotTermsOfService);
+    }
+
+    [SlashCommand("test", "testing")] // HACK
+    public async Task Test([Autocomplete(typeof(HeroAutocompleteHandlerNEW))] string query)
+    {
+        await DeferAsync().ConfigureAwait(false);
+
+        var result = await _meilisearchService.SearchTopResultAsync<EntityMeta>(query);
+
+        await FollowupAsync(text: result?.InternalName ?? "Nothing");
     }
 }

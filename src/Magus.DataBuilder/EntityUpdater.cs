@@ -1174,7 +1174,7 @@ public class EntityUpdater
         }
 
         string[] filterableAttributes = [nameof(EntityMeta.Type)];
-        string[] searchableAttributes = [nameof(EntityMeta.Name), nameof(EntityMeta.Aliases), nameof(EntityMeta.RealName), nameof(EntityMeta.InternalName)];
+        string[] searchableAttributes = [nameof(EntityMeta.Name), nameof(EntityMeta.Name)+".en", nameof(EntityMeta.Aliases), nameof(EntityMeta.RealName), nameof(EntityMeta.InternalName)];
 
         Settings settings = new()
         {
