@@ -11,7 +11,7 @@ public class BotSettings
     public string BotPrivacyPolicy { get; set; } = string.Empty;
     public string BotTermsOfService { get; set; } = string.Empty;
 
-    public ulong[] ManagementGuilds { get; set; } = Array.Empty<ulong>();
+    public ulong[] ManagementGuilds { get; set; } = [];
 
     public string StratzToken { get; set; }
 

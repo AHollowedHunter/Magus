@@ -71,7 +71,7 @@ public class InteractionHandler
     private List<TypeInfo> GetEnabledModules()
     {
         TypeInfo moduleTypeInfo = typeof(IInteractionModuleBase).GetTypeInfo();
-        List<TypeInfo> result   = new();
+        List<TypeInfo> result   = [];
         foreach (TypeInfo definedType in Assembly.GetEntryAssembly()!.DefinedTypes)
         {
             var moduleRegistration = definedType.GetCustomAttribute<ModuleRegistration>();

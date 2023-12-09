@@ -62,7 +62,7 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
             _ = _db.UpsertRecord(guild);
         }
 
-        await FollowupWithFileAsync(imageStream, MakeFileName(spoilerMode, bracketInfo), embeds: embeds.ToArray());
+        await FollowupWithFileAsync(imageStream, MakeFileName(spoilerMode, bracketInfo), embeds: [.. embeds]);
     }
 
     private static Embed MakeBracketEmbed(LeagueInfo info, bool spoilerMode)
@@ -157,7 +157,7 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
         {
             // Only hide spoilers for main event playoffs, which for bali is NOW 13.
             // long term this should be covered with a proper set of structs etc. for this data.
-            embed.AddField(MakeNodeFieldBuilder(node, node.NodeGroupId == 13 ? spoilerMode : false));
+            embed.AddField(MakeNodeFieldBuilder(node, node.NodeGroupId == 13 && spoilerMode));
         }
         var embeds = new List<Embed>
         {
@@ -171,7 +171,7 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
             _ = _db.UpsertRecord(guild);
         }
 
-        await FollowupAsync(embeds: embeds.ToArray());
+        await FollowupAsync(embeds: [.. embeds]);
     }
 
     [SlashCommand("live", "Get live games. Updates every 5 minutes. (BETA)")]
@@ -216,7 +216,7 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
             _ = _db.UpsertRecord(guild);
         }
 
-        await FollowupAsync(embeds: embeds.ToArray());
+        await FollowupAsync(embeds: [.. embeds]);
     }
     private static EmbedFieldBuilder MakeLiveGameFieldBuilder(MatchLiveType match, bool spoilerMode)
     {

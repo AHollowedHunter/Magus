@@ -6,7 +6,7 @@ namespace Magus.Data.Services;
 
 public sealed class MeilisearchService
 {
-    private MeilisearchClient _client;
+    private readonly MeilisearchClient _client;
 
     public MeilisearchService()
     {

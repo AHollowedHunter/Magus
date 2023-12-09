@@ -233,15 +233,15 @@ public sealed class MongoDBService : IAsyncDataService
 
     private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = "en-GB") where T : ILocalisedEntity, ILocaleRecord
         => entity => entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
-                                                 || entity.Name.ToLower().Contains(entityName.ToLower())
-                                                 || entity.RealName!.ToLower().StartsWith(entityName.ToLower())
-                                                 || entity.InternalName.Contains(entityName.ToLower()));
+                                                 || entity.Name.Contains(entityName, StringComparison.CurrentCultureIgnoreCase)
+                                                 || entity.RealName!.StartsWith(entityName, StringComparison.CurrentCultureIgnoreCase)
+                                                 || entity.InternalName.Contains(entityName, StringComparison.CurrentCultureIgnoreCase));
 
     private static Expression<Func<T, bool>> QueryPatchNoteEntityName<T>(string entityName, string patchNumber, string locale = "en-GB") where T : EntityPatchNoteEmbed
         => entity => entity.PatchNumber == patchNumber && entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
-                                                                                      || entity.Name.ToLower().Contains(entityName.ToLower())
-                                                                                      || entity.RealName!.ToLower().StartsWith(entityName.ToLower())
-                                                                                      || entity.InternalName.Contains(entityName.ToLower()));
+                                                                                      || entity.Name.Contains(entityName, StringComparison.CurrentCultureIgnoreCase)
+                                                                                      || entity.RealName!.StartsWith(entityName, StringComparison.CurrentCultureIgnoreCase)
+                                                                                      || entity.InternalName.Contains(entityName, StringComparison.CurrentCultureIgnoreCase));
 
     private static IEnumerable<WriteModel<T>> GetBulkReplaceRequest<T>(IEnumerable<T> records, bool isUpsert = false) where T : ISnowflakeRecord
     {
