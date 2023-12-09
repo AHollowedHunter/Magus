@@ -118,6 +118,7 @@ class Bot
             .AddScheduler()
             .AddHttpClient()
             .AddSingleton<IAsyncDataService, MongoDBService>()
+            .AddSingleton<MeilisearchService>()
             .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
             .AddSingleton(x => new InteractionServiceConfig() { InteractionCustomIdDelimiters = new char[] { Constants.CustomIdGroupDelimiter }, UseCompiledLambda = true })
             .AddSingleton<InteractionService>()
