@@ -8,13 +8,19 @@ public class EntityEmoteAttribute : Attribute
     /// Mark an emote with the entity id
     /// </summary>
     /// <param name="entityId">The entities ID</param>
-    public EntityEmoteAttribute(int entityId)
+    public EntityEmoteAttribute(int entityId, string internalName)
     {
         EntityId = entityId;
+        InternalName = internalName;
     }
 
     /// <summary>
     /// The Entities ID
     /// </summary>
     public int EntityId { get; }
+
+    /// <summary>
+    /// The Entities Internal Id
+    /// </summary>
+    public string InternalName { get; }
 }

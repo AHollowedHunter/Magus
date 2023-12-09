@@ -144,7 +144,7 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
             {
                 var hero = summary.Heroes.ElementAtOrDefault(i);
                 if (hero != null)
-                    embed.AddField($"{HeroEmotes.GetFromHeroId(hero.HeroId)} {_localisationService.GetLocalisedHeroName(hero.HeroId, locale)}"
+                    embed.AddField($"{HeroEmotes.Get(hero.HeroId)} {_localisationService.GetLocalisedHeroName(hero.HeroId, locale)}"
                         , HeroSummary(player.MatchGroupByHero.First(x => x.HeroId == hero.HeroId))
                         , true);
                 else
@@ -244,7 +244,7 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
         sb.Append(" in ");
         sb.Append(SecondsToTime(match.DurationSeconds));
         sb.Append(" as ");
-        sb.Append(HeroEmotes.GetFromHeroId(match!.Players.Single().HeroId));
+        sb.Append(HeroEmotes.Get(match!.Players.Single().HeroId));
         sb.Append('\u202F');
         sb.AppendLine(_localisationService.GetLocalisedHeroName(match.Players.Single().HeroId, locale));
 
