@@ -138,7 +138,7 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
                 .WithAuthor(player.SteamAccount.Name, player.SteamAccount.Avatar, $"https://stratz.com/players/{user.DotaID}")
                 .WithColor(Color.DarkGreen)
                 .WithDescription(description.ToString())
-                .WithFooter($"Powered by STRATZ", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
+                .WithFooter($"Powered by STRATZ", Emotes.StratzIcon.Url);
 
             for (var i = 0; i < 3; i++)
             {

@@ -13,7 +13,8 @@ public static class Emotes
     public static Emote AnnouncementChannel => Emote.Parse("<:announcement:1080865323605037108>");
     public static Emote TextChannel         => Emote.Parse("<:text:1080865313110904952>");
 
-    public static Emote MagusIcon => Emote.Parse("<:magusbot:995727154191020155>");
+    public static Emote MagusIcon  => Emote.Parse("<:magusbot:995727154191020155>");
+    public static Emote StratzIcon => Emote.Parse("<:STRATZ:1113573151549423657>");
 
     public static Emote MVPIcon => Emote.Parse("<:mvp:1117570846182092821>");
 

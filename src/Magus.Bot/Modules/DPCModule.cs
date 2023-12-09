@@ -72,7 +72,7 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
             .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})")
             .WithColor(0x102a4c)
             .WithTimestamp(info.LastUpdated)
-            .WithFooter("Powered by STRATZ", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
+            .WithFooter("Powered by STRATZ", Emotes.StratzIcon.Url);
 
         if (info.Playoffs.LiveNodes.Any())
         {
@@ -148,7 +148,7 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
             .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})\n**Upcoming Matches**")
             .WithColor(0x102a4c)
             .WithTimestamp(info.LastUpdated)
-            .WithFooter("Powered by STRATZ", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
+            .WithFooter("Powered by STRATZ", Emotes.StratzIcon.Url);
 
         var guild = await getGuildTask;
         var spoilerMode = guild?.HideDpcSpoilers ?? false;
@@ -188,7 +188,7 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
             .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})\n{Emotes.Live} **Live Games**")
             .WithColor(0x102a4c)
             .WithTimestamp(info.LastUpdated)
-            .WithFooter("Powered by STRATZ", "https://cdn.discordapp.com/emojis/1113573151549423657.webp");
+            .WithFooter("Powered by STRATZ", Emotes.StratzIcon.Url);
 
         var guild = await getGuildTask;
         var spoilerMode = guild?.HideDpcSpoilers ?? false;
