@@ -13,5 +13,6 @@ public enum AbilityUnitTargetTeam : byte
     [Display(Name = "Both Teams")]
     DOTA_UNIT_TARGET_TEAM_BOTH     = 3,
     DOTA_UNIT_TARGET_TEAM_CUSTOM   = 4,
+    ENEMY_CUSTOM                   = 6, // HACK for Harpoon, what else?
     FORCEABILITY                   = 7, // Friendly, enemy, and custom
 }

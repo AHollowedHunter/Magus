@@ -1,8 +1,8 @@
-﻿using Magus.Common.Dota;
+﻿using ACave.Extensions.Common;
+using Magus.Common.Dota;
 using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.Models;
 using Magus.Common.Emotes;
-using Magus.Common.Extensions;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 
