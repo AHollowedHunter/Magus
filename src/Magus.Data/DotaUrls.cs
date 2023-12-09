@@ -1,4 +1,4 @@
-﻿using Magus.Data.Models.Dota;
+﻿using Magus.Data.Enums.Dota;
 using System.Text.RegularExpressions;
 
 namespace Magus.Data;

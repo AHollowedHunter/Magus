@@ -1,7 +1,6 @@
 ﻿using Magus.Data.Enums;
 using Magus.Data.Models.V2;
 using Meilisearch;
-using System.Collections.Generic;
 
 namespace Magus.Data.Services;
 

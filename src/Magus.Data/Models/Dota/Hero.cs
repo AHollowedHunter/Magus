@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Magus.Data.Models.Dota;
+﻿namespace Magus.Data.Models.Dota;
 
 public record Hero
 {
@@ -94,41 +92,4 @@ public record Hero
 
     public float GetArmor()
         => ArmorPhysical + (AttributeBaseAgility / 6);
-}
-
-public enum AttributePrimary
-{
-    [Display(Name = "Strength")]
-    DOTA_ATTRIBUTE_STRENGTH,
-    [Display(Name = "Agility")]
-    DOTA_ATTRIBUTE_AGILITY,
-    [Display(Name = "Intelligence")]
-    DOTA_ATTRIBUTE_INTELLECT,
-    [Display(Name = "Universal")]
-    DOTA_ATTRIBUTE_ALL
-}
-
-public enum Role
-{
-    Carry,
-    Support,
-    Nuker,
-    Disabler,
-    Jungler,
-    Durable,
-    Escape,
-    Pusher,
-    Initiator
-}
-
-public enum AttackCapabilities
-{
-    [Display(Name = "No Attack")]
-    DOTA_UNIT_CAP_NO_ATTACK                 = 0,
-    [Display(Name = "Melee")]
-    DOTA_UNIT_CAP_MELEE_ATTACK              = 1,
-    [Display(Name = "Ranged")]
-    DOTA_UNIT_CAP_RANGED_ATTACK             = 2,
-    [Display(Name = "Ranged, Direction")]
-    DOTA_UNIT_CAP_RANGED_ATTACK_DIRECTIONAL = 4,
 }
