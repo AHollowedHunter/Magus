@@ -74,8 +74,8 @@ public class MetaModule : ModuleBase
         await FollowupAsync(text: "To view the terms of service for MagusBot, please follow the link below:\n" + _config.BotTermsOfService);
     }
 
-    [SlashCommand("test", "testing")] // HACK
-    public async Task Test([Autocomplete(typeof(HeroAutocompleteHandlerNEW))] string query)
+    [SlashCommand("test", "testing")] // TEST
+    public async Task Test([Autocomplete(typeof(HeroAutocompleteHandler))] string query)
     {
         await DeferAsync().ConfigureAwait(false);
 

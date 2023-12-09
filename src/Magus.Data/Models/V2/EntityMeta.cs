@@ -13,6 +13,7 @@ public sealed class EntityMeta
     public int EntityId { get; set; }
 
     [JsonPropertyName(nameof(Type))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public EntityType Type { get; set; }
 
     [JsonPropertyName(nameof(Name))]

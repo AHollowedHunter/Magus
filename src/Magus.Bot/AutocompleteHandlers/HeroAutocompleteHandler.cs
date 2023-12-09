@@ -1,22 +1,17 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Magus.Bot.Services;
-using Magus.Data.Models.Embeds;
+using Magus.Data.Enums;
 using Magus.Data.Services;
 
 namespace Magus.Bot.AutocompleteHandlers;
 
 public class HeroAutocompleteHandler : AutocompleteHandler
 {
-    private readonly IAsyncDataService _db;
-    private readonly IServiceProvider _services;
-    private readonly LocalisationService _localisationService;
+    private MeilisearchService Meilisearch { get; }
 
-    public HeroAutocompleteHandler(IAsyncDataService db, IServiceProvider services, LocalisationService localisationService)
+    public HeroAutocompleteHandler(MeilisearchService meilisearch)
     {
-        _db = db;
-        _services = services;
-        _localisationService = localisationService;
+        Meilisearch = meilisearch;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -27,20 +22,12 @@ public class HeroAutocompleteHandler : AutocompleteHandler
     {
         try
         {
-            var locale = _localisationService.LocaleConfirmOrDefault(context.Interaction.UserLocale);
             var value = autocompleteInteraction.Data.Current.Value as string;
-            List<HeroInfoEmbed> heroes;
-            if (string.IsNullOrEmpty(value))
-            {
-                heroes = (await _db.GetRecords<HeroInfoEmbed>(locale, 25)).ToList();
-            }
-            else
-            {
-                heroes = (await _db.GetEntityInfo<HeroInfoEmbed>(value, locale, limit: 25)).ToList();
-            }
 
-            List<AutocompleteResult> results = new();
-            heroes.ForEach(hero => results.Add(new AutocompleteResult(hero.Name, hero.InternalName)));
+            var search = await Meilisearch.SearchEntityMetaAsync(value, EntityType.Hero).ConfigureAwait(false);
+
+            List<AutocompleteResult> results = [];
+            search.ToList().ForEach(hero => results.Add(new AutocompleteResult(hero.Name["en"], hero.InternalName))); // TODO handle localisation
 
             return AutocompletionResult.FromSuccess(results);
         }
