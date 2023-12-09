@@ -1,6 +1,8 @@
-﻿using Magus.Common.Extensions;
-using Magus.Data;
-using Magus.Data.Enums.Dota;
+﻿using Magus.Common.Dota;
+using Magus.Common.Dota.Enums;
+using Magus.Common.Dota.Models;
+using Magus.Common.Emotes;
+using Magus.Common.Extensions;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 
@@ -14,10 +16,10 @@ public static class EntityExtensions
         {
             Title        = hero.Name,
             Description  = $"> {hero.NpeDesc}",
-            Url          = DotaUrls.GetHeroUrl(hero.Name),
+            Url          = URLs.GetHeroUrl(hero.Name),
             ColorRaw     = 0X00A84300,
             Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
-            ThumbnailUrl = $"{DotaUrls.Hero}{hero.InternalName.Substring(14)}.png",
+            ThumbnailUrl = $"{URLs.Hero}{hero.InternalName.Substring(14)}.png",
             Footer       = new() { Text = $"Patch {latestPatch.PatchNumber}", IconUrl = hero.AttributePrimary.GetAttributeIcon() },
         };
         var heroInfoFields = new List<Field>();
@@ -25,20 +27,20 @@ public static class EntityExtensions
         // Attributes
         heroInfoFields.Add(new()
         {
-            Name = $"{Emotes.StrengthIcon} Strength {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_STRENGTH ? "⭐" : "")}",
+            Name = $"{MagusEmotes.StrengthIcon} Strength {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_STRENGTH ? "⭐" : "")}",
             Value = $"{hero.AttributeBaseStrength} +{hero.AttributeStrengthGain}",
             IsInline = true
         });
 
         heroInfoFields.Add(new()
         {
-            Name = $"{Emotes.AgilityIcon} Agility {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_AGILITY ? "⭐" : "")}",
+            Name = $"{MagusEmotes.AgilityIcon} Agility {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_AGILITY ? "⭐" : "")}",
             Value = $" {hero.AttributeBaseAgility} +{hero.AttributeAgilityGain}",
             IsInline = true
         });
         heroInfoFields.Add(new()
         {
-            Name = $"{Emotes.IntelligenceIcon} Intelligence {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_INTELLECT ? "⭐" : "")}",
+            Name = $"{MagusEmotes.IntelligenceIcon} Intelligence {(hero.AttributePrimary == AttributePrimary.DOTA_ATTRIBUTE_INTELLECT ? "⭐" : "")}",
             Value = $"{hero.AttributeBaseIntelligence} +{hero.AttributeIntelligenceGain}",
             IsInline = true
         });
@@ -47,19 +49,19 @@ public static class EntityExtensions
         heroInfoFields.Add(new()
         {
             Name = "Attack",
-            Value = $"{Emotes.DamageIcon} {hero.GetAttackDamageMin():n0} - {hero.GetAttackDamageMax():n0}\n{Emotes.AttackTimeIcon} {hero.GetAttackTime():n2}{Emotes.Spacer}({hero.AttackRate:n1} Base)\n{Emotes.AttackRangeIcon} {hero.AttackRange}\n{Emotes.ProjectileSpeedIcon} {hero.ProjectileSpeed}",
+            Value = $"{MagusEmotes.DamageIcon} {hero.GetAttackDamageMin():n0} - {hero.GetAttackDamageMax():n0}\n{MagusEmotes.AttackTimeIcon} {hero.GetAttackTime():n2}{MagusEmotes.Spacer}({hero.AttackRate:n1} Base)\n{MagusEmotes.AttackRangeIcon} {hero.AttackRange}\n{MagusEmotes.ProjectileSpeedIcon} {hero.ProjectileSpeed}",
             IsInline = true
         });
         heroInfoFields.Add(new()
         {
             Name = "Defence",
-            Value = $"{Emotes.ArmourIcon} {hero.GetArmor():n1}\n{Emotes.MagicResistIcon} {hero.MagicalResistance}",
+            Value = $"{MagusEmotes.ArmourIcon} {hero.GetArmor():n1}\n{MagusEmotes.MagicResistIcon} {hero.MagicalResistance}",
             IsInline = true
         });
         heroInfoFields.Add(new()
         {
             Name = "Mobility",
-            Value = $"{Emotes.MoveSpeedIcon} {hero.MovementSpeed}\n{Emotes.TurnRateIcon} {hero.MovementTurnRate}\n{Emotes.VisionIcon} {hero.VisionDaytimeRange} / {hero.VisionNighttimeRange}",
+            Value = $"{MagusEmotes.MoveSpeedIcon} {hero.MovementSpeed}\n{MagusEmotes.TurnRateIcon} {hero.MovementTurnRate}\n{MagusEmotes.VisionIcon} {hero.VisionDaytimeRange} / {hero.VisionNighttimeRange}",
             IsInline = true
         });
 
@@ -102,9 +104,9 @@ public static class EntityExtensions
                 name = Discord.Format.Bold(name);
 
             if (ability.AbilityIsGrantedByScepter)
-                name = $"{Emotes.ScepterIcon}\u00A0{name}";
+                name = $"{MagusEmotes.ScepterIcon}\u00A0{name}";
             else if (ability.AbilityIsGrantedByShard)
-                name = $"{Emotes.ShardIcon}\u00A0{name}";
+                name = $"{MagusEmotes.ShardIcon}\u00A0{name}";
 
             abilityValues.Add(name);
         }
@@ -146,23 +148,23 @@ public static class EntityExtensions
             ColorRaw     = 0x00E67E22,
             Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
             Footer       = new Footer() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
-            ThumbnailUrl = DotaUrls.GetAbilityImage(ability.InternalName),
+            ThumbnailUrl = URLs.GetAbilityImage(ability.InternalName),
         };
         var embedFields = new List<Field>();
 
         if (ability.AbilityIsGrantedByScepter)
         {
-            embed.Description = Emotes.ScepterIcon + " SCEPTER NEW ABILITY\n" + embed.Description;
+            embed.Description = MagusEmotes.ScepterIcon + " SCEPTER NEW ABILITY\n" + embed.Description;
         }
         else if (ability.AbilityIsGrantedByShard)
         {
-            embed.Description = Emotes.ShardIcon + " SHARD NEW ABILITY\n" + embed.Description;
+            embed.Description = MagusEmotes.ShardIcon + " SHARD NEW ABILITY\n" + embed.Description;
         }
 
         // Ability Properties
 
-        var leftEmbedField       = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
-        var rightEmbedField      = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
+        var leftEmbedField       = new Field() { Name = MagusEmotes.Spacer.ToString(), IsInline = true };
+        var rightEmbedField      = new Field() { Name = MagusEmotes.Spacer.ToString(), IsInline = true };
         var leftEmbedFieldValue  = "";
         var rightEmbedFieldValue = "";
 
@@ -199,7 +201,7 @@ public static class EntityExtensions
         }
 
         // Ability spell values
-        var spellEmbed = new Field() { Name = Emotes.Spacer.ToString(), Value = string.Empty };
+        var spellEmbed = new Field() { Name = MagusEmotes.Spacer.ToString(), Value = string.Empty };
         foreach (var spellValue in ability.DisplayedValues)
         {
             spellEmbed.Value += $"{spellValue.Value}\n";
@@ -220,9 +222,9 @@ public static class EntityExtensions
         var manaString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Count == 0 ? new List<float>(){0F} : ability.AbilityManaCost.Distinct()));
         var hpString   = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityHealthCost.Count == 0 ? new List<float>(){0F} : ability.AbilityHealthCost.Distinct()));
 
-        embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.CooldownIcon}\u00A0{cooldownString}" });
-        embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.ManaIcon}\u00A0{manaString}" });
-        embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.HpIcon}\u00A0{hpString}" });
+        embedFields.Add(new Field() { Name = $"{MagusEmotes.Spacer}", IsInline = true, Value = $"{MagusEmotes.CooldownIcon}\u00A0{cooldownString}" });
+        embedFields.Add(new Field() { Name = $"{MagusEmotes.Spacer}", IsInline = true, Value = $"{MagusEmotes.ManaIcon}\u00A0{manaString}" });
+        embedFields.Add(new Field() { Name = $"{MagusEmotes.Spacer}", IsInline = true, Value = $"{MagusEmotes.HpIcon}\u00A0{hpString}" });
 
         // Do talents
 
@@ -233,7 +235,7 @@ public static class EntityExtensions
             {
                 value += $"{spellValue.Description}\n";
             }
-            embedFields.Add(new Field() { Name = $"{Emotes.ScepterIcon} Scepter Upgrade", Value = value });
+            embedFields.Add(new Field() { Name = $"{MagusEmotes.ScepterIcon} Scepter Upgrade", Value = value });
         }
         if (ability.AbilityHasShard)
         {
@@ -242,7 +244,7 @@ public static class EntityExtensions
             {
                 value += $"{spellValue.Description}\n";
             }
-            embedFields.Add(new Field() { Name = $"{Emotes.ShardIcon} Shard Upgrade", Value = value });
+            embedFields.Add(new Field() { Name = $"{MagusEmotes.ShardIcon} Shard Upgrade", Value = value });
         }
 
         if (ability.Notes.Count > 0)
@@ -283,19 +285,19 @@ public static class EntityExtensions
             ColorRaw     = 0x00206694,
             Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)latestPatch.Timestamp),
             Footer       = new Footer() { Text = $"Most recent patch: {latestPatch.PatchNumber}" },
-            ThumbnailUrl = DotaUrls.GetItemImage(item.InternalName),
+            ThumbnailUrl = URLs.GetItemImage(item.InternalName),
         };
         var embedFields = new List<Field>();
 
         if (item.ItemPurchasable)
-            embed.Description = $"{Emotes.GoldIcon}\u00A0{Discord.Format.Bold(item.ItemCost.ToString())}\n\n";
+            embed.Description = $"{MagusEmotes.GoldIcon}\u00A0{Discord.Format.Bold(item.ItemCost.ToString())}\n\n";
         if (item.ItemIsNeutralDrop)
             embed.Description = $"**Tier {item.ItemNeutralTier}** Neutral Item\n\n";
         embed.Description += String.Join("\n", item.DisplayedValues.Select(x => x.Value));
 
         // Ability Properties
-        var leftEmbedField       = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
-        var rightEmbedField      = new Field() { Name = Emotes.Spacer.ToString(), IsInline = true };
+        var leftEmbedField       = new Field() { Name = MagusEmotes.Spacer.ToString(), IsInline = true };
+        var rightEmbedField      = new Field() { Name = MagusEmotes.Spacer.ToString(), IsInline = true };
         var leftEmbedFieldValue  = "";
         var rightEmbedFieldValue = "";
 
@@ -341,7 +343,7 @@ public static class EntityExtensions
             var chargeRestoreTimes = item.AbilityValues.FirstOrDefault(x => x.Name == "AbilityChargeRestoreTime")?.Values ?? item.AbilityChargeRestoreTime ?? Enumerable.Empty<float>();
             cooldownString += $"\n> Charges:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", charges))}\n> Restore:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", chargeRestoreTimes))}";
         }
-        cooldownString = $"{Emotes.CooldownIcon}\u00A0{cooldownString}";
+        cooldownString = $"{MagusEmotes.CooldownIcon}\u00A0{cooldownString}";
 
         if (item.Spells != null && item.Spells.Count > 0)
         {
@@ -356,16 +358,16 @@ public static class EntityExtensions
                 {
                     if (item.AbilityManaCost.Any())
                     {
-                        var manaString = $"{Emotes.ManaIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityManaCost.Count == 0 ? new List<float>(){0F} : item.AbilityManaCost.Distinct()))}";
+                        var manaString = $"{MagusEmotes.ManaIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityManaCost.Count == 0 ? new List<float>(){0F} : item.AbilityManaCost.Distinct()))}";
                         spellValue.Append(manaString);
-                        spellValue.Append(Emotes.Spacer);
+                        spellValue.Append(MagusEmotes.Spacer);
                     }
                     if (item.AbilityHealthCost.Any())
                     {
 
-                        var hpString   = $"{Emotes.HpIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityHealthCost.Count == 0 ? new List<float>(){0F} : item.AbilityHealthCost.Distinct()))}";
+                        var hpString   = $"{MagusEmotes.HpIcon}\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", item.AbilityHealthCost.Count == 0 ? new List<float>(){0F} : item.AbilityHealthCost.Distinct()))}";
                         spellValue.Append(hpString);
-                        spellValue.Append(Emotes.Spacer);
+                        spellValue.Append(MagusEmotes.Spacer);
                     }
                     spellValue.Append(cooldownString);
                     firstSpell = false;

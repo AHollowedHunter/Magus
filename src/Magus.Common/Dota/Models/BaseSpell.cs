@@ -1,6 +1,6 @@
-﻿using Magus.Data.Enums.Dota;
+﻿using Magus.Common.Dota.Enums;
 
-namespace Magus.Data.Models.Dota;
+namespace Magus.Common.Dota.Models;
 
 /// <summary>
 /// DotA appears to handle hero abilities & talents along with items as the same identical "ability".

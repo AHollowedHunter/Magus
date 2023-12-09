@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Magus.Data.Models.Dota;
+namespace Magus.Common.Dota.Enums;
 
 public enum AttackCapabilities
 {

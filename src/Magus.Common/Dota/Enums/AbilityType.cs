@@ -1,4 +1,4 @@
-﻿namespace Magus.Data.Enums.Dota;
+﻿namespace Magus.Common.Dota.Enums;
 
 public enum AbilityType : byte
 {

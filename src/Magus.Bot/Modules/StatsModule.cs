@@ -4,7 +4,6 @@ using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Services;
 using Magus.Common.Emotes;
-using Magus.Data;
 using Magus.Data.Extensions;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Stratz.Results;
@@ -138,7 +137,7 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
                 .WithAuthor(player.SteamAccount.Name, player.SteamAccount.Avatar, $"https://stratz.com/players/{user.DotaID}")
                 .WithColor(Color.DarkGreen)
                 .WithDescription(description.ToString())
-                .WithFooter($"Powered by STRATZ", Emotes.StratzIcon.Url);
+                .WithFooter($"Powered by STRATZ", MagusEmotes.StratzIcon.Url);
 
             for (var i = 0; i < 3; i++)
             {
@@ -260,7 +259,7 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
         sb.Append(match.Players.Single().GoldPerMinute);
         sb.Append("**");
         sb.Append(WideSpace);
-        sb.Append(Emotes.GoldIcon);
+        sb.Append(MagusEmotes.GoldIcon);
         sb.Append('\u202F');
         sb.AppendLine(match.Players.Single().Networth.ToString("n0"));
 

@@ -1,4 +1,4 @@
-﻿namespace Magus.Data.Models.Dota;
+﻿namespace Magus.Common.Dota.Models;
 
 public record Ability : BaseSpell
 {

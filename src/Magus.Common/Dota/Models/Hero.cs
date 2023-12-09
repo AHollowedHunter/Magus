@@ -1,4 +1,6 @@
-﻿namespace Magus.Data.Models.Dota;
+﻿using Magus.Common.Dota.Enums;
+
+namespace Magus.Common.Dota.Models;
 
 public record Hero
 {

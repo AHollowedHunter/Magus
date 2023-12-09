@@ -2,7 +2,8 @@
 using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
-using Magus.Data;
+using Magus.Common.Dota;
+using Magus.Common.Emotes;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 
@@ -34,7 +35,7 @@ public sealed class TIModule : ModuleBase
             Description  = $"Current Prize Pool stands at:\n\n**${string.Format("{0:n0}", _tiService.PrizePool)}**",
             Timestamp    = DateTimeOffset.UtcNow,
             Color        = Color.Gold,
-            ThumbnailUrl = DotaUrls.DotaColourLogo,
+            ThumbnailUrl = URLs.DotaColourLogo,
         };
         await RespondAsync(embed: embed.Build());
     }
@@ -47,15 +48,15 @@ public sealed class TIModule : ModuleBase
             Title        = "The International 2022 Live Games",
             Timestamp    = DateTimeOffset.UtcNow,
             Color        = Color.Gold,
-            ThumbnailUrl = DotaUrls.DotaColourLogo,
+            ThumbnailUrl = URLs.DotaColourLogo,
         };
 
         foreach (var game in _tiService.LiveGames)
         {
             var name = $"{game.RadiantTeam?.TeamName ?? "[UNKNOWN]"} vs {game.DireTeam?.TeamName ?? "[UNKNOWN]"}";
 
-            var value = $"Duration:\u2007**{game.Duration:h\\:mm\\:ss}**{Emotes.Spacer}*(Stream Delay:\u2007{game.StreamDelaySeconds.TotalSeconds}s)*\n"
-                        + $"Score:\u2007||**{game.Scores.Radiant}\u00A0-\u00A0{game.Scores.Dire}**||{Emotes.Spacer}"
+            var value = $"Duration:\u2007**{game.Duration:h\\:mm\\:ss}**{MagusEmotes.Spacer}*(Stream Delay:\u2007{game.StreamDelaySeconds.TotalSeconds}s)*\n"
+                        + $"Score:\u2007||**{game.Scores.Radiant}\u00A0-\u00A0{game.Scores.Dire}**||{MagusEmotes.Spacer}"
                         + (game.SeriesWins.Radiant > 0 || game.SeriesWins.Dire > 0 ? $"Series Wins:\u2007**||{game.SeriesWins.Radiant}\u00A0-\u00A0{game.SeriesWins.Dire}||**\n" : "\n")
                         + $"Match ID:\u2007{game.MatchId}";
             embed.AddField(name, value);

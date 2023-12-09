@@ -2,7 +2,7 @@
 using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
-using Magus.Data;
+using Magus.Common.Emotes;
 using Magus.Data.Extensions;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
@@ -72,11 +72,11 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
             .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})")
             .WithColor(0x102a4c)
             .WithTimestamp(info.LastUpdated)
-            .WithFooter("Powered by STRATZ", Emotes.StratzIcon.Url);
+            .WithFooter("Powered by STRATZ", MagusEmotes.StratzIcon.Url);
 
         if (info.Playoffs.LiveNodes.Any())
         {
-            eb.AddField("_ _", Emotes.Live + " **Live Games**");
+            eb.AddField("_ _", MagusEmotes.Live + " **Live Games**");
             foreach (var node in info.Playoffs.LiveNodes)
             {
                 eb.AddField(MakeNodeFieldBuilder(node, spoilerMode));
@@ -148,7 +148,7 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
             .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})\n**Upcoming Matches**")
             .WithColor(0x102a4c)
             .WithTimestamp(info.LastUpdated)
-            .WithFooter("Powered by STRATZ", Emotes.StratzIcon.Url);
+            .WithFooter("Powered by STRATZ", MagusEmotes.StratzIcon.Url);
 
         var guild = await getGuildTask;
         var spoilerMode = guild?.HideDpcSpoilers ?? false;
@@ -185,10 +185,10 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
 
         var mainEmbed = new EmbedBuilder()
             .WithTitle(info.LeagueName)
-            .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})\n{Emotes.Live} **Live Games**")
+            .WithDescription($"[View on STRATZ](https://stratz.com/leagues/{info.LeagueId}){WideSpace}[Official Website]({info.Url})\n{MagusEmotes.Live} **Live Games**")
             .WithColor(0x102a4c)
             .WithTimestamp(info.LastUpdated)
-            .WithFooter("Powered by STRATZ", Emotes.StratzIcon.Url);
+            .WithFooter("Powered by STRATZ", MagusEmotes.StratzIcon.Url);
 
         var guild = await getGuildTask;
         var spoilerMode = guild?.HideDpcSpoilers ?? false;

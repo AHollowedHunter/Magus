@@ -2,7 +2,7 @@
 using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
-using Magus.Data;
+using Magus.Common.Emotes;
 using Magus.Data.Models.V2;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
@@ -48,7 +48,7 @@ public class MagusModule : ModuleBase
 
         var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n[Privacy Policy]({_config.BotPrivacyPolicy})\n[Terms of Service]({_config.BotTermsOfService})\n";
         response.AddField("Links", links, false);
-        response.AddField(Emotes.Spacer.ToString(), "Dota and the Dota Logo are trademarks and/or registered trademarks of Valve Corporation");
+        response.AddField(MagusEmotes.Spacer.ToString(), "Dota and the Dota Logo are trademarks and/or registered trademarks of Valve Corporation");
 
         await FollowupAsync(embed: response.Build(), ephemeral: true);
     }

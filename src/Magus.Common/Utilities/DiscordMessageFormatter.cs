@@ -3,9 +3,9 @@ using System.Text.RegularExpressions;
 
 namespace Magus.Common.Utilities;
 
-public static class DiscordMessageFormatter
+public static partial class DiscordMessageFormatter
 {
-    private static readonly Regex _rssRegex = new(@"\[[^\]]*\](?:.*)\[/[^\]]*\]");
+    private static readonly Regex _rssRegex = RssRegex();
 
     private static readonly HtmlSanitizer _sanitizer;
     private static readonly ReverseMarkdown.Converter _markdownConverter;
@@ -24,7 +24,7 @@ public static class DiscordMessageFormatter
     {
         var sanitizedSource = _sanitizer.Sanitize(htmlSource);
 
-        sanitizedSource = _rssRegex.Replace(sanitizedSource, ""); // DO this first to prevent inadverently removing markdown URLs
+        sanitizedSource = _rssRegex.Replace(sanitizedSource, ""); // DO this first to prevent inadvertently removing markdown URLs
         sanitizedSource = _markdownConverter.Convert(sanitizedSource);
 
         return sanitizedSource;
@@ -39,4 +39,7 @@ public static class DiscordMessageFormatter
     {
         "href"
     };
+
+    [GeneratedRegex(@"\[[^\]]*\](?:.*)\[/[^\]]*\]")]
+    private static partial Regex RssRegex();
 }

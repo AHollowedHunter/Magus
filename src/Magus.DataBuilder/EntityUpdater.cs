@@ -1,20 +1,19 @@
-﻿using Magus.Common.Options;
+﻿using Magus.Common.Dota.Enums;
+using Magus.Common.Dota.Models;
+using Magus.Common.Options;
 using Magus.Data.Enums;
-using Magus.Data.Enums.Dota;
-using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Magus;
 using Magus.Data.Models.V2;
 using Magus.Data.Services;
 using Meilisearch;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ValveKeyValue;
-using static Magus.Data.Models.Dota.Ability;
-using static Magus.Data.Models.Dota.BaseSpell;
+using static Magus.Common.Dota.Models.Ability;
+using static Magus.Common.Dota.Models.BaseSpell;
 
 namespace Magus.DataBuilder;
 

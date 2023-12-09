@@ -1,6 +1,6 @@
 ﻿using Coravel.Scheduling.Schedule.Interfaces;
+using Magus.Common.Dota;
 using Magus.Common.ImageSharp;
-using Magus.Data;
 using Magus.Data.Services;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -56,7 +56,7 @@ public class DPCService
             {
                 try
                 {
-                    var teamLogo = Image.Load<Rgba32>(await _httpClient.GetStreamAsync(DotaUrls.GetTeamLogo((int)team.TeamId)));
+                    var teamLogo = Image.Load<Rgba32>(await _httpClient.GetStreamAsync(URLs.GetTeamLogo((int)team.TeamId)));
                     teamLogo.Mutate(x => x.Resize(32, 32));
                     teamLogos[(int)team.TeamId] = teamLogo;
                 }

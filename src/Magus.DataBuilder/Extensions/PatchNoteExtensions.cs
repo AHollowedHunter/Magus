@@ -1,5 +1,7 @@
 ﻿using Discord;
-using Magus.Data;
+using Magus.Common.Dota;
+using Magus.Common.Dota.Models;
+using Magus.Common.Emotes;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
 using System.Text;
@@ -20,7 +22,7 @@ public static class PatchNoteExtensions
             Url          = _patchUrlBase + patch.PatchName,
             ColorRaw     = Color.DarkRed,
             Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
-            ThumbnailUrl = DotaUrls.DotaColourLogo,
+            ThumbnailUrl = URLs.DotaColourLogo,
             Footer       = new() { Text = "Patch " + patch.PatchName },
         };
         var fields = new List<Field>();
@@ -84,7 +86,7 @@ public static class PatchNoteExtensions
                 Url          = _patchUrlBase + patch.PatchName,
                 ColorRaw     = Color.DarkOrange,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
-                ThumbnailUrl = DotaUrls.GetHeroImage(hero.InternalName), // Store this in a hero object?
+                ThumbnailUrl = URLs.GetHeroImage(hero.InternalName), // Store this in a hero object?
                 Footer       = new() { Text = "Patch " + patch.PatchName},
                 Fields       = fields,
             };
@@ -177,7 +179,7 @@ public static class PatchNoteExtensions
     {
         if (indent > 0)
         {
-            return String.Concat(Enumerable.Repeat(Emotes.Spacer.ToString(), indent)) + "◦ ";
+            return String.Concat(Enumerable.Repeat(MagusEmotes.Spacer.ToString(), indent)) + "◦ ";
         }
         return "• ";
     }

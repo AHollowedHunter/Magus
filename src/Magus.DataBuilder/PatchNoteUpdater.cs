@@ -1,5 +1,5 @@
-﻿using Magus.Common.Options;
-using Magus.Data.Models.Dota;
+﻿using Magus.Common.Dota.Models;
+using Magus.Common.Options;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;

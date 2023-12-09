@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Magus.Data.Enums.Dota;
+namespace Magus.Common.Dota.Enums;
 
 [Flags]
 public enum AbilityUnitTargetTeam : byte

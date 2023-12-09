@@ -4,8 +4,8 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Magus.Bot.Attributes;
 using Magus.Bot.Extensions;
+using Magus.Common.Emotes;
 using Magus.Common.Enums;
-using Magus.Data;
 using Magus.Data.Extensions;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
@@ -55,12 +55,12 @@ public class ConfigServerModule : ModuleBase
         var dotaButton = new ButtonBuilder()
                 .WithLabel(Topic.Dota.ToString())
                 .WithCustomId("announcements", GroupName, method: CustomIdMethod.GET, key: Topic.Dota.ToString())
-                .WithEmote(Emotes.DotaLogo)
+                .WithEmote(MagusEmotes.DotaLogo)
                 .WithStyle(ButtonStyle.Primary);
         var magusButton = new ButtonBuilder()
                 .WithLabel(Topic.MagusBot.ToString())
                 .WithCustomId("announcements", GroupName, method: CustomIdMethod.GET, key: Topic.MagusBot.ToString())
-                .WithEmote(Emotes.MagusIcon)
+                .WithEmote(MagusEmotes.MagusIcon)
                 .WithStyle(ButtonStyle.Primary);
         var rows = new List<ActionRowBuilder>
             {
@@ -92,10 +92,10 @@ public class ConfigServerModule : ModuleBase
         if (webhook != null && channel != null)
             message
             .AppendLine()
-            .AppendFormat("Currently receiving **{0}** announcements in **{1} {2}**", topic, Emotes.TextChannel.ToString(), channel.Name);
+            .AppendFormat("Currently receiving **{0}** announcements in **{1} {2}**", topic, MagusEmotes.TextChannel.ToString(), channel.Name);
 
         var fieldValue = new StringBuilder()
-                .AppendFormat("• You may only choose **one** {0} Text Channel.", Emotes.TextChannel.ToString())
+                .AppendFormat("• You may only choose **one** {0} Text Channel.", MagusEmotes.TextChannel.ToString())
                 .AppendLine()
                 .AppendLine("• MagusBot requires the `Manage Webhooks` permission is enabled for the server or selected targetChannel to create or remove webhooks required to send messages.")
                 .AppendLine("• Selecting a targetChannel from the menu will **instantly** attempt to update the chosen targetChannel.")
@@ -172,7 +172,7 @@ public class ConfigServerModule : ModuleBase
             });
         }
 
-        await FollowupAsync($"**{Emotes.TextChannel}\u00A0{targetChannel.Name}** will now receive {topic} updates!", ephemeral: true);
+        await FollowupAsync($"**{MagusEmotes.TextChannel}\u00A0{targetChannel.Name}** will now receive {topic} updates!", ephemeral: true);
     }
 
     [ComponentInteraction("announcements:DEL:*")]
