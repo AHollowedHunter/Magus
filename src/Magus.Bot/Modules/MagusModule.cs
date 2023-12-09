@@ -12,7 +12,7 @@ namespace Magus.Bot.Modules;
 
 [Group("magus", "All things MagusBot")]
 [ModuleRegistration(Location.GLOBAL)]
-public class MetaModule : ModuleBase
+public class MagusModule : ModuleBase
 {
     private readonly IAsyncDataService _db;
     private readonly BotSettings _config;
@@ -21,7 +21,7 @@ public class MetaModule : ModuleBase
 
     readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString(3);
 
-    public MetaModule(IAsyncDataService db, IOptions<BotSettings> config)
+    public MagusModule(IAsyncDataService db, IOptions<BotSettings> config)
     {
         _db = db;
         _config = config.Value;
