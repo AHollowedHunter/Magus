@@ -8,6 +8,7 @@ using Magus.Data.Models.V2;
 using Magus.Data.Services;
 using Meilisearch;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -1027,7 +1028,7 @@ public class EntityUpdater
         item.AbilityManaCost = kvItem.ParseChildValueList<float>("AbilityManaCost");
         item.AbilityHealthCost = kvItem.ParseChildValueList<float>("AbilityHealthCost");
 
-        item.ItemAliases = kvItem.ParseChildValueList<string>("ItemAliases");
+        item.ItemAliases = kvItem.ParseChildValueList<string>("ItemAliases", spaceIsSeparator: false);
         item.ItemBaseLevel = kvItem.ParseChildValue<byte>("ItemBaseLevel");
         item.MaxUpgradeLevel = kvItem.ParseChildValue<byte>("MaxUpgradeLevel");
         item.ItemCost = kvItem.ParseChildValue<short>("ItemCost", emptyValueReturnDefault: true);
@@ -1156,7 +1157,9 @@ public class EntityUpdater
     {
         _logger.LogInformation("Creating entity localisation records.");
 
-        var entityLocalisation = new List<EntityMeta>();
+        var entities = new List<EntityMeta>();
+
+        // The below doesn't exclude duplicate localisations having their own key... another thing in the localisartion rework
 
         foreach (var heroLocalisationsGroup in _heroes.GroupBy(x => (x.Id, x.InternalName))) // TODO this different
         {
@@ -1170,7 +1173,23 @@ public class EntityUpdater
 
             var heroLocalisation = new EntityMeta(heroLocalisationsGroup.Key.InternalName, heroLocalisationsGroup.Key.Id, EntityType.Hero, localisedNames, hero.NameAliases.ToArray(), hero.RealName);
 
-            entityLocalisation.Add(heroLocalisation);
+            entities.Add(heroLocalisation);
+        }
+
+        // HACK add item localisations
+        foreach (var itemLocalisationsGroup in _items.GroupBy(x => (x.Id, x.InternalName))) // TODO this different
+        {
+            _logger.LogDebug("Processing item EntityLocalisations for {key}", itemLocalisationsGroup.Key);
+
+            var item = itemLocalisationsGroup.First(); // TODO like above, this different.
+
+            var localisedNames = new Dictionary<string, string>();
+            foreach (var localisedItem in itemLocalisationsGroup)
+                localisedNames[_localisationOptions.SourceLocaleMappings[localisedItem.Language][0]] = localisedItem.Name;
+
+            var itemLocalisation = new EntityMeta(itemLocalisationsGroup.Key.InternalName, itemLocalisationsGroup.Key.Id, EntityType.Item, localisedNames, item.ItemAliases?.ToArray());
+
+            entities.Add(itemLocalisation);
         }
 
         string[] filterableAttributes = [nameof(EntityMeta.Type)];
@@ -1184,7 +1203,7 @@ public class EntityUpdater
         await _meilisearchService.DeleteIndexAsync(nameof(EntityMeta)); // HACK for testing. Will use a swap index later.
         await _meilisearchService.CreateIndexAsync(nameof(EntityMeta), "InternalName", settings);
 
-        await _meilisearchService.AddDocumentsAsync(entityLocalisation);
+        await _meilisearchService.AddDocumentsAsync(entities);
 
         _logger.LogInformation("Finished creating entity localisation records.");
     }

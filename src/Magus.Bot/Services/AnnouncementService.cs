@@ -46,6 +46,9 @@ public class AnnouncementService
     private async Task GetDotaNews()
     {
         var newAnnouncements = await GetNewDotaAnnouncements();
+        if (newAnnouncements.Any() is false)
+            return;
+
         foreach (var announcement in newAnnouncements)
         {
             _logger.LogInformation("Processing new Dota news: {id} {title}", announcement.Id, announcement.Title);

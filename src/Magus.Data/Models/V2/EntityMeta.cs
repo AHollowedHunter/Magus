@@ -20,9 +20,11 @@ public sealed class EntityMeta
     public IDictionary<string, string> Name { get; set; }
 
     [JsonPropertyName(nameof(Aliases))]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string[]? Aliases { get; set; }
 
     [JsonPropertyName(nameof(RealName))]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? RealName { get; set; } // TODO needed? how get?
 
     public EntityMeta(string internalName, int entityId, EntityType type, IDictionary<string, string> name, string[]? aliases = null, string? realName = null)
