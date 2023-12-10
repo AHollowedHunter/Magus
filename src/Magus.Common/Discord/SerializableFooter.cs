@@ -11,7 +11,10 @@ public sealed class SerializableFooter
         IconUrl = iconUrl;
     }
 
+    [JsonPropertyName(nameof(Text))]
     public string Text { get; set; }
+
+    [JsonPropertyName(nameof(IconUrl))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? IconUrl { get; set; }
 

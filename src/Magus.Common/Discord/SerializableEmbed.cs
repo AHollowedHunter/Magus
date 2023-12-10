@@ -5,30 +5,40 @@ namespace Magus.Common.Discord;
 
 public sealed class SerializableEmbed
 {
+    [JsonPropertyName(nameof(Title))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Title { get; set; }
 
+
+    [JsonPropertyName(nameof(Description))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Description { get; set; }
 
+    [JsonPropertyName(nameof(Url))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Url { get; set; }
 
+    [JsonPropertyName(nameof(ImageUrl))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ImageUrl { get; set; }
 
+    [JsonPropertyName(nameof(ThumbnailUrl))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ThumbnailUrl { get; set; }
 
+    [JsonPropertyName(nameof(ColorRaw))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public uint? ColorRaw { get; set; }
 
+    [JsonPropertyName(nameof(Fields))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IEnumerable<SerializableField>? Fields { get; set; }
 
+    [JsonPropertyName(nameof(Footer))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public SerializableFooter? Footer { get; set; }
 
+    [JsonPropertyName(nameof(Timestamp))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DateTimeOffset? Timestamp { get; set; }
 

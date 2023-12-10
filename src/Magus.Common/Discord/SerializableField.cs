@@ -1,4 +1,6 @@
-﻿namespace Magus.Common.Discord;
+﻿using System.Text.Json.Serialization;
+
+namespace Magus.Common.Discord;
 
 public sealed class SerializableField
 {
@@ -12,7 +14,12 @@ public sealed class SerializableField
         IsInline = isInline;
     }
 
+    [JsonPropertyName(nameof(Name))]
     public string Name { get; set; }
+
+    [JsonPropertyName(nameof(Value))]
     public string Value { get; set; }
+
+    [JsonPropertyName(nameof(IsInline))]
     public bool IsInline { get; set; }
 }
