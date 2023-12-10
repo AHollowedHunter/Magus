@@ -1192,7 +1192,7 @@ public class EntityUpdater
             entities.Add(itemLocalisation);
         }
 
-        string[] filterableAttributes = [nameof(Entity.Type)];
+        string[] filterableAttributes = [nameof(Entity.EntityType)];
         string[] searchableAttributes = [nameof(Entity.Name), nameof(Entity.Name)+".en", nameof(Entity.Aliases), nameof(Entity.RealName), nameof(Entity.InternalName)];
 
         Settings settings = new()
