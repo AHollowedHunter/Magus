@@ -12,7 +12,8 @@ public sealed class SerializableFooter
     }
 
     public string Text { get; set; }
-
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? IconUrl { get; set; }
+
+    public static implicit operator SerializableFooter(string text) => new(text);
 }

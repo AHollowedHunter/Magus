@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Magus.Common.Discord;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Magus.Data.Models.Embeds;
@@ -13,5 +14,5 @@ public abstract record EntityInfoEmbed : ISnowflakeId, ILocaleRecord, ILocalised
     public string Name { get; set; }
     public string? RealName { get; set; }
     public IEnumerable<string>? Aliases { get; set; }
-    public Embed Embed { get; set; }
+    public SerializableEmbed Embed { get; set; }
 }

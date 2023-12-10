@@ -30,7 +30,7 @@ public class InfoModule : ModuleBase
         var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale, 1)).FirstOrDefault();
 
         if (heroInfo != null)
-            await FollowupAsync(embed: heroInfo.Embed.CreateDiscordEmbed());
+            await FollowupAsync(embed: heroInfo.Embed.ToDiscordEmbed());
         else
             await FollowupAsync($"Could not find a hero called **{name}**", ephemeral: true);
     }
@@ -44,7 +44,7 @@ public class InfoModule : ModuleBase
         var abilityInfo = (await _db.GetEntityInfo<AbilityInfoEmbed>(name, locale, 1)).FirstOrDefault();
 
         if (abilityInfo != null)
-            await FollowupAsync(embed: abilityInfo.Embed.CreateDiscordEmbed());
+            await FollowupAsync(embed: abilityInfo.Embed.ToDiscordEmbed());
         else
             await FollowupAsync($"Could not find an ability called **{name}**", ephemeral: true);
     }
@@ -64,7 +64,7 @@ public class InfoModule : ModuleBase
 
         var abilityInfo = await _db.GetHeroScepter(heroInfo.EntityId, locale ?? Context.Interaction.UserLocale);
         if (abilityInfo != null)
-            await FollowupAsync(embed: abilityInfo.Embed.CreateDiscordEmbed());
+            await FollowupAsync(embed: abilityInfo.Embed.ToDiscordEmbed());
         else
             await FollowupAsync($"Could not find an scepter for the hero called **{name}**", ephemeral: true);
     }
@@ -84,7 +84,7 @@ public class InfoModule : ModuleBase
 
         var abilityInfo = await _db.GetHeroShard(heroInfo.EntityId, locale ?? Context.Interaction.UserLocale);
         if (abilityInfo != null)
-            await FollowupAsync(embed: abilityInfo.Embed.CreateDiscordEmbed());
+            await FollowupAsync(embed: abilityInfo.Embed.ToDiscordEmbed());
         else
             await FollowupAsync($"Could not find an shard for the hero called **{name}**", ephemeral: true);
     }
@@ -98,7 +98,7 @@ public class InfoModule : ModuleBase
         var itemInfo = (await _db.GetEntityInfo<ItemInfoEmbed>(name, locale)).FirstOrDefault();
 
         if (itemInfo != null)
-            await FollowupAsync(embed: itemInfo.Embed.CreateDiscordEmbed());
+            await FollowupAsync(embed: itemInfo.Embed.ToDiscordEmbed());
         else
             await FollowupAsync($"Could not find an item called **{name}**", ephemeral: true);
     }
