@@ -45,7 +45,8 @@ public class EntityUpdater
     private Dictionary<string, byte> _neutralItemTiers = [];
     private Hero _baseHero = new();
 
-    private static readonly string ValueSeparator = "\u00A0/\u00A0";
+    private static readonly char NarrowNoBreakSpace = '\u202F';
+    private static readonly string ValueSeparator = $"{NarrowNoBreakSpace}/{NarrowNoBreakSpace}"; // TODO move somewhere reusable, and unify everywhere
 
     private static readonly Regex NameGender = new("#\\|(\\p{L}+)\\|#");
 
