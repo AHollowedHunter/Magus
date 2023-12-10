@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Magus.Common.Discord;
 using Magus.Common.Dota;
 using Magus.Common.Dota.Models;
 using Magus.Common.Emotes;
@@ -13,7 +14,7 @@ public static class PatchNoteExtensions
 
     public static IEnumerable<GeneralPatchNoteEmbed> GetGeneralPatchNoteEmbeds(this PatchNote patch, Dictionary<string, string[]> languageMap)
     {
-        var generalPatchEmbed = new Data.Models.Embeds.Embed()
+        var generalPatchEmbed = new SerializableEmbed()
         {
             Title        = $"Patch {patch.PatchName} - General changes",
             Description  = CreateFormattedDescription(patch.GenericNotes), // LIMIT IT
@@ -21,24 +22,20 @@ public static class PatchNoteExtensions
             ColorRaw     = Color.DarkRed,
             Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
             ThumbnailUrl = URLs.DotaColourLogo,
-            Footer       = new() { Text = "Patch " + patch.PatchName },
+            Footer       = "Patch " + patch.PatchName,
         };
-        var fields = new List<Field>();
+        var fields = new List<SerializableField>();
 
         if (!string.IsNullOrEmpty(patch.Website))
         {
-            fields.Add(new()
-            {
-                Name  = "Patch Website",
-                Value = $"[{patch.Website}](https://www.dota2.com/{patch.Website})",
-            });
+            fields.Add(new("Patch Website",
+                $"[{patch.Website}](https://www.dota2.com/{patch.Website})"
+            ));
         }
-        fields.Add(new()
-        {
-            Name  = "Full patch notes",
-            Value = $"[Click here for full patch notes]({generalPatchEmbed.Url})" +
-            $"\nAdditionally, use the command `/patch <hero|item> <name>` to view the most recent changes for a specifc hero or item ",
-        });
+        fields.Add(new("Full patch notes",
+             $"[Click here for full patch notes]({generalPatchEmbed.Url})" +
+             $"\nAdditionally, use the command `/patch <hero|item> <name>` to view the most recent changes for a specifc hero or item "
+        ));
 
         generalPatchEmbed.Fields = fields;
 
@@ -47,11 +44,11 @@ public static class PatchNoteExtensions
         {
             generalPatchNotesList.Add(new()
             {
-                Id          = GetPatchNoteId(patch.PatchName, "General", locale), //Temp custom id
-                Locale      = locale,
-                Embed       = generalPatchEmbed,
+                Id = GetPatchNoteId(patch.PatchName, "General", locale), //Temp custom id
+                Locale = locale,
+                Embed = generalPatchEmbed,
                 PatchNumber = patch.PatchName,
-                Timestamp    = patch.Timestamp,
+                Timestamp = patch.Timestamp,
             });
         }
         return generalPatchNotesList;
@@ -64,20 +61,20 @@ public static class PatchNoteExtensions
         {
             var heroInfo = heroes.Where(x => x.InternalName == hero.InternalName).First();
 
-            var fields = new List<Field>();
+            var fields = new List<SerializableField>();
 
             foreach (var abilityNote in hero.AbilityNotes)
             {
                 var abilityName = GetLanguageValue(abilityValues, patch.Language, abilityNote.InternalName);
-                fields.Add(new() { Name = $"{abilityName}:", Value = CreateFormattedDescription(abilityNote.Notes) });
+                fields.Add(new($"{abilityName}:", CreateFormattedDescription(abilityNote.Notes)));
             }
 
             if (hero.TalentNotes.Count > 0)
             {
-                fields.Add(new() { Name = "Talents:", Value = CreateFormattedDescription(hero.TalentNotes) });
+                fields.Add(new("Talents:", CreateFormattedDescription(hero.TalentNotes)));
             }
 
-            var heroPatchNoteEmbed = new Data.Models.Embeds.Embed()
+            var heroPatchNoteEmbed = new SerializableEmbed()
             {
                 Title        = $"{heroInfo.Name} - changes {patch.PatchName}",
                 Description  = CreateFormattedDescription(hero.GeneralNotes),
@@ -85,21 +82,21 @@ public static class PatchNoteExtensions
                 ColorRaw     = Color.DarkOrange,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
                 ThumbnailUrl = URLs.GetHeroImage(hero.InternalName), // Store this in a hero object?
-                Footer       = new() { Text = "Patch " + patch.PatchName},
+                Footer       = "Patch " + patch.PatchName,
                 Fields       = fields,
             };
             foreach (var locale in languageMap[patch.Language])
             {
                 heroPatchNotesList.Add(new()
                 {
-                    Id           = GetPatchNoteId(patch.PatchName, hero.InternalName, locale), //Temp custom id
-                    Locale       = locale,
-                    EntityId     = heroInfo.EntityId,
-                    Name         = heroInfo.Name,
+                    Id = GetPatchNoteId(patch.PatchName, hero.InternalName, locale), //Temp custom id
+                    Locale = locale,
+                    EntityId = heroInfo.EntityId,
+                    Name = heroInfo.Name,
                     InternalName = hero.InternalName,
-                    Embed        = heroPatchNoteEmbed,
-                    PatchNumber  = patch.PatchName,
-                    Timestamp    = patch.Timestamp,
+                    Embed = heroPatchNoteEmbed,
+                    PatchNumber = patch.PatchName,
+                    Timestamp = patch.Timestamp,
                 });
             }
         }
@@ -115,28 +112,28 @@ public static class PatchNoteExtensions
             var itemInfo = items.Where(x => x.InternalName == item.InternalName).FirstOrDefault();
             if (itemInfo == null) continue;
 
-            var itemPatchNoteEmbed = new Data.Models.Embeds.Embed()
+            var itemPatchNoteEmbed = new SerializableEmbed()
             {
                 Title        = $"{itemInfo.Name} - changes {patch.PatchName}",
                 Description  = CreateFormattedDescription(item.Notes),
                 Url          = _patchUrlBase + patch.PatchName,
                 ColorRaw     = Color.DarkBlue,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
-                ThumbnailUrl = $"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/{item.InternalName.Substring(5)}.png",
-                Footer       = new() { Text = "Patch " + patch.PatchName}
+                ThumbnailUrl = URLs.GetItemImage(item.InternalName),
+                Footer       = "Patch " + patch.PatchName
             };
             foreach (var locale in languageMap[patch.Language])
             {
                 itemPatchNotesList.Add(new()
                 {
-                    Id           = GetPatchNoteId(patch.PatchName, item.InternalName, locale), //Temp custom id
-                    Locale       = locale,
-                    EntityId     = itemInfo.EntityId,
-                    Name         = itemInfo.Name,
+                    Id = GetPatchNoteId(patch.PatchName, item.InternalName, locale), //Temp custom id
+                    Locale = locale,
+                    EntityId = itemInfo.EntityId,
+                    Name = itemInfo.Name,
                     InternalName = itemInfo.InternalName,
-                    Embed        = itemPatchNoteEmbed,
-                    PatchNumber  = patch.PatchName,
-                    Timestamp    = patch.Timestamp,
+                    Embed = itemPatchNoteEmbed,
+                    PatchNumber = patch.PatchName,
+                    Timestamp = patch.Timestamp,
                 });
             }
         }
@@ -149,7 +146,7 @@ public static class PatchNoteExtensions
         string truncatedMessage = "***See website for full patchnote***";
         foreach (var note in notes)
         {
-            var indent = notes.Any(x=> x.Indent == 0) ? note.Indent : note.Indent - 1; // Some set of notes are all indedented, so remove a level
+            var indent = notes.Any(x => x.Indent == 0) ? note.Indent : note.Indent - 1; // Some set of notes are all indedented, so remove a level
             var tab = string.Empty;
 
             if (!Regex.Match(note.Value, @"^\s+$").Success)
@@ -177,7 +174,7 @@ public static class PatchNoteExtensions
     {
         if (indent > 0)
         {
-            return String.Concat(Enumerable.Repeat(MagusEmotes.Spacer.ToString(), indent)) + "◦ ";
+            return string.Concat(Enumerable.Repeat(MagusEmotes.Spacer.ToString(), indent)) + "◦ ";
         }
         return "• ";
     }
@@ -194,13 +191,13 @@ public static class PatchNoteExtensions
     private static string GetLanguageValue(Dictionary<(string Language, string Key), string> values, string language, string internalName, string defaultLanguage = "english")
     {
         var key = (Language: language, Key: $"DOTA_Tooltip_ability_{internalName}".ToLower());
-        if (values.ContainsKey(key))
+        if (values.TryGetValue(key, out string? value))
         {
-            return values[key];
+            return value;
         }
         else
         {
-            values.TryGetValue((defaultLanguage, key.Key), out var value);
+            values.TryGetValue((defaultLanguage, key.Key), out value);
             return value ?? "";
         }
     }

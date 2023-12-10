@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Magus.Common.Discord;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Magus.Data.Models.Embeds;
@@ -10,5 +11,5 @@ public abstract record BasePatchNoteEmbed : ISnowflakeId, ILocaleRecord
     public string Locale { get; set; }
     public string PatchNumber { get; init; }
     public ulong Timestamp { get; set; }
-    public Embed Embed { get; init; }
+    public SerializableEmbed Embed { get; init; }
 }

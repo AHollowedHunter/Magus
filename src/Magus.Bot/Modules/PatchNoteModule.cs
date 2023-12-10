@@ -1,7 +1,6 @@
 ﻿using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
-using Magus.Bot.Extensions;
 using Magus.Bot.Services;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Services;
@@ -35,7 +34,7 @@ public class PatchNoteModule : ModuleBase
         var patchNote = await _db.GetGeneralPatchNote(number, locale);
 
         if (patchNote != null)
-            await FollowupAsync(embed: patchNote.Embed.CreateDiscordEmbed());
+            await FollowupAsync(embed: patchNote.Embed.ToDiscordEmbed());
         else
             await FollowupAsync($"Could not find a patch note numbered **{number}**.");
     }
@@ -94,7 +93,7 @@ public class PatchNoteModule : ModuleBase
         }
         var embeds = new List<Discord.Embed>();
         foreach (var patchNote in patchNotes)
-            embeds.Add(patchNote.Embed.CreateDiscordEmbed());
+            embeds.Add(patchNote.Embed.ToDiscordEmbed());
 
         return embeds;
     }
