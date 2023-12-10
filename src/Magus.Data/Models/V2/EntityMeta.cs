@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.V2;
-public sealed class EntityMeta
+public sealed class EntityMeta : IEntity
 {
     [Key]
     [JsonPropertyName(nameof(InternalName))]

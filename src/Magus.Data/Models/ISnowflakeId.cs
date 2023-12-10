@@ -1,6 +1,6 @@
 ﻿namespace Magus.Data.Models;
 
-public interface ISnowflakeRecord
+public interface ISnowflakeId
 {
     public ulong Id { get; set; }
 }

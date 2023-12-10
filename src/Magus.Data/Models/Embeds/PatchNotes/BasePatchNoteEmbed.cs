@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Magus.Data.Models.Embeds;
 
-public abstract record BasePatchNoteEmbed : ISnowflakeRecord, ILocaleRecord
+public abstract record BasePatchNoteEmbed : ISnowflakeId, ILocaleRecord
 {
     [BsonRepresentation(BsonType.Int64, AllowOverflow = true)]
     public ulong Id { get; set; }

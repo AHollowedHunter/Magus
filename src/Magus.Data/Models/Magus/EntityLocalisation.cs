@@ -4,7 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Magus.Data.Models.Magus;
 
-public record EntityLocalisation : ISnowflakeRecord, IEntity
+public record EntityLocalisation : ISnowflakeId, IEntity
 {
     [BsonRepresentation(BsonType.Int64, AllowOverflow = true)]
     public ulong Id { get; set; }

@@ -2,7 +2,7 @@
 
 namespace Magus.Data.Models;
 
-public record Announcement : ISnowflakeRecord, ILocaleRecord
+public record Announcement : ISnowflakeId, ILocaleRecord
 {
     public ulong Id { get; set; }
 

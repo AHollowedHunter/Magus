@@ -1,6 +1,6 @@
 ﻿namespace Magus.Data.Models.Discord;
 
-public record User : ISnowflakeRecord
+public record User : ISnowflakeId
 {
     public User() { }
     public User(ulong id) => Id = id;

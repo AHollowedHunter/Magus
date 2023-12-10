@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.OpenDota;
 
-public partial class Match : ISnowflakeRecord
+public partial class Match : ISnowflakeId
 {
     [JsonPropertyName("match_id")]
     public ulong Id { get; set; }

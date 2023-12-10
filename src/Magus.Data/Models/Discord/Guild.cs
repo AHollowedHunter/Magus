@@ -2,7 +2,7 @@
 
 namespace Magus.Data.Models.Discord;
 
-public record Guild : ISnowflakeRecord
+public record Guild : ISnowflakeId
 {
     public Guild() { }
     public Guild(ulong id) => Id = id;

@@ -47,24 +47,24 @@ public sealed class MongoDBService : IAsyncDataService
         => _db.GetCollection<T>(typeof(T).Name);
 
 
-    public void CreateCollection<T>() where T : ISnowflakeRecord
+    public void CreateCollection<T>() where T : ISnowflakeId
     {
         GetCollection<T>();
     }
 
-    public async Task DeleteCollection<T>() where T : ISnowflakeRecord
+    public async Task DeleteCollection<T>() where T : ISnowflakeId
     {
         await _db.DropCollectionAsync(typeof(T).Name);
     }
 
-    public async Task<bool> DeleteRecord<T>(ulong id) where T : ISnowflakeRecord
+    public async Task<bool> DeleteRecord<T>(ulong id) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         var result = await collection.DeleteOneAsync(x => x.Id == id);
         return result.IsAcknowledged && result.DeletedCount == 1;
     }
 
-    public async Task<string> EnsureIndex<T>(Expression<Func<T, object>> field, bool unique = false, bool caseSensitive = true) where T : ISnowflakeRecord
+    public async Task<string> EnsureIndex<T>(Expression<Func<T, object>> field, bool unique = false, bool caseSensitive = true) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         var indexKeysDefinition = Builders<T>.IndexKeys.Ascending(field);
@@ -160,21 +160,21 @@ public sealed class MongoDBService : IAsyncDataService
         return await query.Take(limit).ToListAsync();
     }
 
-    public async Task<T> GetRecord<T>(ulong id) where T : ISnowflakeRecord
+    public async Task<T> GetRecord<T>(ulong id) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         var result = await collection.FindAsync(x => x.Id == id);
         return await result.FirstOrDefaultAsync();
     }
 
-    public async Task<IEnumerable<T>> GetRecords<T>(int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord
+    public async Task<IEnumerable<T>> GetRecords<T>(int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         var result = await collection.FindAsync(x => x.Id != 0);
         return await result.ToListAsync();
     }
 
-    public async Task<IEnumerable<T>> GetRecords<T>(string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeRecord, ILocaleRecord
+    public async Task<IEnumerable<T>> GetRecords<T>(string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeId, ILocaleRecord
     {
         var collection = GetCollection<T>();
         var query = collection.AsQueryable().Where(x => x.Locale == locale);
@@ -185,47 +185,47 @@ public sealed class MongoDBService : IAsyncDataService
         return await query.Take(limit).ToListAsync();
     }
 
-    public async Task InsertRecord<T>(T record) where T : ISnowflakeRecord
+    public async Task InsertRecord<T>(T record) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         await collection.InsertOneAsync(record);
     }
 
-    public async Task InsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord
+    public async Task InsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         await collection.InsertManyAsync(records);
     }
 
-    public async Task UpdateRecord<T>(T record) where T : ISnowflakeRecord
+    public async Task UpdateRecord<T>(T record) where T : ISnowflakeId
     {
         throw new NotImplementedException();
     }
 
-    public async Task UpdateRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord
+    public async Task UpdateRecords<T>(IEnumerable<T> records) where T : ISnowflakeId
     {
         throw new NotImplementedException();
     }
 
-    public async Task UpsertRecord<T>(T record) where T : ISnowflakeRecord
+    public async Task UpsertRecord<T>(T record) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         await collection.ReplaceOneAsync(x => x.Id == record.Id, record, new ReplaceOptions() { IsUpsert = true });
     }
 
-    public async Task UpsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord
+    public async Task UpsertRecords<T>(IEnumerable<T> records) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         await collection.BulkWriteAsync(GetBulkReplaceRequest(records, true));
     }
 
-    public async Task ReplaceRecord<T>(T record) where T : ISnowflakeRecord
+    public async Task ReplaceRecord<T>(T record) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         await collection.ReplaceOneAsync(x => x.Id == record.Id, record);
     }
 
-    public async Task ReplaceRecords<T>(IEnumerable<T> records) where T : ISnowflakeRecord
+    public async Task ReplaceRecords<T>(IEnumerable<T> records) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
         await collection.BulkWriteAsync(GetBulkReplaceRequest(records));
@@ -243,7 +243,7 @@ public sealed class MongoDBService : IAsyncDataService
                                                                                       || entity.RealName!.StartsWith(entityName, StringComparison.CurrentCultureIgnoreCase)
                                                                                       || entity.InternalName.Contains(entityName, StringComparison.CurrentCultureIgnoreCase));
 
-    private static IEnumerable<WriteModel<T>> GetBulkReplaceRequest<T>(IEnumerable<T> records, bool isUpsert = false) where T : ISnowflakeRecord
+    private static IEnumerable<WriteModel<T>> GetBulkReplaceRequest<T>(IEnumerable<T> records, bool isUpsert = false) where T : ISnowflakeId
     {
         var request = new List<WriteModel<T>>();
         foreach (var record in records)

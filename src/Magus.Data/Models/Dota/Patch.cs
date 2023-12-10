@@ -1,6 +1,6 @@
 ﻿namespace Magus.Data.Models.Dota;
  // TODO (re?)move this class
-public record Patch : ISnowflakeRecord
+public record Patch : ISnowflakeId
 {
     public ulong Id { get; set; }
     public string PatchNumber { get; init; }
