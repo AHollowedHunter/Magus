@@ -86,16 +86,16 @@ public sealed class MeilisearchService
         return result.Hits;
     }
 
-    public async Task<IEnumerable<EntityMeta>> SearchEntityMetaAsync(string? query, EntityType type = EntityType.None, int limit = 25)
+    public async Task<IEnumerable<Entity>> SearchEntityMetaAsync(string? query, EntityType type = EntityType.None, int limit = 25)
     {
-        var index = await GetIndexAsync(nameof(EntityMeta)).ConfigureAwait(false);
+        var index = await GetIndexAsync(nameof(Entity)).ConfigureAwait(false);
 
         var searchQuery = new SearchQuery() { Limit = limit, };
 
         if (type != EntityType.None)
-            searchQuery.Filter = $"{nameof(EntityMeta.Type)} = '{type}'";
+            searchQuery.Filter = $"{nameof(Entity.EntityType)} = '{type}'";
 
-        var result = await index.SearchAsync<EntityMeta>(query, searchQuery).ConfigureAwait(false);
+        var result = await index.SearchAsync<Entity>(query, searchQuery).ConfigureAwait(false);
         return result.Hits;
     }
 

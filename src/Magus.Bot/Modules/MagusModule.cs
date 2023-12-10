@@ -79,7 +79,7 @@ public class MagusModule : ModuleBase
     {
         await DeferAsync().ConfigureAwait(false);
 
-        var result = await _meilisearchService.SearchTopResultAsync<EntityMeta>(query);
+        var result = await _meilisearchService.SearchTopResultAsync<Entity>(query);
 
         var embed = new EmbedBuilder()
             .WithTitle("Test")

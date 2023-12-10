@@ -77,14 +77,14 @@ public sealed class MongoDBService : IAsyncDataService
                                                                                }));
     }
 
-    public async Task<T> GetEntityInfo<T>(int entityId, string locale = "en-GB") where T : EntityInfoEmbed
+    public async Task<T> GetEntityInfo<T>(int entityId, string locale = "en") where T : EntityInfoEmbed
     {
         var collection = GetCollection<T>();
         var result = await collection.FindAsync(x => x.Locale == locale && x.EntityId == entityId);
         return await result.FirstOrDefaultAsync();
     }
 
-    public async Task<IEnumerable<T>> GetEntityInfo<T>(string entityName, string locale = "en-GB", int limit = int.MaxValue) where T : EntityInfoEmbed
+    public async Task<IEnumerable<T>> GetEntityInfo<T>(string entityName, string locale = "en", int limit = int.MaxValue) where T : EntityInfoEmbed
     {
         var collection = GetCollection<T>();
         return await collection.AsQueryable().Where(QueryLocaleEntityName<T>(entityName, locale)).OrderBy(x => x.InternalName).Take(limit).ToListAsync();
@@ -93,7 +93,7 @@ public sealed class MongoDBService : IAsyncDataService
         //return await result.ToListAsync();
     }
 
-    public async Task<GeneralPatchNoteEmbed> GetGeneralPatchNote(string patchNumber, string locale = "en-GB")
+    public async Task<GeneralPatchNoteEmbed> GetGeneralPatchNote(string patchNumber, string locale = "en")
     {
         var collection = GetCollection<GeneralPatchNoteEmbed>();
         var result = await collection.FindAsync(x => x.Locale == locale && x.PatchNumber == patchNumber);
@@ -124,21 +124,21 @@ public sealed class MongoDBService : IAsyncDataService
         return await query.Take(limit).ToListAsync();
     }
 
-    public async Task<T> GetPatchNote<T>(string patchNumber, int entityId, string locale = "en-GB") where T : EntityPatchNoteEmbed
+    public async Task<T> GetPatchNote<T>(string patchNumber, int entityId, string locale = "en") where T : EntityPatchNoteEmbed
     {
         var collection = GetCollection<T>();
         var result = await collection.FindAsync(x => x.Locale == locale && x.PatchNumber == patchNumber && x.EntityId == entityId);
         return await result.FirstOrDefaultAsync();
     }
 
-    public async Task<T> GetPatchNote<T>(string patchNumber, string entityName, string locale = "en-GB") where T : EntityPatchNoteEmbed
+    public async Task<T> GetPatchNote<T>(string patchNumber, string entityName, string locale = "en") where T : EntityPatchNoteEmbed
     {
         var collection = GetCollection<T>();
         var result = await collection.FindAsync(QueryPatchNoteEntityName<T>(entityName, patchNumber, locale));
         return await result.FirstOrDefaultAsync();
     }
 
-    public async Task<IEnumerable<T>> GetPatchNotes<T>(int entityId, string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
+    public async Task<IEnumerable<T>> GetPatchNotes<T>(int entityId, string locale = "en", int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
     {
         var collection = GetCollection<T>();
         var query = collection.AsQueryable().Where(x => x.Locale == locale && x.EntityId == entityId);
@@ -149,7 +149,7 @@ public sealed class MongoDBService : IAsyncDataService
         return await query.Take(limit).ToListAsync();
     }
 
-    public async Task<IEnumerable<T>> GetPatchNotes<T>(string entityName, string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
+    public async Task<IEnumerable<T>> GetPatchNotes<T>(string entityName, string locale = "en", int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
     {
         var collection = GetCollection<T>();
         var query = collection.AsQueryable().Where(QueryLocaleEntityName<T>(entityName, locale)).OrderBy(x => x.InternalName);
@@ -174,7 +174,7 @@ public sealed class MongoDBService : IAsyncDataService
         return await result.ToListAsync();
     }
 
-    public async Task<IEnumerable<T>> GetRecords<T>(string locale = "en-GB", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeId, ILocaleRecord
+    public async Task<IEnumerable<T>> GetRecords<T>(string locale = "en", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeId, ILocaleRecord
     {
         var collection = GetCollection<T>();
         var query = collection.AsQueryable().Where(x => x.Locale == locale);
@@ -231,13 +231,13 @@ public sealed class MongoDBService : IAsyncDataService
         await collection.BulkWriteAsync(GetBulkReplaceRequest(records));
     }
 
-    private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = "en-GB") where T : ILocalisedEntity, ILocaleRecord
+    private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = "en") where T : ILocalisedEntity, ILocaleRecord
         => entity => entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
                                                  || entity.Name.Contains(entityName, StringComparison.CurrentCultureIgnoreCase)
                                                  || entity.RealName!.StartsWith(entityName, StringComparison.CurrentCultureIgnoreCase)
                                                  || entity.InternalName.Contains(entityName, StringComparison.CurrentCultureIgnoreCase));
 
-    private static Expression<Func<T, bool>> QueryPatchNoteEntityName<T>(string entityName, string patchNumber, string locale = "en-GB") where T : EntityPatchNoteEmbed
+    private static Expression<Func<T, bool>> QueryPatchNoteEntityName<T>(string entityName, string patchNumber, string locale = "en") where T : EntityPatchNoteEmbed
         => entity => entity.PatchNumber == patchNumber && entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
                                                                                       || entity.Name.Contains(entityName, StringComparison.CurrentCultureIgnoreCase)
                                                                                       || entity.RealName!.StartsWith(entityName, StringComparison.CurrentCultureIgnoreCase)
@@ -274,13 +274,13 @@ public sealed class MongoDBService : IAsyncDataService
         return await query.CountAsync();
     }
 
-    public async Task<AbilityInfoEmbed> GetHeroScepter(int heroId, string locale = "en-GB")
+    public async Task<AbilityInfoEmbed> GetHeroScepter(int heroId, string locale = "en")
     {
         var collection = GetCollection<AbilityInfoEmbed>();
         return await collection.AsQueryable().Where(ability => ability.HeroId == heroId && ability.Scepter && ability.Locale == locale).FirstOrDefaultAsync();
     }
 
-    public async Task<AbilityInfoEmbed> GetHeroShard(int heroId, string locale = "en-GB")
+    public async Task<AbilityInfoEmbed> GetHeroShard(int heroId, string locale = "en")
     {
         var collection = GetCollection<AbilityInfoEmbed>();
         return await collection.AsQueryable().Where(ability => ability.HeroId == heroId && ability.Shard && ability.Locale == locale).FirstOrDefaultAsync();

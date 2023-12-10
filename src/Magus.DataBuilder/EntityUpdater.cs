@@ -1157,7 +1157,7 @@ public class EntityUpdater
     {
         _logger.LogInformation("Creating entity localisation records.");
 
-        var entities = new List<EntityMeta>();
+        var entities = new List<Entity>();
 
         // The below doesn't exclude duplicate localisations having their own key... another thing in the localisartion rework
 
@@ -1171,7 +1171,7 @@ public class EntityUpdater
             foreach (var localisedHero in heroLocalisationsGroup)
                 localisedNames[_localisationOptions.SourceLocaleMappings[localisedHero.Language][0]] = localisedHero.Name;
 
-            var heroLocalisation = new EntityMeta(heroLocalisationsGroup.Key.InternalName, heroLocalisationsGroup.Key.Id, EntityType.Hero, localisedNames, hero.NameAliases.ToArray(), hero.RealName);
+            var heroLocalisation = new Entity(heroLocalisationsGroup.Key.InternalName, heroLocalisationsGroup.Key.Id, EntityType.Hero, localisedNames, hero.NameAliases.ToArray(), hero.RealName);
 
             entities.Add(heroLocalisation);
         }
@@ -1187,21 +1187,21 @@ public class EntityUpdater
             foreach (var localisedItem in itemLocalisationsGroup)
                 localisedNames[_localisationOptions.SourceLocaleMappings[localisedItem.Language][0]] = localisedItem.Name;
 
-            var itemLocalisation = new EntityMeta(itemLocalisationsGroup.Key.InternalName, itemLocalisationsGroup.Key.Id, EntityType.Item, localisedNames, item.ItemAliases?.ToArray());
+            var itemLocalisation = new Entity(itemLocalisationsGroup.Key.InternalName, itemLocalisationsGroup.Key.Id, EntityType.Item, localisedNames, item.ItemAliases?.ToArray());
 
             entities.Add(itemLocalisation);
         }
 
-        string[] filterableAttributes = [nameof(EntityMeta.Type)];
-        string[] searchableAttributes = [nameof(EntityMeta.Name), nameof(EntityMeta.Name)+".en", nameof(EntityMeta.Aliases), nameof(EntityMeta.RealName), nameof(EntityMeta.InternalName)];
+        string[] filterableAttributes = [nameof(Entity.Type)];
+        string[] searchableAttributes = [nameof(Entity.Name), nameof(Entity.Name)+".en", nameof(Entity.Aliases), nameof(Entity.RealName), nameof(Entity.InternalName)];
 
         Settings settings = new()
         {
             FilterableAttributes = filterableAttributes,
             SearchableAttributes = searchableAttributes,
         };
-        await _meilisearchService.DeleteIndexAsync(nameof(EntityMeta)); // HACK for testing. Will use a swap index later.
-        await _meilisearchService.CreateIndexAsync(nameof(EntityMeta), "InternalName", settings);
+        await _meilisearchService.DeleteIndexAsync(nameof(Entity)); // HACK for testing. Will use a swap index later.
+        await _meilisearchService.CreateIndexAsync(nameof(Entity), "InternalName", settings);
 
         await _meilisearchService.AddDocumentsAsync(entities);
 

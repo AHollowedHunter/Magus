@@ -1,20 +1,30 @@
 ﻿using Magus.Data.Enums;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.V2;
-public sealed class EntityMeta : IEntity
+public sealed class Entity : IEntity
 {
-    [Key]
+    public Entity(string internalName, int entityId, EntityType type, IDictionary<string, string> name, string[]? aliases = null, string? realName = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(internalName);
+
+        InternalName = internalName;
+        EntityId = entityId;
+        EntityType = type;
+        Name = name;
+        Aliases = aliases;
+        RealName = realName;
+    }
+
     [JsonPropertyName(nameof(InternalName))]
     public string InternalName { get; set; }
 
     [JsonPropertyName(nameof(EntityId))]
     public int EntityId { get; set; }
 
-    [JsonPropertyName(nameof(Type))]
+    [JsonPropertyName(nameof(EntityType))]
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public EntityType Type { get; set; }
+    public EntityType EntityType { get; set; }
 
     [JsonPropertyName(nameof(Name))]
     public IDictionary<string, string> Name { get; set; }
@@ -26,14 +36,4 @@ public sealed class EntityMeta : IEntity
     [JsonPropertyName(nameof(RealName))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? RealName { get; set; } // TODO needed? how get?
-
-    public EntityMeta(string internalName, int entityId, EntityType type, IDictionary<string, string> name, string[]? aliases = null, string? realName = null)
-    {
-        InternalName = internalName;
-        EntityId = entityId;
-        Type = type;
-        Name = name;
-        Aliases = aliases;
-        RealName = realName;
-    }
 }
