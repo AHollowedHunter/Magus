@@ -51,4 +51,8 @@ public enum AbilityBehavior : ulong
     DOTA_ABILITY_BEHAVIOR_NOASSIST                       = 137438953472, // TODO: Ensure correct
     DOTA_ABILITY_BEHAVIOR_OVERSHOOT                      = 274877906944, // TODO: Ensure correct
     DOTA_ABILITY_BEHAVIOR_USE_HP                         = 549755813888, // TODO: Ensure correct
+
+    // Alternative Names
+    [Display(Name = "Point target")]
+    DOTA_ABILITY_BEHAVIOR_POINT_TARGET                   = DOTA_ABILITY_BEHAVIOR_POINT, // 3 abilities call it this, why? (elder_titan_move_spirit, enigma_demonic_conversion, arc_warden_tempest_double) #pragma warning restore CA1069 // Enums values should not be duplicated
 }

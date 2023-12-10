@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ACave.Extensions.Common" Version="0.2.0-beta" />
+    <PackageReference Include="ACave.Extensions.Common" Version="0.2.1-beta" />
     <PackageReference Include="Discord.Net.Core" Version="3.13.0" />
     <PackageReference Include="HtmlSanitizer" Version="8.0.746" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />

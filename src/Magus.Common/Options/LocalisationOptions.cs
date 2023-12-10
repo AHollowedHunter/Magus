@@ -29,7 +29,7 @@ public class LocalisationOptions
     /// Previously and elsewhere the default is en-GB, so watch for issues with this before
     /// getting around to refactoring/replacing the localisation methods.
     /// </remarks>
-    public string DefaultTag { get; set; } = "en-US";
+    public string DefaultTag { get; set; } = "en";
     /// <summary>
     /// Key is language, string array is matching IETF tags
     /// </summary>
