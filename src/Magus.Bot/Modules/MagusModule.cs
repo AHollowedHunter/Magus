@@ -81,6 +81,12 @@ public class MagusModule : ModuleBase
 
         var result = await _meilisearchService.SearchTopResultAsync<EntityMeta>(query);
 
-        await FollowupAsync(text: result?.InternalName ?? "Nothing");
+        var embed = new EmbedBuilder()
+            .WithTitle("Test")
+            .WithDescription("No footer text but image only")
+            .WithFooter("    ", "https://cdn.discordapp.com/emojis/1098946942802862160.webp")
+            .WithTimestamp(DateTimeOffset.Now);
+
+        await FollowupAsync(text: result?.InternalName ?? "Nothing", embed: embed.Build());
     }
 }
