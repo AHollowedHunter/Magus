@@ -1208,14 +1208,6 @@ public class EntityUpdater
         _logger.LogInformation("Finished creating entity localisation records.");
     }
 
-    private static void SetEntityLocalisationId(EntityLocalisation entity)
-    {
-        var str = $"{entity.EntityId}_{entity.InternalName}_{entity.Type}";
-        var md5 = System.Security.Cryptography.MD5.Create();
-        var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(str));
-        entity.Id = BitConverter.ToUInt64(hash);
-    }
-
     private async Task StoreEntityEmbeds()
     {
         _logger.LogInformation("Converting entities to Info Embed records");

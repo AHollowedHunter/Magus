@@ -73,20 +73,4 @@ public class MagusModule : ModuleBase
         await DeferAsync();
         await FollowupAsync(text: "To view the terms of service for MagusBot, please follow the link below:\n" + _config.BotTermsOfService);
     }
-
-    [SlashCommand("test", "testing")] // TEST
-    public async Task Test([Autocomplete(typeof(HeroAutocompleteHandler))] string query)
-    {
-        await DeferAsync().ConfigureAwait(false);
-
-        var result = await _meilisearchService.SearchTopResultAsync<Entity>(query);
-
-        var embed = new EmbedBuilder()
-            .WithTitle("Test")
-            .WithDescription("No footer text but image only")
-            .WithFooter("    ", "https://cdn.discordapp.com/emojis/1098946942802862160.webp")
-            .WithTimestamp(DateTimeOffset.Now);
-
-        await FollowupAsync(text: result?.InternalName ?? "Nothing", embed: embed.Build());
-    }
 }
