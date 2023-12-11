@@ -1,4 +1,5 @@
-﻿using Coravel.Scheduling.Schedule.Interfaces;
+﻿using ACave.Extensions.Common;
+using Coravel.Scheduling.Schedule.Interfaces;
 using Discord;
 using Discord.WebSocket;
 using Magus.Common.Enums;
@@ -99,9 +100,7 @@ public class AnnouncementService
         var sourceId      = _botSettings.Announcements.DotaSource;
         var sourceChannel = await _discord.GetChannelAsync(sourceId) as INewsChannel;
 
-        var content = announcement.Content.Length < 512
-            ? announcement.Content
-            : announcement.Content[..(512+announcement.Content[512..].IndexOf(" "))] + " ***...***";
+        var content = announcement.Content.LimitCharacters(512, true) + " ***...***";
 
         var description = new StringBuilder()
             .AppendLine(content)
