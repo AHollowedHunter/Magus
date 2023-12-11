@@ -22,4 +22,7 @@ public sealed class SerializableField
 
     [JsonPropertyName(nameof(IsInline))]
     public bool IsInline { get; set; }
+
+    public static SerializableField EmptyField(bool isInline = false)
+        => new("_ _", "_ _", isInline);
 }
