@@ -1,4 +1,5 @@
-﻿using Magus.Common.Dota.Enums;
+﻿using Discord;
+using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.Models;
 using Magus.Common.Options;
 using Magus.Data.Enums;
@@ -8,6 +9,7 @@ using Magus.Data.Models.V2;
 using Magus.Data.Services;
 using Meilisearch;
 using Microsoft.Extensions.Options;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -44,6 +46,10 @@ public class EntityUpdater
     private readonly List<Item> _items = [];
     private Dictionary<string, byte> _neutralItemTiers = [];
     private Hero _baseHero = new();
+
+    // v2 hacks
+    private List<Entity> entities = [];
+    //
 
     private static readonly char NarrowNoBreakSpace = '\u202F';
     private static readonly string ValueSeparator = $"{NarrowNoBreakSpace}/{NarrowNoBreakSpace}"; // TODO move somewhere reusable, and unify everywhere
@@ -1157,7 +1163,7 @@ public class EntityUpdater
     {
         _logger.LogInformation("Creating entity localisation records.");
 
-        var entities = new List<Entity>();
+        entities.Clear();
 
         // The below doesn't exclude duplicate localisations having their own key... another thing in the localisartion rework
 
@@ -1186,12 +1192,12 @@ public class EntityUpdater
 
                 var abilityLocalisation = new Entity(abilityLocaleGroup.Key.InternalName, abilityLocaleGroup.Key.Id, EntityType.Ability, abilityLocalisedNames);
 
-                entities.Add(abilityLocalisation);  
+                entities.Add(abilityLocalisation);
             }
         }
 
         // HACK add item localisations
-        foreach (var itemLocalisationsGroup in _items.GroupBy(x => (x.Id, x.InternalName))) // TODO this different
+        foreach (var itemLocalisationsGroup in _items.Where(i => i.ItemRecipe is false).GroupBy(x => (x.Id, x.InternalName))) // TODO this different
         {
             _logger.LogDebug("Processing item EntityLocalisations for {key}", itemLocalisationsGroup.Key);
 
@@ -1214,7 +1220,7 @@ public class EntityUpdater
             FilterableAttributes = filterableAttributes,
             SearchableAttributes = searchableAttributes,
         };
-        await _meilisearchService.DeleteIndexAsync(nameof(Entity)); // HACK for testing. Will use a swap index later.
+        try { await _meilisearchService.DeleteIndexAsync(nameof(Entity)); } catch { } // HACK for testing. Will use a swap index later.
         await _meilisearchService.CreateIndexAsync(nameof(Entity), "InternalName", settings);
 
         await _meilisearchService.AddDocumentsAsync(entities);
@@ -1225,33 +1231,46 @@ public class EntityUpdater
     private async Task StoreEntityEmbeds()
     {
         _logger.LogInformation("Converting entities to Info Embed records");
-        var heroInfoEmbeds    = new List<HeroInfoEmbed>();
-        var abilityInfoEmbeds = new List<AbilityInfoEmbed>();
-        var itemInfoEmbeds    = new List<ItemInfoEmbed>();
+        var entityInfoList = new List<EntityInfo>();
         var latestPatch       = await _db.GetLatestPatch();
 
-        foreach (var hero in _heroes)
+
+        foreach (var heroData in entities.Where(e => e.EntityType == EntityType.Hero))
         {
-            _logger.LogDebug("Processing hero and ability info embeds for {0,-40} in {1}", hero.InternalName, hero.Language);
-            heroInfoEmbeds.AddRange(hero.GetHeroInfoEmbeds(_localisationOptions.SourceLocaleMappings, latestPatch));
-            foreach (var heroAbility in hero.Abilities)
+            foreach (var hero in _heroes.Where(x => x.InternalName == heroData.InternalName))
             {
-                abilityInfoEmbeds.AddRange(heroAbility.CreateAbilityInfoEmbeds(_localisationOptions.SourceLocaleMappings, latestPatch, hero));
+                _logger.LogDebug("Processing hero and ability info embeds for {0,-40} in {1}", hero.InternalName, hero.Language);
+                entityInfoList.Add(hero.GetHeroInfoEmbed(_localisationOptions.SourceLocaleMappings[hero.Language][0], latestPatch));
+
+                foreach (var heroAbility in hero.Abilities)
+                {
+                    entityInfoList.Add(heroAbility.CreateAbilityInfoEmbed(_localisationOptions.SourceLocaleMappings[heroAbility.Language][0], latestPatch, hero));
+                }
             }
         }
-        foreach (var item in _items.Where(x => !x.ItemRecipe))
+
+        foreach (var itemData in entities.Where(e => e.EntityType == EntityType.Item))
         {
-            _logger.LogDebug("Processing item info embeds for {0,-40} in {1}", item.InternalName, item.Language);
-            itemInfoEmbeds.AddRange(item.CreateItemInfoEmbeds(_localisationOptions.SourceLocaleMappings, latestPatch));
+            foreach (var item in _items.Where(x => x.InternalName == itemData.InternalName))
+            {
+                _logger.LogDebug("Processing item info embeds for {0,-40} in {1}", item.InternalName, item.Language);
+                entityInfoList.Add(item.CreateItemInfoEmbed(_localisationOptions.SourceLocaleMappings[item.Language][0], latestPatch));
+            }
         }
 
-
-        _logger.LogInformation("Updating entity info embeds in Database");
-
-        await EnsureIndexes();
-        await _db.UpsertRecords(heroInfoEmbeds);
-        await _db.UpsertRecords(abilityInfoEmbeds);
-        await _db.UpsertRecords(itemInfoEmbeds);
+        _logger.LogInformation("Updating EntityInfo documents");
+        //meilisearch
+        string[] filterableAttributes = [nameof(EntityInfo.EntityType)];
+        string[] searchableAttributes = [nameof(EntityInfo.InternalName), nameof(EntityInfo.EntityId), nameof(EntityInfo.Locale)];
+        Settings settings = new()
+        {
+            FilterableAttributes = filterableAttributes,
+            SearchableAttributes = searchableAttributes,
+        };
+        try { await _meilisearchService.DeleteIndexAsync(nameof(EntityInfo)); } catch { } // HACK for testing. Will use a swap index later.
+        await _meilisearchService.CreateIndexAsync(nameof(EntityInfo), nameof(EntityInfo.UniqueId), settings);
+        await _meilisearchService.AddDocumentsAsync(entityInfoList);
+        //
     }
 
     private async Task EnsureIndexes()

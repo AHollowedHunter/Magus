@@ -4,13 +4,13 @@ using System.Text.Json.Serialization;
 namespace Magus.Data.Models.V2;
 public sealed class Entity : IEntity
 {
-    public Entity(string internalName, int entityId, EntityType type, IDictionary<string, string> name, string[]? aliases = null, string? realName = null)
+    public Entity(string internalName, int entityId, EntityType entityType, IDictionary<string, string> name, string[]? aliases = null, string? realName = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(internalName);
 
         InternalName = internalName;
         EntityId = entityId;
-        EntityType = type;
+        EntityType = entityType;
         Name = name;
         Aliases = aliases;
         RealName = realName;

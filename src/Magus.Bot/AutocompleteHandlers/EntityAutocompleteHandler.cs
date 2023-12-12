@@ -25,7 +25,7 @@ public abstract class EntityAutocompleteHandler : AutocompleteHandler
         try
         {
             var value = autocompleteInteraction.Data.Current.Value as string;
-            var entities = await Meilisearch.SearchEntityMetaAsync(value, this.EntityType).ConfigureAwait(false);
+            var entities = await Meilisearch.SearchEntityAsync(value, this.EntityType).ConfigureAwait(false);
 
             List<AutocompleteResult> results = [];
             foreach (var entity in entities)

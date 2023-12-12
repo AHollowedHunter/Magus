@@ -20,6 +20,8 @@ public sealed class EntityInfo : IEntity, ILocalised
     /// <summary>
     /// This property is used for a unique reference within the search index.
     /// </summary>
+    /// 
+    [JsonPropertyName(nameof(UniqueId))]
     public string UniqueId => $"{InternalName}_{Locale}";
 
     [JsonPropertyName(nameof(Locale))]

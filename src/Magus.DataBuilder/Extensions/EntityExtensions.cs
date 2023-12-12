@@ -1,4 +1,5 @@
 ﻿using ACave.Extensions.Common;
+using Discord;
 using Magus.Common.Discord;
 using Magus.Common.Dota;
 using Magus.Common.Dota.Enums;
@@ -6,12 +7,13 @@ using Magus.Common.Dota.Models;
 using Magus.Common.Emotes;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
+using Magus.Data.Models.V2;
 
 namespace Magus.DataBuilder.Extensions;
 
 public static class EntityExtensions
 {
-    public static IEnumerable<HeroInfoEmbed> GetHeroInfoEmbeds(this Hero hero, Dictionary<string, string[]> languageMap, Patch latestPatch)
+    public static EntityInfo GetHeroInfoEmbed(this Hero hero, string locale, Data.Models.Dota.Patch latestPatch)
     {
         var heroInfoEmbed = new SerializableEmbed()
         {
@@ -102,25 +104,10 @@ public static class EntityExtensions
 
         heroInfoEmbed.Fields = heroInfoFields;
 
-        var heroInfoEmbedList = new List<HeroInfoEmbed>();
-        foreach (var locale in languageMap[hero.Language])
-        {
-            heroInfoEmbedList.Add(new()
-            {
-                Id = GetEntityId(hero.Id, hero.InternalName, locale),
-                EntityId = hero.Id,
-                Locale = locale,
-                InternalName = hero.InternalName,
-                Aliases = hero.NameAliases,
-                RealName = hero.RealName,
-                Name = hero.Name,
-                Embed = heroInfoEmbed,
-            });
-        }
-        return heroInfoEmbedList;
+        return new EntityInfo(hero.InternalName, hero.Id, Data.Enums.EntityType.Hero, locale, heroInfoEmbed);
     }
 
-    public static IEnumerable<AbilityInfoEmbed> CreateAbilityInfoEmbeds(this Ability ability, Dictionary<string, string[]> languageMap, Patch latestPatch, Hero hero)
+    public static EntityInfo CreateAbilityInfoEmbed(this Ability ability, string locale, Data.Models.Dota.Patch latestPatch, Hero hero)
     {
         var embed = new SerializableEmbed()
         {
@@ -240,26 +227,16 @@ public static class EntityExtensions
         }
         embed.Fields = embedFields;
 
-        var abilityInfoEmbedList = new List<AbilityInfoEmbed>();
-        foreach (var locale in languageMap[ability.Language])
-        {
-            abilityInfoEmbedList.Add(new()
-            {
-                Id = GetEntityId(ability.Id, ability.InternalName, locale),
-                EntityId = ability.Id,
-                Locale = locale,
-                InternalName = ability.InternalName,
-                Name = ability.Name,
-                Embed = embed,
-                HeroId = hero.Id,
-                Scepter = ability.AbilityHasScepter || ability.AbilityIsGrantedByScepter,
-                Shard = ability.AbilityHasShard || ability.AbilityIsGrantedByShard
-            });
-        }
-        return abilityInfoEmbedList;
+
+        return new EntityInfo(ability.InternalName, ability.Id, Data.Enums.EntityType.Ability, locale, embed);
+
+        // what about in embed?
+        //        HeroId = hero.Id,
+        //        Scepter = ability.AbilityHasScepter || ability.AbilityIsGrantedByScepter,
+        //        Shard = ability.AbilityHasShard || ability.AbilityIsGrantedByShard
     }
 
-    public static IEnumerable<ItemInfoEmbed> CreateItemInfoEmbeds(this Item item, Dictionary<string, string[]> languageMap, Patch latestPatch)
+    public static EntityInfo CreateItemInfoEmbed(this Item item, string locale, Data.Models.Dota.Patch latestPatch)
     {
         var embed = new SerializableEmbed()
         {
@@ -363,20 +340,8 @@ public static class EntityExtensions
         }
         embed.Fields = embedFields;
 
-        var itemInfoEmbedList = new List<ItemInfoEmbed>();
-        foreach (var locale in languageMap[item.Language])
-        {
-            itemInfoEmbedList.Add(new()
-            {
-                Id = GetEntityId(item.Id, item.InternalName, locale),
-                EntityId = item.Id,
-                Locale = locale,
-                InternalName = item.InternalName,
-                Name = item.Name,
-                Embed = embed,
-            });
-        }
-        return itemInfoEmbedList;
+        return new EntityInfo(item.InternalName, item.Id, Data.Enums.EntityType.Item, locale, embed);
+        
     }
 
     private static ulong GetEntityId(int entityId, string internalName, string locale)

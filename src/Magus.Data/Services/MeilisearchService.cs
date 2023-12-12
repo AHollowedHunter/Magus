@@ -86,7 +86,7 @@ public sealed class MeilisearchService
         return result.Hits;
     }
 
-    public async Task<IEnumerable<Entity>> SearchEntityMetaAsync(string? query, EntityType type = EntityType.None, int limit = 25)
+    public async Task<IEnumerable<Entity>> SearchEntityAsync(string? query, EntityType type = EntityType.None, int limit = 25)
     {
         var index = await GetIndexAsync(nameof(Entity)).ConfigureAwait(false);
 

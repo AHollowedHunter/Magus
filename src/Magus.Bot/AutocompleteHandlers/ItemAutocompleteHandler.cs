@@ -3,7 +3,7 @@ using Magus.Data.Services;
 
 namespace Magus.Bot.AutocompleteHandlers;
 
-public class ItemAutocompleteHandler : EntityAutocompleteHandler
+public sealed class ItemAutocompleteHandler : EntityAutocompleteHandler
 {
     internal override EntityType EntityType => EntityType.Item;
 
