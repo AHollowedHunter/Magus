@@ -5,6 +5,11 @@ using System.Text.Json.Serialization;
 namespace Magus.Data.Models.V2;
 public sealed class PatchNote : IEntity, ILocalised, IPatch
 {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+    [JsonConstructor]
+    private PatchNote() { }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
     public PatchNote(string locale, string patchNumber, ulong timestamp, PatchNoteType patchNoteType, string internalName, int entityId, EntityType entityType, SerializableEmbed embed)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(locale);
@@ -21,10 +26,14 @@ public sealed class PatchNote : IEntity, ILocalised, IPatch
         Embed = embed ?? throw new ArgumentNullException(nameof(embed));
     }
 
+    public static string MakeUniqueId(string patchNumber, string internalName, string locale)
+        => $"{patchNumber}_{internalName}_{locale}";
+
     /// <summary>
     /// This property is used for a unique reference within the search index.
     /// </summary>
-    public string UniqueId => $"{PatchNumber}_{InternalName}_{Locale}";
+    [JsonPropertyName(nameof(UniqueId))]
+    public string UniqueId => MakeUniqueId(PatchNumber, InternalName, Locale);
 
     [JsonPropertyName(nameof(Locale))]
     public string Locale { get; set; }

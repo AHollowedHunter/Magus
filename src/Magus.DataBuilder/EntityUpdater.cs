@@ -2,6 +2,7 @@
 using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.Models;
 using Magus.Common.Options;
+using Magus.Data.Constants;
 using Magus.Data.Enums;
 using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Magus;
@@ -1177,7 +1178,15 @@ public class EntityUpdater
             foreach (var localisedHero in heroLocalisationsGroup)
                 heroLocalisedNames[_localisationOptions.SourceLocaleMappings[localisedHero.Language][0]] = localisedHero.Name;
 
-            var heroLocalisation = new Entity(heroLocalisationsGroup.Key.InternalName, heroLocalisationsGroup.Key.Id, EntityType.Hero, heroLocalisedNames, hero.NameAliases.ToArray(), hero.RealName);
+            var heroAbilityInternalNames = hero.Abilities.Select(x => x.InternalName).ToArray();
+
+            var heroLocalisation = new Entity(heroLocalisationsGroup.Key.InternalName,
+                                              heroLocalisationsGroup.Key.Id,
+                                              EntityType.Hero,
+                                              heroLocalisedNames,
+                                              hero.NameAliases.ToArray(),
+                                              hero.RealName,
+                                              heroAbilityInternalNames);
 
             entities.Add(heroLocalisation);
 
@@ -1190,7 +1199,18 @@ public class EntityUpdater
                 foreach (var localisedAbility in abilityLocaleGroup)
                     abilityLocalisedNames[_localisationOptions.SourceLocaleMappings[localisedAbility.Language][0]] = localisedAbility.Name;
 
-                var abilityLocalisation = new Entity(abilityLocaleGroup.Key.InternalName, abilityLocaleGroup.Key.Id, EntityType.Ability, abilityLocalisedNames);
+                List<string> entityFilters = [];
+                if (ability.AbilityHasScepter || ability.AbilityIsGrantedByScepter)
+                    entityFilters.Add(EntityFilter.Scepter);
+                if (ability.AbilityHasShard || ability.AbilityIsGrantedByShard)
+                    entityFilters.Add(EntityFilter.Shard);
+
+                var abilityLocalisation = new Entity(abilityLocaleGroup.Key.InternalName,
+                                                     abilityLocaleGroup.Key.Id,
+                                                     EntityType.Ability,
+                                                     abilityLocalisedNames,
+                                                     linkedEntities: [hero.InternalName],
+                                                     entityFilters: entityFilters.ToArray());
 
                 entities.Add(abilityLocalisation);
             }
@@ -1207,13 +1227,25 @@ public class EntityUpdater
             foreach (var localisedItem in itemLocalisationsGroup)
                 localisedNames[_localisationOptions.SourceLocaleMappings[localisedItem.Language][0]] = localisedItem.Name;
 
-            var itemLocalisation = new Entity(itemLocalisationsGroup.Key.InternalName, itemLocalisationsGroup.Key.Id, EntityType.Item, localisedNames, item.ItemAliases?.ToArray());
+            var itemLocalisation = new Entity(itemLocalisationsGroup.Key.InternalName,
+                                              itemLocalisationsGroup.Key.Id,
+                                              EntityType.Item,
+                                              localisedNames,
+                                              item.ItemAliases?.ToArray());
 
             entities.Add(itemLocalisation);
         }
 
-        string[] filterableAttributes = [nameof(Entity.EntityType)];
-        string[] searchableAttributes = [nameof(Entity.Name), nameof(Entity.Name)+".en", nameof(Entity.Aliases), nameof(Entity.RealName), nameof(Entity.InternalName)];
+        string[] filterableAttributes = [nameof(Entity.EntityType), nameof(Entity.LinkedEntities), nameof(Entity.EntityFilters)];
+        string[] searchableAttributes =
+        [
+            nameof(Entity.Name),
+            nameof(Entity.Name)+".en",
+            nameof(Entity.Aliases),
+            nameof(Entity.RealName),
+            nameof(Entity.InternalName),
+            nameof(Entity.LinkedEntities)
+        ];
 
         Settings settings = new()
         {

@@ -70,6 +70,13 @@ public sealed class MeilisearchService
         var task = await index.AddDocumentsAsync(values).ConfigureAwait(false);
         await WaitForResultAsync(task).ConfigureAwait(false);
     }
+
+    public async Task<EntityInfo> GetEntityInfoAsync(string internalName, string locale = "en", string indexUid = nameof(EntityInfo))
+    {
+        var documentId = EntityInfo.MakeUniqueId(internalName, locale);
+        var index = await GetIndexAsync(indexUid).ConfigureAwait(false);
+        return await index.GetDocumentAsync<EntityInfo>(documentId).ConfigureAwait(false);
+    }
     #endregion
 
     #region search
@@ -99,16 +106,31 @@ public sealed class MeilisearchService
         return result.Hits;
     }
 
-    public async Task<T?> SearchTopResultAsync<T>(string? query, string? indexUid = null) where T : class
+    public async Task<IEnumerable<Entity>> SearchEntityWithFiltersAsync(string? query, string[] filters, EntityType type = EntityType.None, int limit = 25)
     {
-        indexUid ??= typeof(T).Name;
-        var index = await GetIndexAsync(indexUid).ConfigureAwait(false);
+        var index = await GetIndexAsync(nameof(Entity)).ConfigureAwait(false);
 
-        var searchQuery = new SearchQuery() { Limit = 1, };
+        var searchQuery = new SearchQuery() { Limit = limit, };
 
-        var result = await index.SearchAsync<T>(query, searchQuery).ConfigureAwait(false);
-        return result.Hits.SingleOrDefault();
+        // TODO improve all this, check meiliseach C# docs
+        var filter = string.Empty;
+        if (filters.Length == 1)
+            filter = "EntityFilters = '" + filters[0] + "'";
+        else
+            filter = $"EntityFilters = '{string.Join("' AND EntityFilters = '", filters)}'";
+
+        if (type != EntityType.None)
+            searchQuery.Filter = filter + $" AND {nameof(Entity.EntityType)} = '{type}'";
+
+        var result = await index.SearchAsync<Entity>(query, searchQuery).ConfigureAwait(false);
+        return result.Hits;
     }
+
+    public async Task<T?> SearchTopResultAsync<T>(string? query, string? indexUid = null) where T : class
+        => (await SearchIndexAsync<T>(query, 1, indexUid)).FirstOrDefault();
+
+    public async Task<Entity?> SearchTopEntityAsync(string? query, EntityType entityType)
+        => (await SearchEntityAsync(query, entityType, 1)).FirstOrDefault();
     #endregion
 
     #region private helpers
