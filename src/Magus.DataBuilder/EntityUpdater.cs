@@ -1167,13 +1167,27 @@ public class EntityUpdater
 
             var hero = heroLocalisationsGroup.First(); // TODO like above, this different.
 
-            var localisedNames = new Dictionary<string, string>();
+            var heroLocalisedNames = new Dictionary<string, string>();
             foreach (var localisedHero in heroLocalisationsGroup)
-                localisedNames[_localisationOptions.SourceLocaleMappings[localisedHero.Language][0]] = localisedHero.Name;
+                heroLocalisedNames[_localisationOptions.SourceLocaleMappings[localisedHero.Language][0]] = localisedHero.Name;
 
-            var heroLocalisation = new Entity(heroLocalisationsGroup.Key.InternalName, heroLocalisationsGroup.Key.Id, EntityType.Hero, localisedNames, hero.NameAliases.ToArray(), hero.RealName);
+            var heroLocalisation = new Entity(heroLocalisationsGroup.Key.InternalName, heroLocalisationsGroup.Key.Id, EntityType.Hero, heroLocalisedNames, hero.NameAliases.ToArray(), hero.RealName);
 
             entities.Add(heroLocalisation);
+
+            // hacks upon hacks
+            foreach (var abilityLocaleGroup in heroLocalisationsGroup.SelectMany(h => h.Abilities).GroupBy(a => (a.Id, a.InternalName)))
+            {
+                var ability = abilityLocaleGroup.First(); // TODO like above, this different.
+
+                var abilityLocalisedNames = new Dictionary<string, string>();
+                foreach (var localisedAbility in abilityLocaleGroup)
+                    abilityLocalisedNames[_localisationOptions.SourceLocaleMappings[localisedAbility.Language][0]] = localisedAbility.Name;
+
+                var abilityLocalisation = new Entity(abilityLocaleGroup.Key.InternalName, abilityLocaleGroup.Key.Id, EntityType.Ability, abilityLocalisedNames);
+
+                entities.Add(abilityLocalisation);  
+            }
         }
 
         // HACK add item localisations
