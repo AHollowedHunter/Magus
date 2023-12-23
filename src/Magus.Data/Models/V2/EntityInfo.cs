@@ -1,15 +1,18 @@
 ﻿using Magus.Common.Discord;
 using Magus.Data.Enums;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.V2;
 public sealed class EntityInfo : IEntity, ILocalised
 {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+    /// <summary>
+    /// Private constructor just for Json, due to the UniqueId property
+    /// </summary>
     [JsonConstructor]
     private EntityInfo() { }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
+    [SetsRequiredMembers]
     public EntityInfo(string internalName, int entityId, EntityType type, string locale, SerializableEmbed embed)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(internalName);
@@ -28,15 +31,14 @@ public sealed class EntityInfo : IEntity, ILocalised
     /// <summary>
     /// This property is used for a unique reference within the search index.
     /// </summary>
-    /// 
     [JsonPropertyName(nameof(UniqueId))]
     public string UniqueId => MakeUniqueId(InternalName, Locale);
 
     [JsonPropertyName(nameof(Locale))]
-    public string Locale { get; set; }
+    public required string Locale { get; set; }
 
     [JsonPropertyName(nameof(InternalName))]
-    public string InternalName { get; set; }
+    public required string InternalName { get; set; }
 
     [JsonPropertyName(nameof(EntityId))]
     public int EntityId { get; set; }
@@ -46,5 +48,5 @@ public sealed class EntityInfo : IEntity, ILocalised
     public EntityType EntityType { get; set; }
 
     [JsonPropertyName(nameof(Embed))]
-    public SerializableEmbed Embed { get; set; }
+    public required SerializableEmbed Embed { get; set; }
 }

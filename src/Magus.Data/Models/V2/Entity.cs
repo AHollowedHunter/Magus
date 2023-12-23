@@ -4,7 +4,14 @@ using System.Text.Json.Serialization;
 namespace Magus.Data.Models.V2;
 public sealed class Entity : IEntity
 {
-    public Entity(string internalName, int entityId, EntityType entityType, IDictionary<string, string> name, string[]? aliases = null, string? realName = null, string[]? linkedEntities = null, string[]? entityFilters = null)
+    public Entity(string internalName,
+                  int entityId,
+                  EntityType entityType,
+                  IDictionary<string, string> name,
+                  string[]? aliases = null,
+                  string? realName = null,
+                  string[]? linkedEntities = null,
+                  string[]? entityFilters = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(internalName);
 

@@ -1,15 +1,18 @@
 ﻿using Magus.Common.Discord;
 using Magus.Data.Enums;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.V2;
 public sealed class PatchNote : IEntity, ILocalised, IPatch
 {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+    /// <summary>
+    /// Private constructor just for Json, due to the UniqueId property
+    /// </summary>
     [JsonConstructor]
     private PatchNote() { }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
+    [SetsRequiredMembers]
     public PatchNote(string locale, string patchNumber, ulong timestamp, PatchNoteType patchNoteType, string internalName, int entityId, EntityType entityType, SerializableEmbed embed)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(locale);
@@ -36,10 +39,10 @@ public sealed class PatchNote : IEntity, ILocalised, IPatch
     public string UniqueId => MakeUniqueId(PatchNumber, InternalName, Locale);
 
     [JsonPropertyName(nameof(Locale))]
-    public string Locale { get; set; }
+    public required string Locale { get; set; }
 
     [JsonPropertyName(nameof(PatchNumber))]
-    public string PatchNumber { get; set; }
+    public required string PatchNumber { get; set; }
 
     [JsonPropertyName(nameof(Timestamp))]
     public ulong Timestamp { get; set; }
@@ -49,7 +52,7 @@ public sealed class PatchNote : IEntity, ILocalised, IPatch
     public PatchNoteType PatchNoteType { get; set; }
 
     [JsonPropertyName(nameof(InternalName))]
-    public string InternalName { get; set; }
+    public required string InternalName { get; set; }
 
     [JsonPropertyName(nameof(EntityId))]
     public int EntityId { get; set; }
@@ -59,5 +62,5 @@ public sealed class PatchNote : IEntity, ILocalised, IPatch
     public EntityType EntityType { get; set; }
 
     [JsonPropertyName(nameof(Embed))]
-    public SerializableEmbed Embed { get; set; }
+    public required SerializableEmbed Embed { get; set; }
 }
