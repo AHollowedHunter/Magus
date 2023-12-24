@@ -95,6 +95,13 @@ class Bot
 
     static Task LogDiscord(LogMessage message)
     {
+        // Any logs to ignore, check here first
+        switch (message.Exception)
+        {
+            case GatewayReconnectException: // Logs already show a disconnect and reconnect. Other errors should show.
+                return Task.CompletedTask;
+        }
+
         var severity = message.Severity switch
         {
             LogSeverity.Critical => LogLevel.Critical,
