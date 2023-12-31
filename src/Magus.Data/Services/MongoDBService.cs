@@ -3,7 +3,6 @@ using Magus.Data.Enums;
 using Magus.Data.Models;
 using Magus.Data.Models.Discord;
 using Magus.Data.Models.Dota;
-using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Magus;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson.IO;
@@ -77,89 +76,6 @@ public sealed class MongoDBService : IAsyncDataService
                                                                                }));
     }
 
-    public async Task<T> GetEntityInfo<T>(int entityId, string locale = "en") where T : EntityInfoEmbed
-    {
-        var collection = GetCollection<T>();
-        var result = await collection.FindAsync(x => x.Locale == locale && x.EntityId == entityId);
-        return await result.FirstOrDefaultAsync();
-    }
-
-    public async Task<IEnumerable<T>> GetEntityInfo<T>(string entityName, string locale = "en", int limit = int.MaxValue) where T : EntityInfoEmbed
-    {
-        var collection = GetCollection<T>();
-        return await collection.AsQueryable().Where(QueryLocaleEntityName<T>(entityName, locale)).OrderBy(x => x.InternalName).Take(limit).ToListAsync();
-        //var query = QueryLocaleEntityNamex<T>(entityName, locale);
-        //var result = await collection.FindAsync(query);
-        //return await result.ToListAsync();
-    }
-
-    public async Task<GeneralPatchNoteEmbed> GetGeneralPatchNote(string patchNumber, string locale = "en")
-    {
-        var collection = GetCollection<GeneralPatchNoteEmbed>();
-        var result = await collection.FindAsync(x => x.Locale == locale && x.PatchNumber == patchNumber);
-        return await result.FirstOrDefaultAsync();
-    }
-
-    public async Task<Patch> GetLatestPatch()
-    {
-        var collection = GetCollection<Patch>();
-        return await collection.AsQueryable().OrderByDescending(x => x.Timestamp).FirstAsync();
-    }
-
-    public async Task<Patch> GetPatch(string patch)
-    {
-        var collection = GetCollection<Patch>();
-        var result = await collection.FindAsync(x => x.PatchNumber == patch);
-        return await result.FirstOrDefaultAsync();
-    }
-
-    public async Task<IEnumerable<Patch>> GetPatches(string patch, int limit = int.MaxValue, bool orderByDesc = false)
-    {
-        var collection = GetCollection<Patch>();
-        var query = collection.AsQueryable().Where(x => x.PatchNumber.StartsWith(patch));
-        if (!orderByDesc)
-            query = query.OrderBy(x => x.Timestamp);
-        else
-            query = query.OrderByDescending(x => x.Timestamp);
-        return await query.Take(limit).ToListAsync();
-    }
-
-    public async Task<T> GetPatchNote<T>(string patchNumber, int entityId, string locale = "en") where T : EntityPatchNoteEmbed
-    {
-        var collection = GetCollection<T>();
-        var result = await collection.FindAsync(x => x.Locale == locale && x.PatchNumber == patchNumber && x.EntityId == entityId);
-        return await result.FirstOrDefaultAsync();
-    }
-
-    public async Task<T> GetPatchNote<T>(string patchNumber, string entityName, string locale = "en") where T : EntityPatchNoteEmbed
-    {
-        var collection = GetCollection<T>();
-        var result = await collection.FindAsync(QueryPatchNoteEntityName<T>(entityName, patchNumber, locale));
-        return await result.FirstOrDefaultAsync();
-    }
-
-    public async Task<IEnumerable<T>> GetPatchNotes<T>(int entityId, string locale = "en", int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
-    {
-        var collection = GetCollection<T>();
-        var query = collection.AsQueryable().Where(x => x.Locale == locale && x.EntityId == entityId);
-        if (!orderByDesc)
-            query = query.OrderBy(x => x.Timestamp);
-        else
-            query = query.OrderByDescending(x => x.Timestamp);
-        return await query.Take(limit).ToListAsync();
-    }
-
-    public async Task<IEnumerable<T>> GetPatchNotes<T>(string entityName, string locale = "en", int limit = int.MaxValue, bool orderByDesc = false) where T : EntityPatchNoteEmbed
-    {
-        var collection = GetCollection<T>();
-        var query = collection.AsQueryable().Where(QueryLocaleEntityName<T>(entityName, locale)).OrderBy(x => x.InternalName);
-        if (!orderByDesc)
-            query = query.OrderBy(x => x.Timestamp);
-        else
-            query = query.OrderByDescending(x => x.Timestamp);
-        return await query.Take(limit).ToListAsync();
-    }
-
     public async Task<T> GetRecord<T>(ulong id) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();
@@ -231,18 +147,6 @@ public sealed class MongoDBService : IAsyncDataService
         await collection.BulkWriteAsync(GetBulkReplaceRequest(records));
     }
 
-    private static Expression<Func<T, bool>> QueryLocaleEntityName<T>(string entityName, string locale = "en") where T : ILocalisedEntity, ILocaleRecord
-        => entity => entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
-                                                 || entity.Name.Contains(entityName, StringComparison.CurrentCultureIgnoreCase)
-                                                 || entity.RealName!.StartsWith(entityName, StringComparison.CurrentCultureIgnoreCase)
-                                                 || entity.InternalName.Contains(entityName, StringComparison.CurrentCultureIgnoreCase));
-
-    private static Expression<Func<T, bool>> QueryPatchNoteEntityName<T>(string entityName, string patchNumber, string locale = "en") where T : EntityPatchNoteEmbed
-        => entity => entity.PatchNumber == patchNumber && entity.Locale == locale && (entity.InternalName.Equals(entityName.ToLower())
-                                                                                      || entity.Name.Contains(entityName, StringComparison.CurrentCultureIgnoreCase)
-                                                                                      || entity.RealName!.StartsWith(entityName, StringComparison.CurrentCultureIgnoreCase)
-                                                                                      || entity.InternalName.Contains(entityName, StringComparison.CurrentCultureIgnoreCase));
-
     private static IEnumerable<WriteModel<T>> GetBulkReplaceRequest<T>(IEnumerable<T> records, bool isUpsert = false) where T : ISnowflakeId
     {
         var request = new List<WriteModel<T>>();
@@ -272,18 +176,6 @@ public sealed class MongoDBService : IAsyncDataService
         else
             query = query.Where(g => g.Announcements.Any());
         return await query.CountAsync();
-    }
-
-    public async Task<AbilityInfoEmbed> GetHeroScepter(int heroId, string locale = "en")
-    {
-        var collection = GetCollection<AbilityInfoEmbed>();
-        return await collection.AsQueryable().Where(ability => ability.HeroId == heroId && ability.Scepter && ability.Locale == locale).FirstOrDefaultAsync();
-    }
-
-    public async Task<AbilityInfoEmbed> GetHeroShard(int heroId, string locale = "en")
-    {
-        var collection = GetCollection<AbilityInfoEmbed>();
-        return await collection.AsQueryable().Where(ability => ability.HeroId == heroId && ability.Shard && ability.Locale == locale).FirstOrDefaultAsync();
     }
 
     public async Task<IEnumerable<EntityLocalisation>> GetEntityLocalisations(EntityType type)

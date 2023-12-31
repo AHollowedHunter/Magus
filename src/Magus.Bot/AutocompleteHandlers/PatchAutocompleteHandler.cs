@@ -1,19 +1,17 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Magus.Data.Models.Dota;
+using Magus.Data.Models.V2;
 using Magus.Data.Services;
 
 namespace Magus.Bot.AutocompleteHandlers;
 
 public class PatchAutocompleteHandler : AutocompleteHandler
 {
-    private readonly IAsyncDataService _db;
-    private readonly IServiceProvider _services;
+    private readonly MeilisearchService _meilisearchService;
 
-    public PatchAutocompleteHandler(IAsyncDataService db, IServiceProvider services)
+    public PatchAutocompleteHandler(MeilisearchService meilisearchService)
     {
-        _db = db;
-        _services = services;
+        _meilisearchService = meilisearchService;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -28,14 +26,14 @@ public class PatchAutocompleteHandler : AutocompleteHandler
             List<Patch> patches;
             if (string.IsNullOrEmpty(value))
             {
-                patches = new List<Patch>() { await _db.GetLatestPatch() };
+                patches = [await _meilisearchService.GetLatestPatchAsync()];
             }
             else
             {
-                patches = (await _db.GetPatches(value, limit: 25, orderByDesc: true)).ToList();
+                patches = (await _meilisearchService.GetPatchesAsync(value, limit: 25, orderByDesc: true)).ToList();
             }
 
-            List<AutocompleteResult> results = new();
+            List<AutocompleteResult> results = [];
             patches.ForEach(patch => results.Add(new AutocompleteResult(patch.PatchNumber, patch.PatchNumber)));
 
             return AutocompletionResult.FromSuccess(results);

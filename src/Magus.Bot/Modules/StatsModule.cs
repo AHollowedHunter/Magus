@@ -5,9 +5,9 @@ using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Services;
 using Magus.Common.Emotes;
 using Magus.Data.Extensions;
-using Magus.Data.Models.Embeds;
 using Magus.Data.Models.Stratz.Results;
 using Magus.Data.Models.Stratz.Types;
+using Magus.Data.Models.V2;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver.Linq;
@@ -46,7 +46,8 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
         await DeferAsync(true);
 
         var user = await _db.GetUser(Context.User);
-        var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).FirstOrDefault();
+        Entity? heroInfo = null; // TODO fix when enabling method
+        //var heroInfo = (await _db.GetEntityInfo<HeroInfoEmbed>(name, locale ?? Context.Interaction.UserLocale, 1)).FirstOrDefault();
 
 
         if (heroInfo == null)
@@ -59,7 +60,7 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
 
             var heroMatches = playerInfo.HeroesPerformance.Where(x => x.Hero.Id == heroInfo.EntityId).First();
 
-            await FollowupAsync(text: $"Played {heroMatches.MatchCount} matches as **{heroInfo.Name}**, {heroMatches.WinCount} wins.", ephemeral: true);
+            await FollowupAsync(text: $"Played {heroMatches.MatchCount} matches as **{heroInfo.Name[locale]}**, {heroMatches.WinCount} wins.", ephemeral: true); // TODO handle name localisation
         }
         else
         {

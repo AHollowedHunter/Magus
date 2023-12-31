@@ -14,25 +14,24 @@ namespace Magus.Bot.Modules;
 [ModuleRegistration(Location.GLOBAL)]
 public class MagusModule : ModuleBase
 {
-    private readonly IAsyncDataService _db;
     private readonly BotSettings _config;
 
-    private readonly MeilisearchService _meilisearchService = new(); // HACK
+    private readonly MeilisearchService _meilisearchService;
 
     readonly string version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString(3);
 
-    public MagusModule(IAsyncDataService db, IOptions<BotSettings> config)
+    public MagusModule(IOptions<BotSettings> config, MeilisearchService meilisearchService)
     {
-        _db = db;
         _config = config.Value;
+        _meilisearchService = meilisearchService;
     }
 
     [SlashCommand("about", "What is MagusBot?")]
     public async Task About()
     {
         await DeferAsync();
-        var latestPatchNote = await _db.GetLatestPatch();
-        var latestPatch = $"[{latestPatchNote.PatchNumber}](https://www.dota2.com/patches/{latestPatchNote.PatchNumber}) - <t:{latestPatchNote.Timestamp}:R>";
+        var latestPatch = await _meilisearchService.GetLatestPatchAsync();
+        var latestPatchValue = $"[{latestPatch.PatchNumber}](https://www.dota2.com/patches/{latestPatch.PatchNumber}) - <t:{latestPatch.Timestamp}:R>";
         var response = new EmbedBuilder()
         {
             Title = "MagusBot",
@@ -42,7 +41,7 @@ public class MagusModule : ModuleBase
             Footer = new() { Text = "Hot Damn!", IconUrl = Context.Client.CurrentUser.GetAvatarUrl() },
         };
         response.AddField("Version", version, true);
-        response.AddField("Latest Patch", latestPatch, true);
+        response.AddField("Latest Patch", latestPatchValue, true);
         response.AddField("Total Guilds", Context.Client.Guilds.Count, true);
         response.AddField("Acknowledgements", "SteamDB for various libraries\nDiscord.NET library", false);
 

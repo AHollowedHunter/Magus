@@ -4,7 +4,6 @@ using Magus.Common.Dota;
 using Magus.Common.Dota.Models;
 using Magus.Common.Emotes;
 using Magus.Data.Extensions;
-using Magus.Data.Models.Embeds;
 using Magus.Data.Models.V2;
 using System.Text.RegularExpressions;
 
@@ -65,7 +64,7 @@ public static class PatchNoteExtensions
 
             var heroPatchNoteEmbed = new SerializableEmbed()
             {
-                Title        = $"{heroInfo.Embed.Title} - changes {patch.PatchName}", // TODO use Entity instead?
+                Title        = $"{heroInfo.Embed.Title} - changes {patch.PatchName}", // TODO use Entity instead for name?
                 Description  = CreateFormattedDescription(hero.GeneralNotes),
                 Url          = _patchUrlBase + patch.PatchName,
                 ColorRaw     = Color.DarkOrange,

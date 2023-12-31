@@ -1,5 +1,4 @@
 ﻿using Coravel.Scheduling.Schedule.Interfaces;
-using Magus.Data.Models.Embeds;
 using Magus.Data.Models.OpenDota;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
@@ -271,11 +270,12 @@ public sealed class TIService
 
     private async Task SetHeroMap()
     {
-        var heroes = new SortedDictionary<int, string>();
-        var heroInfos = await _db.GetRecords<HeroInfoEmbed>(locale: "en-GB");
-        foreach (var hero in heroInfos)
-            heroes.Add(hero.EntityId, hero.Name);
-        this.HeroNames = heroes;
+        // TODO enitire class not used currently, will need to fix below
+        //var heroes = new SortedDictionary<int, string>();
+        //var heroInfos = await _db.GetRecords<HeroInfoEmbed>(locale: "en-GB");
+        //foreach (var hero in heroInfos)
+        //    heroes.Add(hero.EntityId, hero.Name);
+        //this.HeroNames = heroes;
     }
 
     private async Task UpdateTeams()

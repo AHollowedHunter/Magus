@@ -81,9 +81,9 @@ public sealed class MeilisearchService
     public async Task<IEnumerable<EntityInfo>> GetAllEntityInfoAsync(EntityType entityType = EntityType.None, string locale = "en", string indexUid = nameof(EntityInfo))
     {
         var index = _client.Index(indexUid);
-        var filter = $"{nameof(EntityInfo.Locale)}={locale}";
+        var filter = $"{nameof(EntityInfo.Locale)}='{locale}'";
         if (entityType is not EntityType.None)
-            filter += $" AND {nameof(EntityInfo.EntityType)}={entityType}";
+            filter += $" AND {nameof(EntityInfo.EntityType)}='{entityType}'";
 
         return (await index.GetDocumentsAsync<EntityInfo>(new() { Limit = int.MaxValue, Filter = filter })
             .ConfigureAwait(false))
@@ -152,6 +152,40 @@ public sealed class MeilisearchService
 
         var searchQuery = new SearchQuery() { Limit = 1, Sort = [$"{nameof(Patch.Timestamp)}:desc"]};
         return (await index.SearchAsync<Patch>("", searchQuery).ConfigureAwait(false)).Hits.Single();
+    }
+
+    public async Task<IEnumerable<Patch>> GetPatchesAsync(string? query, int limit = 25, bool orderByDesc = true)
+    {
+        var index = _client.Index(nameof(Patch));
+
+        var searchQuery = new SearchQuery() { Limit = limit, Sort = [$"{nameof(Patch.Timestamp)}:{(orderByDesc ? "desc" : "asc")}"]};
+        return (await index.SearchAsync<Patch>(query, searchQuery).ConfigureAwait(false)).Hits;
+    }
+
+    public async Task<IEnumerable<PatchNote>> SearchPatchNotesAsync(string? query, string? patch = null, PatchNoteType? patchType = null, string locale = "en", int limit = 25, bool orderByDesc = true)
+    {
+        var index = _client.Index(nameof(PatchNote));
+
+        var filter = $"{nameof(PatchNote.Locale)}='{locale}'";
+
+        if (patch is not null)
+            filter += $" AND {nameof(PatchNote.PatchNumber)}='{patch}'";
+        if (patchType is not null)
+            filter += $" AND {nameof(PatchNote.PatchNoteType)}='{patchType}'";
+
+        var searchQuery = new SearchQuery()
+        {
+            Limit = limit,
+            Filter = filter,
+        };
+
+        if (orderByDesc)
+            searchQuery.Sort = [$"{nameof(PatchNote.Timestamp)}:desc"];
+        else
+            searchQuery.Sort = [$"{nameof(PatchNote.Timestamp)}:asc"];
+
+        var result = await index.SearchAsync<PatchNote>(query, searchQuery).ConfigureAwait(false);
+        return result.Hits;
     }
     #endregion
 

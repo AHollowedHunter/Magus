@@ -2,7 +2,7 @@
 using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Services;
-using Magus.Data.Models.Embeds;
+using Magus.Data.Enums;
 using Magus.Data.Services;
 
 namespace Magus.Bot.Modules;
@@ -11,13 +11,13 @@ namespace Magus.Bot.Modules;
 [ModuleRegistration(Location.GLOBAL)]
 public class PatchNoteModule : ModuleBase
 {
-    private readonly IAsyncDataService _db;
     private readonly LocalisationService _localisationService;
+    private readonly MeilisearchService _meilisearchService;
 
-    public PatchNoteModule(IAsyncDataService db, LocalisationService localisationService)
+    public PatchNoteModule(LocalisationService localisationService, MeilisearchService meilisearchService)
     {
-        _db = db;
         _localisationService = localisationService;
+        _meilisearchService = meilisearchService;
     }
 
     [SlashCommand("when", "how long is a piece of string?")]
@@ -30,11 +30,11 @@ public class PatchNoteModule : ModuleBase
     {
         await DeferAsync();
         locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
-        number ??= (await _db.GetLatestPatch()).PatchNumber;
-        var patchNote = await _db.GetGeneralPatchNote(number, locale);
+        number ??= (await _meilisearchService.GetLatestPatchAsync().ConfigureAwait(false)).PatchNumber;
+        var patchNotes = await _meilisearchService.SearchPatchNotesAsync(null, number, PatchNoteType.General, locale, 1).ConfigureAwait(false);
 
-        if (patchNote != null)
-            await FollowupAsync(embed: patchNote.Embed.ToDiscordEmbed());
+        if (patchNotes != null)
+            await FollowupAsync(embed: patchNotes.Single().Embed.ToDiscordEmbed());
         else
             await FollowupAsync($"Could not find a patch note numbered **{number}**.");
     }
@@ -45,8 +45,7 @@ public class PatchNoteModule : ModuleBase
                                 [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
     {
         await DeferAsync();
-        locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
-        var embeds = await GetEntityPatchNotesEmbeds<ItemPatchNoteEmbed>(name, patch, locale, 3);
+        var embeds = await GetEntityPatchNotesEmbeds(name, patch, PatchNoteType.Item, locale, 3);
         if (!embeds.Any())
         {
             if (patch != null)
@@ -64,8 +63,7 @@ public class PatchNoteModule : ModuleBase
                                 [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
     {
         await DeferAsync();
-        locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
-        var embeds = await GetEntityPatchNotesEmbeds<HeroPatchNoteEmbed>(name, patch, locale);
+        var embeds = await GetEntityPatchNotesEmbeds(name, patch, PatchNoteType.Hero, locale);
         if (!embeds.Any())
         {
             if (patch != null)
@@ -77,20 +75,11 @@ public class PatchNoteModule : ModuleBase
         await FollowupAsync(embeds: embeds.ToArray());
     }
 
-    private async Task<IEnumerable<Discord.Embed>> GetEntityPatchNotesEmbeds<T>(string name, string? patch = null, string? locale = null, int limit = 1) where T : EntityPatchNoteEmbed
+    private async Task<IEnumerable<Discord.Embed>> GetEntityPatchNotesEmbeds(string name, string? patch = null, PatchNoteType? type = null, string? locale = null, int limit = 1)
     {
         locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
-        var patchNotes = new List<T>();
-        if (patch == null)
-        {
-            patchNotes.AddRange(await _db.GetPatchNotes<T>(name, locale, limit: limit, orderByDesc: true));
-        }
-        else
-        {
-            var patchnote = await _db.GetPatchNote<T>(patch, name, locale);
-            if (patchnote != null)
-                patchNotes.Add(patchnote); ;
-        }
+        var patchNotes = await _meilisearchService.SearchPatchNotesAsync(name, patch, type, locale, limit).ConfigureAwait(false);
+
         var embeds = new List<Discord.Embed>();
         foreach (var patchNote in patchNotes)
             embeds.Add(patchNote.Embed.ToDiscordEmbed());

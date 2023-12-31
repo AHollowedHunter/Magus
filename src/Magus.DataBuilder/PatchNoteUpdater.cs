@@ -1,10 +1,8 @@
 ﻿using Magus.Common.Dota.Models;
 using Magus.Common.Options;
 using Magus.Data.Enums;
-using Magus.Data.Models.Embeds;
-//using Magus.Data.Models.V2;
+using Magus.Data.Models.V2;
 using Magus.Data.Services;
-using Magus.DataBuilder.Extensions;
 using Meilisearch;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
@@ -233,10 +231,39 @@ public sealed class PatchNoteUpdater
         // Following will need tweaking to use collections representing localised entity data from Magus.Data.Models.Dota
         // For now, while hero, ability, item etc. data is not procesed, use existing ...Info stored
 
+        try { await _meilisearchService.DeleteIndexAsync(nameof(PatchNote)); } catch { } // HACK for testing. Will use a swap index later.
+        string[] filterableAttributes =
+                [
+                    nameof(PatchNote.PatchNumber),
+                    nameof(PatchNote.PatchNoteType),
+                    nameof(PatchNote.EntityType),
+                    nameof(PatchNote.Locale)
+                ];
+        string[] searchableAttributes =
+                [
+                    nameof(PatchNote.PatchNumber),
+                    nameof(PatchNote.Timestamp),
+                    nameof(PatchNote.InternalName),
+                    nameof(PatchNote.EntityId),
+                    nameof(PatchNote.Locale)
+                ];
+        string[] sortableAttributes =
+                [
+                    nameof(PatchNote.PatchNumber),
+                    nameof(PatchNote.Timestamp),
+                ];
+        Settings settings = new()
+        {
+            FilterableAttributes = filterableAttributes,
+            SearchableAttributes = searchableAttributes,
+            SortableAttributes = sortableAttributes
+        };
+        await _meilisearchService.CreateIndexAsync(nameof(PatchNote), nameof(PatchNote.UniqueId), settings);
+
         foreach (var localeMap in _localisationOptions.SourceLocaleMappings)
             foreach (var locale in localeMap.Value)
             {
-                List<Data.Models.V2.PatchNote> patchNotes = [];
+                List<PatchNote> patchNotes = [];
                 var heroInfo          = await _meilisearchService.GetAllEntityInfoAsync(EntityType.Hero, locale);
                 //var abilityInfo       = await _db.GetRecords<AbilityInfoEmbed>(locale);
                 var itemInfo          = await _meilisearchService.GetAllEntityInfoAsync(EntityType.Item, locale);
@@ -250,29 +277,6 @@ public sealed class PatchNoteUpdater
                     patchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, locale));
                 }
                 _logger.LogInformation("Updating Patch Notes in Database for {locale}", locale);
-
-                string[] filterableAttributes =
-                [
-                    nameof(Data.Models.V2.PatchNote.PatchNumber),
-                    nameof(Data.Models.V2.PatchNote.PatchNoteType),
-                    nameof(Data.Models.V2.PatchNote.EntityType),
-                    nameof(Data.Models.V2.PatchNote.Locale)
-                ];
-                string[] searchableAttributes =
-                [
-                    nameof(Data.Models.V2.PatchNote.PatchNumber),
-                    nameof(Data.Models.V2.PatchNote.Timestamp),
-                    nameof(Data.Models.V2.PatchNote.InternalName),
-                    nameof(Data.Models.V2.PatchNote.EntityId),
-                    nameof(Data.Models.V2.PatchNote.Locale)
-                ];
-                Settings settings = new()
-                {
-                    FilterableAttributes = filterableAttributes,
-                    SearchableAttributes = searchableAttributes,
-                };
-                try { await _meilisearchService.DeleteIndexAsync(nameof(Data.Models.V2.PatchNote)); } catch { } // HACK for testing. Will use a swap index later.
-                await _meilisearchService.CreateIndexAsync(nameof(Data.Models.V2.PatchNote), nameof(Data.Models.V2.PatchNote.UniqueId), settings);
                 await _meilisearchService.AddDocumentsAsync(patchNotes);
             }
     }
