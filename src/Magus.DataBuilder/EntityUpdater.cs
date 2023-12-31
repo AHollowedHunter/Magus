@@ -1,19 +1,14 @@
-﻿using Discord;
-using Magus.Common.Dota.Enums;
+﻿using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.Models;
 using Magus.Common.Options;
 using Magus.Data.Constants;
 using Magus.Data.Enums;
-using Magus.Data.Models.Embeds;
-using Magus.Data.Models.Magus;
 using Magus.Data.Models.V2;
 using Magus.Data.Services;
 using Meilisearch;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using System.Threading;
 using ValveKeyValue;
 using static Magus.Common.Dota.Models.Ability;
 using static Magus.Common.Dota.Models.BaseSpell;
@@ -27,12 +22,11 @@ namespace Magus.DataBuilder;
 /// </summary>
 public class EntityUpdater
 {
-    private readonly IAsyncDataService _db;
     private readonly LocalisationOptions _localisationOptions;
     private readonly ILogger<PatchNoteUpdater> _logger;
+    private readonly MeilisearchService _meilisearchService;
     private readonly KVSerializer _kvSerializer;
 
-    private readonly MeilisearchService _meilisearchService = new();
 
     private readonly Dictionary<string, int> _abilityIds = [];
     private readonly Dictionary<string, int> _ItemIds = [];
@@ -57,11 +51,11 @@ public class EntityUpdater
 
     private static readonly Regex NameGender = new("#\\|(\\p{L}+)\\|#");
 
-    public EntityUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger)
+    public EntityUpdater(IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger, MeilisearchService meilisearchService)
     {
-        _db = db;
         _localisationOptions = localisationOptions.Value;
         _logger = logger;
+        _meilisearchService = meilisearchService;
 
         _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
     }
@@ -1264,7 +1258,7 @@ public class EntityUpdater
     {
         _logger.LogInformation("Converting entities to Info Embed records");
         var entityInfoList = new List<EntityInfo>();
-        var latestPatch       = await _db.GetLatestPatch();
+        var latestPatch    = await _meilisearchService.GetLatestPatchAsync();
 
 
         foreach (var heroData in entities.Where(e => e.EntityType == EntityType.Hero))
@@ -1303,26 +1297,5 @@ public class EntityUpdater
         await _meilisearchService.CreateIndexAsync(nameof(EntityInfo), nameof(EntityInfo.UniqueId), settings);
         await _meilisearchService.AddDocumentsAsync(entityInfoList);
         //
-    }
-
-    private async Task EnsureIndexes()
-    {
-        _db.CreateCollection<HeroInfoEmbed>();
-        await _db.EnsureIndex<HeroInfoEmbed>(x => x.Locale);
-        await _db.EnsureIndex<HeroInfoEmbed>(x => x.InternalName, caseSensitive: false);
-        await _db.EnsureIndex<HeroInfoEmbed>(x => x.Name, caseSensitive: false);
-        await _db.EnsureIndex<HeroInfoEmbed>(x => x.RealName!, caseSensitive: false);
-        await _db.EnsureIndex<HeroInfoEmbed>(x => x.Aliases!, caseSensitive: false);
-        Thread.Sleep(2000);
-        _db.CreateCollection<AbilityInfoEmbed>();
-        await _db.EnsureIndex<AbilityInfoEmbed>(x => x.Locale);
-        await _db.EnsureIndex<AbilityInfoEmbed>(x => x.InternalName, caseSensitive: false);
-        await _db.EnsureIndex<AbilityInfoEmbed>(x => x.Name, caseSensitive: false);
-        Thread.Sleep(1000);
-        _db.CreateCollection<ItemInfoEmbed>();
-        await _db.EnsureIndex<ItemInfoEmbed>(x => x.Locale);
-        await _db.EnsureIndex<ItemInfoEmbed>(x => x.InternalName, caseSensitive: false);
-        await _db.EnsureIndex<ItemInfoEmbed>(x => x.Name, caseSensitive: false);
-        await _db.EnsureIndex<ItemInfoEmbed>(x => x.Aliases!, caseSensitive: false);
     }
 }

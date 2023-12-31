@@ -127,10 +127,20 @@ public sealed class MeilisearchService
     }
 
     public async Task<T?> SearchTopResultAsync<T>(string? query, string? indexUid = null) where T : class
-        => (await SearchIndexAsync<T>(query, 1, indexUid)).FirstOrDefault();
+        => (await SearchIndexAsync<T>(query, 1, indexUid).ConfigureAwait(false)).FirstOrDefault();
 
     public async Task<Entity?> SearchTopEntityAsync(string? query, EntityType entityType)
-        => (await SearchEntityAsync(query, entityType, 1)).FirstOrDefault();
+        => (await SearchEntityAsync(query, entityType, 1).ConfigureAwait(false)).FirstOrDefault();
+    #endregion
+
+    #region Patch
+    public async Task<Patch> GetLatestPatchAsync()
+    {
+        var index = await GetIndexAsync(nameof(Patch)).ConfigureAwait(false);
+
+        var searchQuery = new SearchQuery() { Limit = 1, Sort = [$"{nameof(Patch.Timestamp)}:desc"]};
+        return (await index.SearchAsync<Patch>("", searchQuery).ConfigureAwait(false)).Hits.Single();
+    }
     #endregion
 
     #region private helpers

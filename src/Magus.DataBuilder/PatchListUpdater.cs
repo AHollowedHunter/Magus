@@ -1,20 +1,22 @@
-﻿using Magus.Data.Models.Dota;
+﻿using Magus.Data.Models.V2;
 using Magus.Data.Services;
+using Meilisearch;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using ValveKeyValue;
 
 namespace Magus.DataBuilder;
 
-public class PatchListUpdater
+public sealed partial class PatchListUpdater
 {
-    private readonly IAsyncDataService _db;
     private readonly ILogger<PatchNoteUpdater> _logger;
+    private readonly MeilisearchService _meilisearchService;
     private readonly KVSerializer _kvSerializer;
 
-    public PatchListUpdater(IAsyncDataService db, ILogger<PatchNoteUpdater> logger)
+    public PatchListUpdater(ILogger<PatchNoteUpdater> logger, MeilisearchService meilisearchService)
     {
-        _db = db;
         _logger = logger;
+        _meilisearchService = meilisearchService;
 
         _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
     }
@@ -38,7 +40,7 @@ public class PatchListUpdater
         _logger.LogInformation("Getting Patches");
         var patchManifest = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.PatchNotes);
 
-        List<Patch> patchList = new();
+        List<Patch> patchList = [];
 
         foreach (var patch in patchManifest.Children)
             patchList.Add(CreatePatchInfo(patch));
@@ -51,20 +53,30 @@ public class PatchListUpdater
     private async Task StorePatchList(List<Patch> patchList)
     {
         _logger.LogInformation("Saving Patch List in database");
-        _db.CreateCollection<Patch>();
-        await _db.EnsureIndex<Patch>(x => x.PatchNumber, true, caseSensitive: false);
-        await _db.EnsureIndex<Patch>(x => x.Timestamp, true);
-        await _db.UpsertRecords(patchList);
+
+        string[] searchAndSortAttributes = [nameof(Patch.PatchNumber), nameof(Patch.Timestamp)];
+        Settings settings = new()
+        {
+            SortableAttributes = searchAndSortAttributes,
+            SearchableAttributes = searchAndSortAttributes,
+        };
+        try { await _meilisearchService.DeleteIndexAsync(nameof(Patch)); } catch { } // HACK for testing. Will use a swap index later.
+        await _meilisearchService.CreateIndexAsync(nameof(Patch), nameof(Patch.UniqueId), settings);
+        await _meilisearchService.AddDocumentsAsync(patchList);
     }
 
-    private Patch CreatePatchInfo(KVObject patch)
-       => new()
-       {
-           Id = GetPatchTimestamp(patch),
-           PatchNumber = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", ""),
-           Timestamp = GetPatchTimestamp(patch),
-       };
+    private static Patch CreatePatchInfo(KVObject patch)
+    {
+        var patchNumber = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", "");
+        return new(
+            NotAlphanumericHyphenUnderscore().Replace(patchNumber, "_"),
+            patchNumber,
+            GetPatchTimestamp(patch));
+    }
 
-    private ulong GetPatchTimestamp(KVObject patch)
+    private static ulong GetPatchTimestamp(KVObject patch)
         => (ulong)DateTimeOffset.Parse(patch.Children.First(x => x.Name == "patch_date").Value.ToString()!).ToUnixTimeSeconds();
+
+    [GeneratedRegex("[^a-zA-Z0-9_-]")]
+    private static partial Regex NotAlphanumericHyphenUnderscore();
 }

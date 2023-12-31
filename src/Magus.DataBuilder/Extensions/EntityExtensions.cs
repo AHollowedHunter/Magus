@@ -1,19 +1,16 @@
 ﻿using ACave.Extensions.Common;
-using Discord;
 using Magus.Common.Discord;
 using Magus.Common.Dota;
 using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.Models;
 using Magus.Common.Emotes;
-using Magus.Data.Models.Dota;
-using Magus.Data.Models.Embeds;
 using Magus.Data.Models.V2;
 
 namespace Magus.DataBuilder.Extensions;
 
 public static class EntityExtensions
 {
-    public static EntityInfo GetHeroInfoEmbed(this Hero hero, string locale, Data.Models.Dota.Patch latestPatch)
+    public static EntityInfo GetHeroInfoEmbed(this Hero hero, string locale, Patch latestPatch)
     {
         var heroInfoEmbed = new SerializableEmbed()
         {
@@ -107,7 +104,7 @@ public static class EntityExtensions
         return new EntityInfo(hero.InternalName, hero.Id, Data.Enums.EntityType.Hero, locale, heroInfoEmbed);
     }
 
-    public static EntityInfo CreateAbilityInfoEmbed(this Ability ability, string locale, Data.Models.Dota.Patch latestPatch, Hero hero)
+    public static EntityInfo CreateAbilityInfoEmbed(this Ability ability, string locale, Patch latestPatch, Hero hero)
     {
         var embed = new SerializableEmbed()
         {
@@ -236,7 +233,7 @@ public static class EntityExtensions
         //        Shard = ability.AbilityHasShard || ability.AbilityIsGrantedByShard
     }
 
-    public static EntityInfo CreateItemInfoEmbed(this Item item, string locale, Data.Models.Dota.Patch latestPatch)
+    public static EntityInfo CreateItemInfoEmbed(this Item item, string locale, Patch latestPatch)
     {
         var embed = new SerializableEmbed()
         {
@@ -342,14 +339,5 @@ public static class EntityExtensions
 
         return new EntityInfo(item.InternalName, item.Id, Data.Enums.EntityType.Item, locale, embed);
         
-    }
-
-    private static ulong GetEntityId(int entityId, string internalName, string locale)
-    {
-        var str = $"{entityId}_{internalName}_{locale}";
-        var md5 = System.Security.Cryptography.MD5.Create();
-        var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(str));
-        var id = BitConverter.ToUInt64(hash);
-        return id;
     }
 }

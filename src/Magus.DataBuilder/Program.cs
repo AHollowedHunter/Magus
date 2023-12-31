@@ -38,6 +38,7 @@ class Program
             .Configure<LocalisationOptions>(settings => configuration.GetSection("Localisation").Bind(settings))
             .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
             .AddSingleton<IAsyncDataService, MongoDBService>()
+            .AddSingleton<MeilisearchService>()
             .AddTransient<DotaUpdater>()
             .AddTransient<PatchNoteUpdater>()
             .AddTransient<EntityUpdater>()
