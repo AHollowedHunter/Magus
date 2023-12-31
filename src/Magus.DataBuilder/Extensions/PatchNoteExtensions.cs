@@ -3,7 +3,9 @@ using Magus.Common.Discord;
 using Magus.Common.Dota;
 using Magus.Common.Dota.Models;
 using Magus.Common.Emotes;
+using Magus.Data.Extensions;
 using Magus.Data.Models.Embeds;
+using Magus.Data.Models.V2;
 using System.Text.RegularExpressions;
 
 namespace Magus.DataBuilder.Extensions;
@@ -12,7 +14,7 @@ public static class PatchNoteExtensions
 {
     private static readonly string _patchUrlBase = "https://www.dota2.com/patches/";
 
-    public static IEnumerable<GeneralPatchNoteEmbed> GetGeneralPatchNoteEmbeds(this PatchNote patch, Dictionary<string, string[]> languageMap)
+    public static PatchNote GetGeneralPatchNoteEmbeds(this PatchNotes patch, string locale)
     {
         var generalPatchEmbed = new SerializableEmbed()
         {
@@ -38,25 +40,12 @@ public static class PatchNoteExtensions
         ));
 
         generalPatchEmbed.Fields = fields;
-
-        var generalPatchNotesList = new List<GeneralPatchNoteEmbed>();
-        foreach (var locale in languageMap[patch.Language])
-        {
-            generalPatchNotesList.Add(new()
-            {
-                Id = GetPatchNoteId(patch.PatchName, "General", locale), //Temp custom id
-                Locale = locale,
-                Embed = generalPatchEmbed,
-                PatchNumber = patch.PatchName,
-                Timestamp = patch.Timestamp,
-            });
-        }
-        return generalPatchNotesList;
+        return patch.CreateGeneralNote(locale, generalPatchEmbed);
     }
 
-    public static IEnumerable<HeroPatchNoteEmbed> GetHeroPatchNoteEmbeds(this PatchNote patch, IEnumerable<HeroInfoEmbed> heroes, Dictionary<(string Language, string Key), string> abilityValues, Dictionary<string, string[]> languageMap)
+    public static IEnumerable<PatchNote> GetHeroPatchNoteEmbeds(this PatchNotes patch, IEnumerable<EntityInfo> heroes, Dictionary<(string Language, string Key), string> abilityValues, string locale)
     {
-        var heroPatchNotesList = new List<HeroPatchNoteEmbed>();
+        var heroPatchNotesList = new List<PatchNote>();
         foreach (var hero in patch.HeroesNotes)
         {
             var heroInfo = heroes.Where(x => x.InternalName == hero.InternalName).First();
@@ -76,7 +65,7 @@ public static class PatchNoteExtensions
 
             var heroPatchNoteEmbed = new SerializableEmbed()
             {
-                Title        = $"{heroInfo.Name} - changes {patch.PatchName}",
+                Title        = $"{heroInfo.Embed.Title} - changes {patch.PatchName}", // TODO use Entity instead?
                 Description  = CreateFormattedDescription(hero.GeneralNotes),
                 Url          = _patchUrlBase + patch.PatchName,
                 ColorRaw     = Color.DarkOrange,
@@ -85,27 +74,15 @@ public static class PatchNoteExtensions
                 Footer       = "Patch " + patch.PatchName,
                 Fields       = fields,
             };
-            foreach (var locale in languageMap[patch.Language])
-            {
-                heroPatchNotesList.Add(new()
-                {
-                    Id = GetPatchNoteId(patch.PatchName, hero.InternalName, locale), //Temp custom id
-                    Locale = locale,
-                    EntityId = heroInfo.EntityId,
-                    Name = heroInfo.Name,
-                    InternalName = hero.InternalName,
-                    Embed = heroPatchNoteEmbed,
-                    PatchNumber = patch.PatchName,
-                    Timestamp = patch.Timestamp,
-                });
-            }
+
+            heroPatchNotesList.Add(patch.CreateHeroNote(locale, heroInfo.InternalName, heroInfo.EntityId, heroPatchNoteEmbed));
         }
         return heroPatchNotesList;
     }
 
-    public static IEnumerable<ItemPatchNoteEmbed> GetItemPatchNoteEmbeds(this PatchNote patch, IEnumerable<ItemInfoEmbed> items, Dictionary<string, string[]> languageMap)
+    public static IEnumerable<PatchNote> GetItemPatchNoteEmbeds(this PatchNotes patch, IEnumerable<EntityInfo> items, string locale)
     {
-        var itemPatchNotesList = new List<ItemPatchNoteEmbed>();
+        var itemPatchNotesList = new List<PatchNote>();
 
         foreach (var item in patch.ItemNotes.Concat(patch.NeutralItemNotes))
         {
@@ -114,7 +91,7 @@ public static class PatchNoteExtensions
 
             var itemPatchNoteEmbed = new SerializableEmbed()
             {
-                Title        = $"{itemInfo.Name} - changes {patch.PatchName}",
+                Title        = $"{itemInfo.Embed.Title} - changes {patch.PatchName}",
                 Description  = CreateFormattedDescription(item.Notes),
                 Url          = _patchUrlBase + patch.PatchName,
                 ColorRaw     = Color.DarkBlue,
@@ -122,25 +99,13 @@ public static class PatchNoteExtensions
                 ThumbnailUrl = URLs.GetItemImage(item.InternalName),
                 Footer       = "Patch " + patch.PatchName
             };
-            foreach (var locale in languageMap[patch.Language])
-            {
-                itemPatchNotesList.Add(new()
-                {
-                    Id = GetPatchNoteId(patch.PatchName, item.InternalName, locale), //Temp custom id
-                    Locale = locale,
-                    EntityId = itemInfo.EntityId,
-                    Name = itemInfo.Name,
-                    InternalName = itemInfo.InternalName,
-                    Embed = itemPatchNoteEmbed,
-                    PatchNumber = patch.PatchName,
-                    Timestamp = patch.Timestamp,
-                });
-            }
+
+            itemPatchNotesList.Add(patch.CreateItemNote(locale, itemInfo.InternalName, itemInfo.EntityId, itemPatchNoteEmbed));
         }
         return itemPatchNotesList;
     }
 
-    private static string CreateFormattedDescription(IList<PatchNote.Note> notes, int maxLength = 4096)
+    private static string CreateFormattedDescription(IList<PatchNotes.Note> notes, int maxLength = 4096)
     {
         var description = string.Empty;
         string truncatedMessage = "***See website for full patchnote***";

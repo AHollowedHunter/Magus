@@ -1,6 +1,6 @@
 ﻿namespace Magus.Common.Dota.Models;
 
-public record PatchNote
+public record PatchNotes
 {
     public string PatchName { get; set; }
     public ulong Timestamp { get; set; }

@@ -1286,7 +1286,7 @@ public class EntityUpdater
 
         _logger.LogInformation("Updating EntityInfo documents");
         //meilisearch
-        string[] filterableAttributes = [nameof(EntityInfo.EntityType)];
+        string[] filterableAttributes = [nameof(EntityInfo.EntityType), nameof(EntityInfo.Locale)];
         string[] searchableAttributes = [nameof(EntityInfo.InternalName), nameof(EntityInfo.EntityId), nameof(EntityInfo.Locale)];
         Settings settings = new()
         {

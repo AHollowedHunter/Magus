@@ -77,6 +77,18 @@ public sealed class MeilisearchService
         var index = _client.Index(indexUid);
         return await index.GetDocumentAsync<EntityInfo>(documentId).ConfigureAwait(false);
     }
+
+    public async Task<IEnumerable<EntityInfo>> GetAllEntityInfoAsync(EntityType entityType = EntityType.None, string locale = "en", string indexUid = nameof(EntityInfo))
+    {
+        var index = _client.Index(indexUid);
+        var filter = $"{nameof(EntityInfo.Locale)}={locale}";
+        if (entityType is not EntityType.None)
+            filter += $" AND {nameof(EntityInfo.EntityType)}={entityType}";
+
+        return (await index.GetDocumentsAsync<EntityInfo>(new() { Limit = int.MaxValue, Filter = filter })
+            .ConfigureAwait(false))
+            .Results;
+    }
     #endregion
 
     #region search

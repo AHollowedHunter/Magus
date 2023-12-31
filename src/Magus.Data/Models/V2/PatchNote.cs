@@ -30,7 +30,7 @@ public sealed class PatchNote : IEntity, ILocalised, IPatch
     }
 
     public static string MakeUniqueId(string patchNumber, string internalName, string locale)
-        => $"{patchNumber}_{internalName}_{locale}";
+        => $"{patchNumber.Replace('.', '-')}_{internalName}_{locale}";
 
     /// <summary>
     /// This property is used for a unique reference within the search index.

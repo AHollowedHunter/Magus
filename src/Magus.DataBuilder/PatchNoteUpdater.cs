@@ -1,7 +1,11 @@
 ﻿using Magus.Common.Dota.Models;
 using Magus.Common.Options;
+using Magus.Data.Enums;
 using Magus.Data.Models.Embeds;
+//using Magus.Data.Models.V2;
 using Magus.Data.Services;
+using Magus.DataBuilder.Extensions;
+using Meilisearch;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -9,23 +13,25 @@ using ValveKeyValue;
 
 namespace Magus.DataBuilder;
 
-public class PatchNoteUpdater
+public sealed class PatchNoteUpdater
 {
-    private readonly IAsyncDataService _db;
+    //private readonly IAsyncDataService _db;
     private readonly LocalisationOptions _localisationOptions;
     private readonly ILogger<PatchNoteUpdater> _logger;
+    private readonly MeilisearchService _meilisearchService;
     private readonly KVSerializer _kvSerializer;
 
     private readonly Dictionary<(string Language, string Key), string> _patchNoteValues; // this should be its own class with methods
     private readonly Dictionary<(string Language, string Key), string> _dotaValues; // this should be its own class with methods
     private readonly Dictionary<(string Language, string Key), string> _abilityValues;
-    private readonly List<PatchNote> _patchNotes;
+    private readonly List<PatchNotes> _patchNotes;
 
-    public PatchNoteUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger)
+    public PatchNoteUpdater(IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger, MeilisearchService meilisearchService)
     {
-        _db = db;
+        //_db = db;
         _localisationOptions = localisationOptions.Value;
         _logger = logger;
+        _meilisearchService = meilisearchService;
 
         _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
         _patchNoteValues = new();
@@ -91,9 +97,9 @@ public class PatchNoteUpdater
         _logger.LogInformation("Finished setting Patch Notes");
     }
 
-    private PatchNote CreatePatchNote(string language, KVObject patch)
+    private PatchNotes CreatePatchNote(string language, KVObject patch)
     {
-        var patchNote = new PatchNote();
+        var patchNote = new PatchNotes();
         // Checks
         if (patch.Children.Where(x => x.Name == "items").First().Any(x => !x.Name.Contains("item_")))
         {
@@ -113,7 +119,7 @@ public class PatchNoteUpdater
 
         foreach (var item in patch.Children.First(x => x.Name == "items").Children)
         {
-            var notes = new List<PatchNote.Note>();
+            var notes = new List<PatchNotes.Note>();
             foreach (var note in item.Children.Where(x => x.Name == "note"))
             {
                 notes.Add(MakeNote(note, language));
@@ -123,7 +129,7 @@ public class PatchNoteUpdater
             if (existingNote != null)
             {
                 patchNote.ItemNotes.Remove(existingNote);
-                var combinedNotes = new List<PatchNote.Note>();
+                var combinedNotes = new List<PatchNotes.Note>();
                 combinedNotes.AddRange(existingNote.Notes);
                 combinedNotes.AddRange(notes);
                 existingNote.Notes = combinedNotes;
@@ -142,7 +148,7 @@ public class PatchNoteUpdater
 
         foreach (var item in patch.Children.First(x => x.Name == "items_neutral").Children)
         {
-            var notes = new List<PatchNote.Note>();
+            var notes = new List<PatchNotes.Note>();
             foreach (var note in item.Children.Where(x => x.Name == "note"))
             {
                 notes.Add(MakeNote(note, language));
@@ -157,9 +163,9 @@ public class PatchNoteUpdater
 
         foreach (var hero in patch.Children.First(x => x.Name == "heroes").Children)
         {
-            var generalNotes = new List<PatchNote.Note>();
-            var abilityNotes = new List<PatchNote.AbilityNotes>();
-            var talentNotes  = new List<PatchNote.Note>();
+            var generalNotes = new List<PatchNotes.Note>();
+            var abilityNotes = new List<PatchNotes.AbilityNotes>();
+            var talentNotes  = new List<PatchNotes.Note>();
             foreach (var general in hero.Children.Where(x => x.Name == "default"))
             {
                 foreach (var note in general.Children)
@@ -169,7 +175,7 @@ public class PatchNoteUpdater
             }
             foreach (var ability in hero.Children.Where(x => x.Name.StartsWith(hero.Name[14..])))/* because heroname includes full "npc_dota_hero_" */
             {
-                var notes = new List<PatchNote.Note>();
+                var notes = new List<PatchNotes.Note>();
                 foreach (var note in ability.Children.Where(x => x.Name == "note"))
                 {
                     notes.Add(MakeNote(note, language));
@@ -200,7 +206,7 @@ public class PatchNoteUpdater
 
         foreach (var creep in patch.Children.First(x => x.Name == "neutral_creeps").Children)
         {
-            var notes = new List<PatchNote.Note>();
+            var notes = new List<PatchNotes.Note>();
             foreach (var note in creep.Children.Where(x => x.Name == "note"))
             {
                 notes.Add(MakeNote(note, language));
@@ -227,49 +233,51 @@ public class PatchNoteUpdater
         // Following will need tweaking to use collections representing localised entity data from Magus.Data.Models.Dota
         // For now, while hero, ability, item etc. data is not procesed, use existing ...Info stored
 
-        EnsureIndexes();
         foreach (var localeMap in _localisationOptions.SourceLocaleMappings)
             foreach (var locale in localeMap.Value)
             {
-                var generalPatchNotes = new List<GeneralPatchNoteEmbed>();
-                var heroPatchNotes    = new List<HeroPatchNoteEmbed>();
-                var itemPatchNotes    = new List<ItemPatchNoteEmbed>();
-                var heroInfo          = await _db.GetRecords<HeroInfoEmbed>(locale);
-                var abilityInfo       = await _db.GetRecords<AbilityInfoEmbed>(locale);
-                var itemInfo          = await _db.GetRecords<ItemInfoEmbed>(locale);
+                List<Data.Models.V2.PatchNote> patchNotes = [];
+                var heroInfo          = await _meilisearchService.GetAllEntityInfoAsync(EntityType.Hero, locale);
+                //var abilityInfo       = await _db.GetRecords<AbilityInfoEmbed>(locale);
+                var itemInfo          = await _meilisearchService.GetAllEntityInfoAsync(EntityType.Item, locale);
 
                 foreach (var patch in _patchNotes.Where(x => x.Language == localeMap.Key))
                 {
                     _logger.LogDebug("Processing patch embeds {name,-5} in {lang}", patch.PatchName, patch.Language);
 
-                    generalPatchNotes.AddRange(patch.GetGeneralPatchNoteEmbeds(_localisationOptions.SourceLocaleMappings));
-                    heroPatchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, _abilityValues, _localisationOptions.SourceLocaleMappings));
-                    itemPatchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, _localisationOptions.SourceLocaleMappings));
+                    patchNotes.Add(patch.GetGeneralPatchNoteEmbeds(locale));
+                    patchNotes.AddRange(patch.GetHeroPatchNoteEmbeds(heroInfo, _abilityValues, locale));
+                    patchNotes.AddRange(patch.GetItemPatchNoteEmbeds(itemInfo, locale));
                 }
                 _logger.LogInformation("Updating Patch Notes in Database for {locale}", locale);
-                await _db.UpsertRecords(generalPatchNotes);
-                await _db.UpsertRecords(heroPatchNotes);
-                await _db.UpsertRecords(itemPatchNotes);
+
+                string[] filterableAttributes =
+                [
+                    nameof(Data.Models.V2.PatchNote.PatchNumber),
+                    nameof(Data.Models.V2.PatchNote.PatchNoteType),
+                    nameof(Data.Models.V2.PatchNote.EntityType),
+                    nameof(Data.Models.V2.PatchNote.Locale)
+                ];
+                string[] searchableAttributes =
+                [
+                    nameof(Data.Models.V2.PatchNote.PatchNumber),
+                    nameof(Data.Models.V2.PatchNote.Timestamp),
+                    nameof(Data.Models.V2.PatchNote.InternalName),
+                    nameof(Data.Models.V2.PatchNote.EntityId),
+                    nameof(Data.Models.V2.PatchNote.Locale)
+                ];
+                Settings settings = new()
+                {
+                    FilterableAttributes = filterableAttributes,
+                    SearchableAttributes = searchableAttributes,
+                };
+                try { await _meilisearchService.DeleteIndexAsync(nameof(Data.Models.V2.PatchNote)); } catch { } // HACK for testing. Will use a swap index later.
+                await _meilisearchService.CreateIndexAsync(nameof(Data.Models.V2.PatchNote), nameof(Data.Models.V2.PatchNote.UniqueId), settings);
+                await _meilisearchService.AddDocumentsAsync(patchNotes);
             }
     }
 
-    private void EnsureIndexes()
-    {
-        _db.CreateCollection<GeneralPatchNoteEmbed>();
-        _db.CreateCollection<HeroPatchNoteEmbed>();
-        _db.CreateCollection<ItemPatchNoteEmbed>();
-        _db.EnsureIndex<GeneralPatchNoteEmbed>(x => x.PatchNumber, caseSensitive: false);
-        _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.PatchNumber, caseSensitive: false);
-        _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.EntityId);
-        _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.Name, caseSensitive: false);
-        _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.Aliases!, caseSensitive: false);
-        _db.EnsureIndex<HeroPatchNoteEmbed>(x => x.RealName!, caseSensitive: false);
-        _db.EnsureIndex<ItemPatchNoteEmbed>(x => x.PatchNumber, caseSensitive: false);
-        _db.EnsureIndex<ItemPatchNoteEmbed>(x => x.Name, caseSensitive: false);
-        _db.EnsureIndex<ItemPatchNoteEmbed>(x => x.Aliases!, caseSensitive: false);
-    }
-
-    private PatchNote.Note MakeNote(KVObject kvObject, string language)
+    private PatchNotes.Note MakeNote(KVObject kvObject, string language)
     {
         if (!kvObject.Children.Any())
         {

@@ -2,12 +2,11 @@
 using Magus.Data.Services;
 using Meilisearch;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using ValveKeyValue;
 
 namespace Magus.DataBuilder;
 
-public sealed partial class PatchListUpdater
+public sealed class PatchListUpdater
 {
     private readonly ILogger<PatchNoteUpdater> _logger;
     private readonly MeilisearchService _meilisearchService;
@@ -69,14 +68,11 @@ public sealed partial class PatchListUpdater
     {
         var patchNumber = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", "");
         return new(
-            NotAlphanumericHyphenUnderscore().Replace(patchNumber, "_"),
+            patchNumber.Replace('.', '-'),
             patchNumber,
             GetPatchTimestamp(patch));
     }
 
     private static ulong GetPatchTimestamp(KVObject patch)
         => (ulong)DateTimeOffset.Parse(patch.Children.First(x => x.Name == "patch_date").Value.ToString()!).ToUnixTimeSeconds();
-
-    [GeneratedRegex("[^a-zA-Z0-9_-]")]
-    private static partial Regex NotAlphanumericHyphenUnderscore();
 }
