@@ -66,7 +66,7 @@ public sealed class MeilisearchService
     public async Task AddDocumentsAsync<T>(IEnumerable<T> values, string? indexUid = null) where T : class
     {
         indexUid ??= typeof(T).Name;
-        var index = await GetIndexAsync(indexUid).ConfigureAwait(false);
+        var index = _client.Index(indexUid);
         var task = await index.AddDocumentsAsync(values).ConfigureAwait(false);
         await WaitForResultAsync(task).ConfigureAwait(false);
     }
@@ -74,7 +74,7 @@ public sealed class MeilisearchService
     public async Task<EntityInfo> GetEntityInfoAsync(string internalName, string locale = "en", string indexUid = nameof(EntityInfo))
     {
         var documentId = EntityInfo.MakeUniqueId(internalName, locale);
-        var index = await GetIndexAsync(indexUid).ConfigureAwait(false);
+        var index = _client.Index(indexUid);
         return await index.GetDocumentAsync<EntityInfo>(documentId).ConfigureAwait(false);
     }
     #endregion
@@ -83,7 +83,7 @@ public sealed class MeilisearchService
     public async Task<IEnumerable<T>> SearchIndexAsync<T>(string? query, int limit = 25, string? indexUid = null) where T : class
     {
         indexUid ??= typeof(T).Name;
-        var index = await GetIndexAsync(indexUid).ConfigureAwait(false);
+        var index = _client.Index(indexUid);
 
         var searchQuery = new SearchQuery()
         {
@@ -95,7 +95,7 @@ public sealed class MeilisearchService
 
     public async Task<IEnumerable<Entity>> SearchEntityAsync(string? query, EntityType type = EntityType.None, int limit = 25)
     {
-        var index = await GetIndexAsync(nameof(Entity)).ConfigureAwait(false);
+        var index = _client.Index(nameof(Entity));
 
         var searchQuery = new SearchQuery() { Limit = limit, };
 
@@ -108,7 +108,7 @@ public sealed class MeilisearchService
 
     public async Task<IEnumerable<Entity>> SearchEntityWithFiltersAsync(string? query, string[] filters, EntityType type = EntityType.None, int limit = 25)
     {
-        var index = await GetIndexAsync(nameof(Entity)).ConfigureAwait(false);
+        var index = _client.Index(nameof(Entity));
 
         var searchQuery = new SearchQuery() { Limit = limit, };
 
@@ -136,7 +136,7 @@ public sealed class MeilisearchService
     #region Patch
     public async Task<Patch> GetLatestPatchAsync()
     {
-        var index = await GetIndexAsync(nameof(Patch)).ConfigureAwait(false);
+        var index = _client.Index(nameof(Patch));
 
         var searchQuery = new SearchQuery() { Limit = 1, Sort = [$"{nameof(Patch.Timestamp)}:desc"]};
         return (await index.SearchAsync<Patch>("", searchQuery).ConfigureAwait(false)).Hits.Single();
