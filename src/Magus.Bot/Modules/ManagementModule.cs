@@ -29,7 +29,7 @@ public class ManagementModule : ModuleBase
     }
 
     [SlashCommand("set-status", "playing, watching; whatever")]
-    public async Task SetStatus(string status, [Summary(description: "Can't be CustomStatus")] ActivityType type, [Summary(description: "If streaming, the url")] string? url = null)
+    public async Task SetStatus(string status, ActivityType type, [Summary(description: "If streaming, the url")] string? url = null)
     {
         if (type is ActivityType.CustomStatus)
             await Context.Client.SetCustomStatusAsync(status);
