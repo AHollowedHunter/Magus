@@ -1075,12 +1075,14 @@ public class EntityUpdater
             {
                 var key     = valueKeyRegex.Match(placeholder.Value).Value;
                 var postFix = escapedPercentage.IsMatch(placeholder.Value) ? "%" : string.Empty;
-                var values  = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(key, StringComparison.InvariantCultureIgnoreCase))?.Values.Select(x => x.ToString() + postFix).ToList();
-                if (values == null || values.Count() == 0)
-                    values = GetAbilityProperty(key, item)?.Select(x => x.ToString() + postFix).ToList();
-                values ??= new() { " " };
+                var values  = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(key, StringComparison.InvariantCultureIgnoreCase))?.Values.Select(x => x.ToString() + postFix).ToArray();
+                if (values == null || values.Length == 0)
+                    values = GetAbilityProperty(key, item)?.Select(x => x.ToString() + postFix).ToArray();
+                values ??= [];
                 var joinedValue = string.Empty;
-                if (item.InternalName.StartsWith("item_dagon"))
+                // This formally assumed dagon only, but should hopefully now work for anything
+                // that has multiple 'levels' like dagon.
+                if (item.ItemBaseLevel > 0 && values.Length >= item.ItemBaseLevel)
                 {
                     values[item.ItemBaseLevel - 1] = Discord.Format.Bold(values[item.ItemBaseLevel - 1]);
                     joinedValue = string.Join(ValueSeparator, values);
