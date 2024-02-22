@@ -1102,17 +1102,17 @@ public class EntityUpdater
         {
             var postFix = value.Value.StartsWith('%') ? "%" : string.Empty;
             item.DisplayedValues[value.Key] = item.DisplayedValues[value.Key].Trim('%');
-            IList<string>? values = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(value.Key, StringComparison.InvariantCultureIgnoreCase))?.Values.Select(x => x.ToString() + postFix).ToList();
-            if (values == null || values.Count() == 0)
-                values = GetAbilityProperty(value.Key, item)?.Distinct().Select(x => x.ToString() + postFix).ToList();
-            if (values == null || values.Count == 0)
+            var values = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(value.Key, StringComparison.InvariantCultureIgnoreCase))?.Values.Select(x => x.ToString() + postFix).ToArray();
+            if (values == null || values.Length == 0)
+                values = GetAbilityProperty(value.Key, item)?.Distinct().Select(x => x.ToString() + postFix).ToArray();
+            if (values == null || values.Length == 0)
             {
                 _logger.LogDebug("Skipped a display value for {0} with key {1}", item.InternalName, value.Key);
                 item.DisplayedValues.Remove(value.Key);
                 continue;
             }
             var joinedValue = string.Empty;
-            if (item.InternalName.StartsWith("item_dagon"))
+            if (item.ItemBaseLevel > 0 && values.Length >= item.ItemBaseLevel)
             {
                 values![item.ItemBaseLevel - 1] = Discord.Format.Bold(values[item.ItemBaseLevel - 1]);
                 joinedValue = string.Join(ValueSeparator, values ?? Enumerable.Empty<string>());
