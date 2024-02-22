@@ -78,7 +78,7 @@ public class PatchNoteModule : ModuleBase
     private async Task<IEnumerable<Discord.Embed>> GetEntityPatchNotesEmbeds(string name, string? patch = null, PatchNoteType? type = null, string? locale = null, int limit = 1)
     {
         locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
-        var patchNotes = await _meilisearchService.SearchPatchNotesAsync(name, patch, type, locale, limit).ConfigureAwait(false);
+        var patchNotes = await _meilisearchService.SearchPatchNotesAsync(name, patch, type, locale, limit).ConfigureAwait(false); // TODO ensure only gets hero
 
         var embeds = new List<Discord.Embed>();
         foreach (var patchNote in patchNotes)
