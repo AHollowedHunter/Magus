@@ -216,12 +216,18 @@ public static class EntityExtensions
             var chargeRestoreTimes = ability.AbilityValues.FirstOrDefault(x => x.Name == "AbilityChargeRestoreTime")?.Values ?? ability.AbilityChargeRestoreTime ?? Enumerable.Empty<float>();
             cooldownString += $"\n> Charges:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", charges))}\n> Restore:\u00A0{Discord.Format.Bold(string.Join("\u00A0/\u00A0", chargeRestoreTimes))}";
         }
-        var manaString = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityManaCost.Count == 0 ? new List<float>(){0F} : ability.AbilityManaCost.Distinct()));
-        var hpString   = Discord.Format.Bold(string.Join("\u00A0/\u00A0", ability.AbilityHealthCost.Count == 0 ? new List<float>(){0F} : ability.AbilityHealthCost.Distinct()));
-
+        
         embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.CooldownIcon}\u00A0{cooldownString}" });
-        embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.ManaIcon}\u00A0{manaString}" });
-        embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.HpIcon}\u00A0{hpString}" });
+        if (ability.AbilityManaCost.Any())
+        {
+            var manaString = Discord.Format.Bold(string.Join("\u202F/\u202F", ability.AbilityManaCost.Distinct()));
+            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.ManaIcon}\u00A0{manaString}" });
+        }
+        if (ability.AbilityHealthCost.Any())
+        {
+            var hpString = Discord.Format.Bold(string.Join("\u202F/\u202F", ability.AbilityHealthCost.Distinct()));
+            embedFields.Add(new Field() { Name = $"{Emotes.Spacer}", IsInline = true, Value = $"{Emotes.HpIcon}\u00A0{hpString}" });
+        }
 
         // Do talents
 
