@@ -29,7 +29,7 @@ public sealed class StratzService
         _httpClient.DefaultRequestHeaders.Authorization = new("Bearer", _botSettings.StratzToken);
         _httpClient.BaseAddress = new Uri(StratzApiUrl);
 
-        _stratz = new GraphQLHttpClient(new(), new SystemTextJsonSerializer(), _httpClient);
+        _stratz = new GraphQLHttpClient(new GraphQLHttpClientOptions(), new SystemTextJsonSerializer(), _httpClient);
     }
 
     public async Task<PlayerType> GetPlayerHeroStats(long steamId, int heroIds, IList<long>? friendIds = null) =>
