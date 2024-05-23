@@ -428,7 +428,8 @@ public class EntityUpdater
 
         var upgradeRegex = new Regex(@"(?i)(shard|scepter)_\w+|\w+(shard|scepter)");
         var bonusRegex   = new Regex(@"(?i)LinkedSpecialBonus|ad_linked_abilities|special_bonus_\w+");
-        var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip");
+        // has to catch non-values, such as text refs...
+        var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet"); 
 
         var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial");
         if (kvAbilityValues != null)
@@ -443,6 +444,9 @@ public class EntityUpdater
                 {
 
                     var valueName   = kvAbilityValue.Name;
+                    // .. and this assumes there is only 1 value in the list? correct?
+                    // should 'nonValueName' check for 'value'? or does this need to be a specific list of values to exclude?
+                    // should instead the value be try-parsed and handled if not?
                     var valueObject = kvAbilityValue.FirstOrDefault(x => !nonValueName.IsMatch(x.Name));
                     if (valueObject == null)
                     {

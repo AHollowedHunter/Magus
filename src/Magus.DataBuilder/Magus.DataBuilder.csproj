@@ -9,9 +9,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Discord.Net.Core" Version="3.13.0" />
+		<PackageReference Include="Discord.Net.Core" Version="3.15.0" />
+		<PackageReference Include="Discord.Net.Interactions" Version="3.15.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
@@ -20,10 +21,10 @@
 		<PackageReference Include="Serilog.Expressions" Version="4.0.0" />
 		<PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
 		<PackageReference Include="Serilog.Settings.Configuration" Version="8.0.0" />
-		<PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
+		<PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-		<PackageReference Include="ValveKeyValue" Version="0.9.0.267" />
-		<PackageReference Include="ValveResourceFormat" Version="7.0.2479" />
+		<PackageReference Include="ValveKeyValue" Version="0.10.0.360" />
+		<PackageReference Include="ValveResourceFormat" Version="9.2.3481" />
 	</ItemGroup>
 
 	<ItemGroup>
