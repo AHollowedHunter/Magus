@@ -34,13 +34,25 @@ public class DPCService
 
     public async Task InitialiseAsync()
     {
-        // Update team logos first, then run update bracket.
-        await UpdateTeamLogos();
-        ScheduleUpdateTeamLogos();
+        try
+        {
+            // Update team logos first, then run update bracket.
+            await UpdateTeamLogos();
+            ScheduleUpdateTeamLogos();
 
-        ScheduleUpdateLeague();
+            ScheduleUpdateLeague();
 
-        _logger.LogInformation("DPCService Initialised");
+            _logger.LogInformation("DPCService Initialised");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to Initialise DPCServices");
+
+            // TODO remove scheduled items if initialisation failed. Figure out how
+            // Scoped scheduler per service?
+            // Schedule in a way it can be cancelled?
+        }
+
     }
 
     private void ScheduleUpdateTeamLogos() => _scheduler.ScheduleAsync(UpdateTeamLogos)
