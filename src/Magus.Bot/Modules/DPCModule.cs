@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 namespace Magus.Bot.Modules;
 
 [Group(GroupName, "Get DPC info (BETA)")]
-[ModuleRegistration(Location.GLOBAL)]
+[ModuleRegistration(Location.GLOBAL, isEnabled: false)]
 public class DPCModule : InteractionModuleBase<SocketInteractionContext>
 {
     const string GroupName = "dpc";

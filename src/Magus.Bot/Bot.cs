@@ -1,6 +1,7 @@
 ﻿using Coravel;
 using Discord;
 using Discord.Interactions;
+using Discord.Rest;
 using Discord.WebSocket;
 using GraphQL;
 using Magus.Bot.Services;
@@ -127,6 +128,7 @@ class Bot
             .AddSingleton<IAsyncDataService, MongoDBService>()
             .AddSingleton<MeilisearchService>()
             .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GATEWAY_INTENTS }))
+            .AddSingleton<IRestClientProvider>(x => x.GetRequiredService<DiscordSocketClient>())
             .AddSingleton(x => new InteractionServiceConfig() { InteractionCustomIdDelimiters = [Constants.CustomIdGroupDelimiter], UseCompiledLambda = true })
             .AddSingleton<InteractionService>()
             .AddSingleton<InteractionHandler>()
