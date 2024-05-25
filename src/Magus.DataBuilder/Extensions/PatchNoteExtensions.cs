@@ -4,7 +4,7 @@ using Magus.Common.Dota;
 using Magus.Common.Dota.Models;
 using Magus.Common.Emotes;
 using Magus.Data.Extensions;
-using Magus.Data.Models.V2;
+using Magus.Data.Models.Dota;
 using System.Text.RegularExpressions;
 
 namespace Magus.DataBuilder.Extensions;

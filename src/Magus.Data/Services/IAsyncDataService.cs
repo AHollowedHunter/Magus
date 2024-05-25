@@ -17,7 +17,6 @@ public interface IAsyncDataService
     Task<Announcement?> GetLatestPublishedAnnouncement(Topic topic);
     Task<T> GetRecord<T>(ulong id) where T : ISnowflakeId;
     Task<IEnumerable<T>> GetRecords<T>(int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeId;
-    Task<IEnumerable<T>> GetRecords<T>(string locale = "en", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeId, ILocaleRecord;
     Task<IEnumerable<Guild>> GetSubscribedGuilds(Topic topic);
     Task<int> GetTotalAnnouncementSubscriptions(Topic? topic = null);
     Task InsertRecord<T>(T record) where T : ISnowflakeId;

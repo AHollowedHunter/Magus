@@ -4,7 +4,7 @@ using Magus.Common.Dota;
 using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.Models;
 using Magus.Common.Emotes;
-using Magus.Data.Models.V2;
+using Magus.Data.Models.Dota;
 
 namespace Magus.DataBuilder.Extensions;
 

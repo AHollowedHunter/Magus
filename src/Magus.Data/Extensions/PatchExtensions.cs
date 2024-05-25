@@ -1,7 +1,7 @@
 ﻿using Magus.Common.Discord;
 using Magus.Common.Dota.Models;
 using Magus.Data.Enums;
-using Magus.Data.Models.V2;
+using Magus.Data.Models.Dota;
 
 namespace Magus.Data.Extensions;
 public static class PatchExtensions

@@ -1,4 +1,4 @@
-﻿namespace Magus.Data.Models.V2;
+﻿namespace Magus.Data.Models.Dota;
 public interface IPatch
 {
     public string PatchNumber { get; }

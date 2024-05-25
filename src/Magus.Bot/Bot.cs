@@ -60,7 +60,7 @@ class Bot
 
         await interactionHandler.InitialiseAsync();
         //await services.GetRequiredService<TIService>().Initialise();
-        await _services.GetRequiredService<DPCService>().InitialiseAsync();
+        //await _services.GetRequiredService<DPCService>().InitialiseAsync();
         await _services.GetRequiredService<LocalisationService>().InitialiseAsync();
         await _services.GetRequiredService<AnnouncementService>().InitialiseAsync();
 
@@ -75,6 +75,8 @@ class Bot
 
         await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
         await client.StartAsync();
+
+        // TODO store and retrieve from DB
         await client.SetGameAsync(name: botSettings.Status.Title, type: (ActivityType)botSettings.Status.Type);
 
         await host.RunAsync();
@@ -134,8 +136,8 @@ class Bot
             .AddSingleton<InteractionHandler>()
             .AddSingleton<LocalisationService>()
             .AddSingleton<StratzService>()
-            .AddSingleton<DPCService>()
-            .AddSingleton<TIService>()
+            //.AddSingleton<DPCService>()
+            //.AddSingleton<TIService>()
             .AddSingleton<AnnouncementService>();
 
     public static bool IsDebug()

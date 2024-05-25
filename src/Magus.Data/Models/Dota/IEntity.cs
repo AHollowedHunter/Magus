@@ -1,6 +1,6 @@
 ﻿using Magus.Data.Enums;
 
-namespace Magus.Data.Models.V2;
+namespace Magus.Data.Models.Dota;
 
 public interface IEntity
 {

@@ -1,7 +1,7 @@
 ﻿using Magus.Data.Enums;
 using System.Text.Json.Serialization;
 
-namespace Magus.Data.Models.V2;
+namespace Magus.Data.Models.Dota;
 public sealed class Entity : IEntity
 {
     public Entity(string internalName,
@@ -47,7 +47,7 @@ public sealed class Entity : IEntity
     public string? RealName { get; set; } // TODO needed? how get?
 
     /// <summary>
-    /// This should be an array of other <see cref="Entity.InternalName"/>'s
+    /// This should be an array of other <see cref="InternalName"/>'s
     /// </summary>
     [JsonPropertyName(nameof(LinkedEntities))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

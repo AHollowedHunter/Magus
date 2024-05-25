@@ -1,9 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Magus.Bot.Attributes;
-using Magus.Bot.AutocompleteHandlers;
 using Magus.Common.Emotes;
-using Magus.Data.Models.V2;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using System.Reflection;

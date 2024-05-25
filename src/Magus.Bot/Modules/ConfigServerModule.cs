@@ -205,6 +205,7 @@ public class ConfigServerModule : ModuleBase
         }
     }
 
+    // TODO no more DPC, update
     [Group(SubGroupName, "server DPC settings")]
     public class DPCGroup : InteractionModuleBase<SocketInteractionContext>
     {

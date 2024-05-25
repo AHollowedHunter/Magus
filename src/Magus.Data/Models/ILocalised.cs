@@ -1,4 +1,4 @@
-﻿namespace Magus.Data.Models.V2;
+﻿namespace Magus.Data.Models;
 public interface ILocalised
 {
     public string Locale { get; }

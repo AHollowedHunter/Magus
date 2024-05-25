@@ -3,7 +3,7 @@ using Magus.Common.Dota.Models;
 using Magus.Common.Options;
 using Magus.Data.Constants;
 using Magus.Data.Enums;
-using Magus.Data.Models.V2;
+using Magus.Data.Models.Dota;
 using Magus.Data.Services;
 using Meilisearch;
 using Microsoft.Extensions.Options;
@@ -18,7 +18,7 @@ namespace Magus.DataBuilder;
 /// <summary>
 /// This class is held together with virtual duct tape and hope.
 /// 
-/// Maybe once day it will be rewritten ¯\_(ツ)_/¯
+/// Maybe one day it will be rewritten ¯\_(ツ)_/¯
 /// </summary>
 public class EntityUpdater
 {

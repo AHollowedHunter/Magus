@@ -90,17 +90,6 @@ public sealed class MongoDBService : IAsyncDataService
         return await result.ToListAsync();
     }
 
-    public async Task<IEnumerable<T>> GetRecords<T>(string locale = "en", int limit = int.MaxValue, bool orderByDesc = false) where T : ISnowflakeId, ILocaleRecord
-    {
-        var collection = GetCollection<T>();
-        var query = collection.AsQueryable().Where(x => x.Locale == locale);
-        if (!orderByDesc)
-            query = query.OrderBy(x => x.Id);
-        else
-            query = query.OrderByDescending(x => x.Id);
-        return await query.Take(limit).ToListAsync();
-    }
-
     public async Task InsertRecord<T>(T record) where T : ISnowflakeId
     {
         var collection = GetCollection<T>();

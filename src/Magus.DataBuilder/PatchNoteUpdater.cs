@@ -1,7 +1,7 @@
 ﻿using Magus.Common.Dota.Models;
 using Magus.Common.Options;
 using Magus.Data.Enums;
-using Magus.Data.Models.V2;
+using Magus.Data.Models.Dota;
 using Magus.Data.Services;
 using Meilisearch;
 using Microsoft.Extensions.Options;
@@ -13,7 +13,6 @@ namespace Magus.DataBuilder;
 
 public sealed class PatchNoteUpdater
 {
-    //private readonly IAsyncDataService _db;
     private readonly LocalisationOptions _localisationOptions;
     private readonly ILogger<PatchNoteUpdater> _logger;
     private readonly MeilisearchService _meilisearchService;

@@ -3,7 +3,7 @@ using Magus.Data.Enums;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
-namespace Magus.Data.Models.V2;
+namespace Magus.Data.Models.Dota;
 public sealed class PatchNote : IEntity, ILocalised, IPatch
 {
     /// <summary>

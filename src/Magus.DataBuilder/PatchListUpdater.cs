@@ -1,4 +1,4 @@
-﻿using Magus.Data.Models.V2;
+﻿using Magus.Data.Models.Dota;
 using Magus.Data.Services;
 using Meilisearch;
 using System.Diagnostics;
