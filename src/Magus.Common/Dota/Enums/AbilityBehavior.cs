@@ -7,15 +7,15 @@ public enum AbilityBehavior : ulong
 {
     DOTA_ABILITY_BEHAVIOR_NONE                           = 0,
     DOTA_ABILITY_BEHAVIOR_HIDDEN                         = 1,
-    [Display(Name = "Passive")]
+    [Display(Name                                        = "Passive")]
     DOTA_ABILITY_BEHAVIOR_PASSIVE                        = 2,
-    [Display(Name = "No Target")]
+    [Display(Name                                        = "No Target")]
     DOTA_ABILITY_BEHAVIOR_NO_TARGET                      = 4,
-    [Display(Name = "Unit Target")]
+    [Display(Name                                        = "Unit Target")]
     DOTA_ABILITY_BEHAVIOR_UNIT_TARGET                    = 8,
-    [Display(Name = "Point target")]
+    [Display(Name                                        = "Point target")]
     DOTA_ABILITY_BEHAVIOR_POINT                          = 16,
-    [Display(Name = "AOE")]
+    [Display(Name                                        = "AOE")]
     DOTA_ABILITY_BEHAVIOR_AOE                            = 32,
     DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE                  = 64,
     DOTA_ABILITY_BEHAVIOR_CHANNELLED                     = 128,
@@ -48,11 +48,11 @@ public enum AbilityBehavior : ulong
     DOTA_ABILITY_BEHAVIOR_UNLOCKED_BY_EFFECT_INDEX       = 17179869184,
     DOTA_ABILITY_BEHAVIOR_SUPPRESS_ASSOCIATED_CONSUMABLE = 34359738368,
     DOTA_ABILITY_BEHAVIOR_FREE_DRAW_TARGETING            = 68719476736,
-    DOTA_ABILITY_BEHAVIOR_NOASSIST                       = 137438953472, // TODO: Ensure correct
-    DOTA_ABILITY_BEHAVIOR_OVERSHOOT                      = 274877906944, // TODO: Ensure correct
-    DOTA_ABILITY_BEHAVIOR_USE_HP                         = 549755813888, // TODO: Ensure correct
-
-    // Alternative Names
-    [Display(Name = "Point target")]
-    DOTA_ABILITY_BEHAVIOR_POINT_TARGET                   = DOTA_ABILITY_BEHAVIOR_POINT, // 3 abilities call it this, why? (elder_titan_move_spirit, enigma_demonic_conversion, arc_warden_tempest_double) #pragma warning restore CA1069 // Enums values should not be duplicated
+    DOTA_ABILITY_BEHAVIOR_IGNORE_SILENCE                 = 137438953472,
+    DOTA_ABILITY_BEHAVIOR_OVERSHOOT                      = 274877906944,
+    DOTA_ABILITY_BEHAVIOR_IGNORE_MUTED                   = 549755813888,
+    DOTA_ABILITY_BEHAVIOR_ALT_CASTABLE                   = 2^40,
+    DOTA_ABILITY_BEHAVIOR_BREAK_DISABLES                 = 2^41,
+    DOTA_ABILITY_BEHAVIOR_SKIP_FOR_KEYBINDS              = 2^42,
+    DOTA_ABILITY_BEHAVIOR_INNATE_UI                      = 2^43,
 }

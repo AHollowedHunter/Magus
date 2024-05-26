@@ -12,4 +12,6 @@ public enum AttackCapabilities
     DOTA_UNIT_CAP_RANGED_ATTACK             = 2,
     [Display(Name = "Ranged, Direction")]
     DOTA_UNIT_CAP_RANGED_ATTACK_DIRECTIONAL = 4,
+
+    DOTA_UNIT_ATTACK_CAPABILITY_BIT_COUNT   = 3,
 }
