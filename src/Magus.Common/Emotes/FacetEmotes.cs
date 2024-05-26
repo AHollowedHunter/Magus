@@ -5,13 +5,13 @@ using System.Reflection;
 
 namespace Magus.Common.Emotes;
 
-public static class Facets
+public static class FacetEmotes
 {
     private static readonly Dictionary<string, Emote> _emotes;
 
-    static Facets()
+    static FacetEmotes()
     {
-        var props = typeof(Facets)
+        var props = typeof(FacetEmotes)
             .GetProperties()
             .Where(x => x.CustomAttributes.Any(x => x.AttributeType == typeof(ResourceAttribute)));
         _emotes = props.ToDictionary(x => x.GetCustomAttribute<ResourceAttribute>()!.Name, x => (Emote)x.GetValue(null, null)!);

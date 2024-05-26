@@ -4,25 +4,25 @@ using System.Reflection;
 
 namespace Magus.Common.Emotes;
 
-public class HeroEmotes
+public static class HeroEmotes
 {
-    private static readonly IDictionary<int, Emote> idEmotes;
-    private static readonly IDictionary<string, Emote> nameEmotes;
+    private static readonly Dictionary<int, Emote> _idEmotes;
+    private static readonly Dictionary<string, Emote> _nameEmotes;
 
     static HeroEmotes()
     {
         var props = typeof(HeroEmotes)
             .GetProperties()
             .Where(x => x.CustomAttributes.Any(x => x.AttributeType == typeof(EntityEmoteAttribute)));
-        idEmotes = props.ToDictionary(x => x.GetCustomAttribute<EntityEmoteAttribute>()!.EntityId, x => (Emote)x.GetValue(null, null)!);
-        nameEmotes = props.ToDictionary(x => x.GetCustomAttribute<EntityEmoteAttribute>()!.InternalName, x => (Emote)x.GetValue(null, null)!);
+        _idEmotes = props.ToDictionary(x => x.GetCustomAttribute<EntityEmoteAttribute>()!.EntityId, x => (Emote)x.GetValue(null, null)!);
+        _nameEmotes = props.ToDictionary(x => x.GetCustomAttribute<EntityEmoteAttribute>()!.InternalName, x => (Emote)x.GetValue(null, null)!);
     }
 
     public static Emote Get(int heroId)
-        => idEmotes[heroId];
+        => _idEmotes[heroId];
 
     public static Emote Get(string internalName)
-        => nameEmotes[internalName];
+        => _nameEmotes[internalName];
 
     // Ignore Spelling
     // in Magus Emotes: Heroes 1
