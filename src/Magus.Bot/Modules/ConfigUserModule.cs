@@ -15,6 +15,7 @@ namespace Magus.Bot.Modules;
 
 [Group(GroupName, "Configure User settings")]
 [ModuleRegistration(Location.GLOBAL)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class ConfigUserModule : ModuleBase
 {
     public const string GroupName = "config-user";

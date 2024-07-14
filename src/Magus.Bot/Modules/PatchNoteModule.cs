@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.AutocompleteHandlers;
 using Magus.Bot.Extensions;
@@ -10,6 +11,7 @@ namespace Magus.Bot.Modules;
 
 [Group("patch", "Get specific patch notes for any patch! ... *since 7.06d*.")]
 [ModuleRegistration(Location.GLOBAL)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class PatchNoteModule : ModuleBase
 {
     private readonly IAsyncDataService _db;

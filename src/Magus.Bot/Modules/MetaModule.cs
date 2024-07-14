@@ -9,6 +9,7 @@ namespace Magus.Bot.Modules;
 
 [Group("magus", "All things MagusBot")]
 [ModuleRegistration(Location.GLOBAL)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class MetaModule : ModuleBase
 {
     private readonly IAsyncDataService _db;

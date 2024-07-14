@@ -17,6 +17,7 @@ namespace Magus.Bot.Modules;
 
 [Group(GroupName, "Get statistics")]
 [ModuleRegistration(Location.GLOBAL)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class StatsModule : InteractionModuleBase<SocketInteractionContext>
 {
     const string GroupName = "stats";
