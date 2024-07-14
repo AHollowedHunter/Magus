@@ -10,6 +10,7 @@ namespace Magus.Bot.Modules;
 
 [Group("magus", "All things MagusBot")]
 [ModuleRegistration(Location.GLOBAL)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class MagusModule : ModuleBase
 {
     private readonly BotSettings _config;
