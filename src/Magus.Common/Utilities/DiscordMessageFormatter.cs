@@ -17,12 +17,13 @@ public static partial class DiscordMessageFormatter
             AllowedAttributes = AllowedAttributes,
         };
         _sanitizer = new HtmlSanitizer(sanitizerOptions);
-        _markdownConverter = new();
+        _markdownConverter = new(new() { CleanupUnnecessarySpaces = false });
     }
 
-    public static string HtmlToDiscordEmbedMarkdown(string htmlSource)
+    public static string HtmlToDiscordEmbedMarkdown(string htmlSource, bool sanitize = true)
     {
-        var sanitizedSource = _sanitizer.Sanitize(htmlSource);
+        // TODO tidy/check/improve, probably this whole class...
+        var sanitizedSource = sanitize ?_sanitizer.Sanitize(htmlSource) : htmlSource;
 
         sanitizedSource = _rssRegex.Replace(sanitizedSource, ""); // DO this first to prevent inadvertently removing markdown URLs
         sanitizedSource = _markdownConverter.Convert(sanitizedSource);

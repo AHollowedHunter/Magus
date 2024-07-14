@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Diagnostics;
+using System.Text.RegularExpressions;
 using ValveKeyValue;
 
 namespace Magus.DataBuilder.Extensions;

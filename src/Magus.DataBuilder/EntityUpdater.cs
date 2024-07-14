@@ -1,6 +1,7 @@
 ﻿using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.Models;
 using Magus.Common.Options;
+using Magus.Common.Utilities;
 using Magus.Data.Constants;
 using Magus.Data.Enums;
 using Magus.Data.Models.Dota;
@@ -48,8 +49,6 @@ public class EntityUpdater
 
     private static readonly char NarrowNoBreakSpace = '\u202F';
     private static readonly string ValueSeparator = $"{NarrowNoBreakSpace}/{NarrowNoBreakSpace}"; // TODO move somewhere reusable, and unify everywhere
-
-    private static readonly Regex NameGender = new("#\\|(\\p{L}+)\\|#");
 
     public EntityUpdater(IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger, MeilisearchService meilisearchService)
     {
@@ -135,7 +134,6 @@ public class EntityUpdater
         var items          = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Items);
         var neutralItems   = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NeutralItems);
 
-        var talentRegex    = new Regex("special_bonus_\\w+");
         var mainAbilities  = new List<KVObject>();
 
         _abilities.Clear();
@@ -147,7 +145,7 @@ public class EntityUpdater
         {
             if (!ability.Children.Any())
                 continue;
-            if (!talentRegex.IsMatch(ability.Name))
+            if (!Rx.TalentName.IsMatch(ability.Name))
             {
                 mainAbilities.Add(ability);
                 continue;
@@ -267,18 +265,14 @@ public class EntityUpdater
 
     private void FormatTalent(Talent talent)
     {
-        var valueKeyRegex      = new Regex(@"(?<=[+-]?{s:)\w+(?=})");
-        var bonusValueKeyRegex = new Regex(@"(?<=[+-]?{s:bonus_)\w+(?=})");
-        var doubleSymbols      = new Regex(@"[%+-](?=[%+-][^%+-])");
-
-        var descriptionValueKeys = valueKeyRegex.Matches(talent.Description);
+        var descriptionValueKeys = Rx.ValueKey.Matches(talent.Description);
         foreach (var valueKey in descriptionValueKeys.AsEnumerable())
         {
             var value = talent.TalentValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Value;
             if (value != null)
                 talent.Description = Regex.Replace(talent.Description, @$"(?<=[+-]?){{s:{valueKey.Value}}}", value);
         }
-        var descriptionBonusValueKeys = bonusValueKeyRegex.Matches(talent.Description);
+        var descriptionBonusValueKeys = Rx.BonusValueKey.Matches(talent.Description);
         foreach (var bonusValueKey in descriptionBonusValueKeys.AsEnumerable())
         {
             var key = bonusValueKey.Value;
@@ -289,14 +283,14 @@ public class EntityUpdater
                 talent.Description = Regex.Replace(talent.Description, @$"(?<=[+-]?){{s:bonus_{key}}}", abilityValue.SpecialBonusValue?.ToString() ?? "");
             }
         }
-        var noteValueKeys = valueKeyRegex.Matches(talent.Note);
+        var noteValueKeys = Rx.ValueKey.Matches(talent.Note);
         foreach (var valueKey in noteValueKeys.AsEnumerable())
         {
             var value = talent.TalentValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Value;
             if (value != null)
                 talent.Note = Regex.Replace(talent.Note, @$"(?<=[+-]?){{s:{valueKey.Value}}}", value);
         }
-        var noteBonusValueKeys = bonusValueKeyRegex.Matches(talent.Note);
+        var noteBonusValueKeys = Rx.BonusValueKey.Matches(talent.Note);
         foreach (var bonusValueKey in noteBonusValueKeys.AsEnumerable())
         {
             var key = bonusValueKey.Value;
@@ -307,8 +301,8 @@ public class EntityUpdater
                 talent.Note = Regex.Replace(talent.Note, @$"(?<=[+-]?){{s:bonus_{key}}}", abilityValue.SpecialBonusValue?.ToString() ?? "");
             }
         }
-        talent.Description = doubleSymbols.Replace(talent.Description, string.Empty);
-        talent.Note = doubleSymbols.Replace(talent.Note, string.Empty);
+        talent.Description = Rx.DoubleSymbols.Replace(talent.Description, string.Empty);
+        talent.Note = Rx.DoubleSymbols.Replace(talent.Note, string.Empty);
     }
 
     private IEnumerable<Talent.TalentValue> GetTalentValues(KVObject kvTalent)
@@ -395,17 +389,15 @@ public class EntityUpdater
     {
         var abilityValues = new List<AbilityValue>();
 
-        var upgradeRegex = new Regex(@"(?i)(shard|scepter)_\w+|\w+(shard|scepter)");
-        var bonusRegex   = new Regex(@"(?i)LinkedSpecialBonus|ad_linked_abilities|special_bonus_\w+");
         // has to catch non-values, such as text refs...
-        var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet"); 
+        //var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet"); 
 
         var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial");
         if (kvAbilityValues != null)
         {
             foreach (var kvAbilityValue in kvAbilityValues.Children)
             {
-                if (upgradeRegex.IsMatch(kvAbilityValue.Name) || kvAbilityValue.ParseChildValue<bool>("RequiresScepter") || kvAbilityValue.ParseChildValue<bool>("RequiresShard"))
+                if (Rx.AbilityUpgrade.IsMatch(kvAbilityValue.Name) || kvAbilityValue.ParseChildValue<bool>("RequiresScepter") || kvAbilityValue.ParseChildValue<bool>("RequiresShard"))
                     continue;
 
                 AbilityValue abilityValue;
@@ -416,16 +408,16 @@ public class EntityUpdater
                     // .. and this assumes there is only 1 value in the list? correct?
                     // should 'nonValueName' check for 'value'? or does this need to be a specific list of values to exclude?
                     // should instead the value be try-parsed and handled if not?
-                    var valueObject = kvAbilityValue.FirstOrDefault(x => !nonValueName.IsMatch(x.Name));
+                    var valueObject = kvAbilityValue.FirstOrDefault(x => !Rx.NonValueName.IsMatch(x.Name));
                     if (valueObject == null)
                     {
                         _logger.LogDebug("Ability {0} with AbilityValue {1} is upgrade value only", kvAbility.Name, valueName);
                         continue;
                     }
 
-                    var values      = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>() : Array.Empty<float>();
-                    var linkedBonus = kvAbilityValue.FirstOrDefault(x => bonusRegex.IsMatch(x.Name));
-                    if (Regex.IsMatch(kvAbilityValue.Name, @"\d+"))
+                    var values      = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>(true) : Array.Empty<float>();
+                    var linkedBonus = kvAbilityValue.FirstOrDefault(x => Rx.BonusValues.IsMatch(x.Name));
+                    if (Rx.DigitOnly.IsMatch(kvAbilityValue.Name))
                         valueName = valueObject.Name;
 
                     abilityValue = new()
@@ -457,9 +449,8 @@ public class EntityUpdater
     {
         var displayValues    = new Dictionary<string,string>();
         var abilityRegex     = new Regex($@"(?i)DOTA_Tooltip_ability_{kvAbility.Name}_");
-        var otherValuesRegex = new Regex(@"(?i)\w+(Note\d*|Lore|Description|shard|scepter|abilitydraft_note)");
 
-        var values = _abilityValues.Where(x => x.Key.Language == language && abilityRegex.IsMatch(x.Key.Key) && !otherValuesRegex.IsMatch(x.Key.Key));
+        var values = _abilityValues.Where(x => x.Key.Language == language && abilityRegex.IsMatch(x.Key.Key) && !Rx.OtherDisplayValues.IsMatch(x.Key.Key));
         foreach (var value in values)
         {
             displayValues.Add(abilityRegex.Replace(value.Key.Key, string.Empty), value.Value);
@@ -471,9 +462,8 @@ public class EntityUpdater
     {
         var displayValues    = new Dictionary<string,string>();
         var abilityRegex     = new Regex($@"(?i)DOTA_Tooltip_ability_{kvItem.Name}_(?=[^\d])");
-        var otherValuesRegex = new Regex(@"(?i)\w+(Note\d*|Lore|Description|shard|scepter|abilitydraft_note)");
 
-        var values = _abilityValues.Where(x => x.Key.Language == language && abilityRegex.IsMatch(x.Key.Key) && !otherValuesRegex.IsMatch(x.Key.Key));
+        var values = _abilityValues.Where(x => x.Key.Language == language && abilityRegex.IsMatch(x.Key.Key) && !Rx.OtherDisplayValues.IsMatch(x.Key.Key));
         foreach (var value in values)
         {
             displayValues.Add(abilityRegex.Replace(value.Key.Key, string.Empty), value.Value);
@@ -524,7 +514,7 @@ public class EntityUpdater
                     if (values == null || values.Count() == 0)
                         values = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>() : Array.Empty<float>();
 
-                    if (Regex.IsMatch(kvAbilityValue.Name, @"\d+"))
+                    if (Rx.DigitOnly.IsMatch(kvAbilityValue.Name))
                         valueName = valueObject.Name;
 
                     abilityValue = new()
@@ -552,14 +542,10 @@ public class EntityUpdater
 
     private void FormatAbility(Ability ability)
     {
-        var valueKeyRegex      = new Regex(@"(?<=%)\w+(?=%)");
-        var bonusValueKeyRegex = new Regex(@"%\w+%");
-        var escapedPercentage  = new Regex(@"%%(?=[^%])");
-
         if (ability.Description == null)
             return;
 
-        var descriptionValueKeys = valueKeyRegex.Matches(ability.Description);
+        var descriptionValueKeys = Rx.AbilityValueKey.Matches(ability.Description);
         foreach (var valueKey in descriptionValueKeys.AsEnumerable())
         {
             var value = ability.AbilityValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
@@ -576,7 +562,7 @@ public class EntityUpdater
                                                     Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
             }
         }
-        ability.Description = escapedPercentage.Replace(ability.Description, "");
+        ability.Description = Rx.EscapedPercentage.Replace(ability.Description, "");
         ability.Description = CleanSimple(ability.Description);
 
         foreach (var value in ability.DisplayedValues)
@@ -633,7 +619,7 @@ public class EntityUpdater
         }
         else if (ability.AbilityHasShard || !string.IsNullOrEmpty(ability.ShardDescription))
         {
-            var shardValueKeys = valueKeyRegex.Matches(ability.ShardDescription!);
+            var shardValueKeys = Rx.AbilityValueKey.Matches(ability.ShardDescription!);
             foreach (var valueKey in shardValueKeys.AsEnumerable())
             {
                 var value = ability.ShardValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
@@ -659,7 +645,7 @@ public class EntityUpdater
                                                             @$"%{valueKey.Value}%",
                                                             Discord.Format.Bold(string.Join(ValueSeparator, formattedValue))); // Use distinct as some all duplicates
                     }
-                ability.ShardDescription = escapedPercentage.Replace(ability.ShardDescription!, "");
+                ability.ShardDescription = Rx.EscapedPercentage.Replace(ability.ShardDescription!, "");
             }
             ability.ShardDescription = CleanSimple(ability.ShardDescription!);
         }
@@ -672,7 +658,7 @@ public class EntityUpdater
         }
         else if (ability.AbilityHasScepter || !string.IsNullOrEmpty(ability.ScepterDescription))
         {
-            var scepterValueKeys = valueKeyRegex.Matches(ability.ScepterDescription!);
+            var scepterValueKeys = Rx.AbilityValueKey.Matches(ability.ScepterDescription!);
             foreach (var valueKey in scepterValueKeys.AsEnumerable())
             {
                 var value = ability.ScepterValues.FirstOrDefault(x => x.Name == valueKey.Value)?.Values;
@@ -692,7 +678,7 @@ public class EntityUpdater
                                                         @$"%{valueKey.Value}%",
                                                         formattedValue); // Use distinct as some all duplicates
                 }
-                ability.ScepterDescription = escapedPercentage.Replace(ability.ScepterDescription!, "");
+                ability.ScepterDescription = Rx.EscapedPercentage.Replace(ability.ScepterDescription!, "");
             }
             ability.ScepterDescription = CleanSimple(ability.ScepterDescription!);
         }
@@ -700,7 +686,7 @@ public class EntityUpdater
         var newNotes = new List<string>();
         foreach (var note in ability.Notes)
         {
-            var noteValueKeys = valueKeyRegex.Matches(note);
+            var noteValueKeys = Rx.AbilityValueKey.Matches(note);
             var newNote = note;
             foreach (var bonusValueKey in noteValueKeys.AsEnumerable())
             {
@@ -720,7 +706,7 @@ public class EntityUpdater
                     newNote = Regex.Replace(newNote, @$"%{bonusValueKey.Value}%", formattedValue);
                 }
             }
-            newNote = escapedPercentage.Replace(newNote, "");
+            newNote = Rx.EscapedPercentage.Replace(newNote, "");
             newNote = CleanLocaleValue(newNote);
             newNotes.Add(newNote);
         }
@@ -749,7 +735,7 @@ public class EntityUpdater
         hero.InternalName = kvhero.Name;
         hero.Language = language;
         hero.Id = kvhero.ParseChildValue<int>("HeroID");
-        hero.Name = NameGender.Replace(GetHeroValue(language, hero.InternalName, isName: true), string.Empty);
+        hero.Name = Rx.NameGender.Replace(GetHeroValue(language, hero.InternalName, isName: true), string.Empty);
         hero.NameAliases = kvhero.ParseChildValueList<string>("NameAliases", spaceIsSeparator: false);
         hero.Bio = GetHeroValue(language, hero.InternalName, "bio");
         hero.Hype = GetHeroValue(language, hero.InternalName, "hype");
@@ -817,13 +803,10 @@ public class EntityUpdater
     /// <returns>Cleaned value</returns>
     private static string CleanSimple(string value)
     {
-        var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*>");
-        var italicsRegex = new Regex(@"(?i)<[/]?\s*i\s*>");
-        var htmlTagRegex = new Regex(@"(?i)<[/]?\s*[^>]*>");
         value = value.Replace("<br>", "\n");
-        value = boldRegex.Replace(value, "**");
-        value = italicsRegex.Replace(value, "*");
-        value = htmlTagRegex.Replace(value, "");
+        value = Rx.HtmlBold.Replace(value, "**");
+        value = Rx.HtmlItalics.Replace(value, "*");
+        value = Rx.HtmlAny.Replace(value, "");
 
         return value;
     }
@@ -836,14 +819,13 @@ public class EntityUpdater
     /// <returns></returns>
     private string CleanPlaceholders(string description, string values, string language)
     {
-        var matches = Regex.Matches(description, @"\$\w+");
-        var signRegex = new Regex(@"[+-](?=\w+)");
+        var matches = Rx.AbilityVariable.Matches(description);
         description = CleanSimple(description);
         if (matches.Count > 0)
             foreach (Match match in matches)
                 description = description.Replace(match.Value, $"\u00A0{values}\u00A0\u00A0{GetAbilityVariable(language, match.Value.Trim('$'))}");
-        else if (signRegex.IsMatch(description))
-            description = signRegex.Replace(description, m => string.Format("{0}\u00A0{1}\u00A0", m.Value, signRegex.Replace(values, string.Empty)));
+        else if (Rx.PlaceholderSign.IsMatch(description))
+            description = Rx.PlaceholderSign.Replace(description, m => string.Format("{0}\u00A0{1}\u00A0", m.Value, Rx.PlaceholderSign.Replace(values, string.Empty)));
         else
             description += $"\u00A0{values}";
 
@@ -866,13 +848,10 @@ public class EntityUpdater
 
     private static string CleanLocaleValue(string value)
     {
-        var boldRegex    = new Regex(@"(?i)<[/]?\s*b\s*/?>");
-        var italicsRegex = new Regex(@"(?i)<[/]?\s*i\s*>");
-        var htmlTagRegex = new Regex(@"(?i)<[/]?\s*[^>]*>");
         value = value.Replace("<br>", "\n");
-        value = boldRegex.Replace(value, "**");
-        value = italicsRegex.Replace(value, "*");
-        value = htmlTagRegex.Replace(value, "");
+        value = Rx.HtmlBold.Replace(value, "**");
+        value = Rx.HtmlItalics.Replace(value, "*");
+        value = Rx.HtmlAny.Replace(value, "");
 
         return value;
     }
@@ -935,13 +914,11 @@ public class EntityUpdater
 
     private IList<Ability> GetHeroAbilities(string language, KVObject kvHero)
     {
-        var abilityRegex       = new Regex("Ability\\d+");
-        var hiddenOrEmptyRegex = new Regex("([\\w]+_empty\\d*)|([\\w]+_hidden\\d*)");
-        var abilityNames       = kvHero.Children.Where(x => abilityRegex.IsMatch(x.Name)).Select(x => x.Value.ToString());
-        var abilities          = new List<Ability>();
+        var abilityNames = kvHero.Children.Where(x => Rx.AbilityKey.IsMatch(x.Name)).Select(x => x.Value.ToString());
+        var abilities    = new List<Ability>();
         foreach (var name in abilityNames)
         {
-            if (string.IsNullOrEmpty(name) || name == "special_bonus_attributes" || hiddenOrEmptyRegex.IsMatch(name))
+            if (string.IsNullOrEmpty(name) || name == "special_bonus_attributes" || Rx.AbilityHiddenOrEmpty.IsMatch(name))
                 continue;
             var ability = _abilities.FirstOrDefault(x => x.InternalName == name && x.Language == language);
 
@@ -961,15 +938,13 @@ public class EntityUpdater
 
     private IList<Talent> GetHeroTalents(string language, KVObject kvHero)
     {
-        var abilityRegex       = new Regex("Ability\\d+");
-        var hiddenOrEmptyRegex = new Regex("([\\w]+_empty\\d*)|([\\w]+_hidden\\d*)");
-        var talentNames        = kvHero.Children.Where(x => abilityRegex.IsMatch(x.Name)).Select(x => x.Value.ToString());
+        var talentNames        = kvHero.Children.Where(x => Rx.AbilityKey.IsMatch(x.Name)).Select(x => x.Value.ToString());
         var talents            = new List<Talent>();
 
         var counter = 0f;
         foreach (var name in talentNames)
         {
-            if (string.IsNullOrEmpty(name) || name == "special_bonus_attributes" || hiddenOrEmptyRegex.IsMatch(name))
+            if (string.IsNullOrEmpty(name) || name == "special_bonus_attributes" || Rx.AbilityHiddenOrEmpty.IsMatch(name))
                 continue;
             var talent = _talents.FirstOrDefault(x => x.InternalName == name && x.Language == language);
             if (talent == null)
@@ -1058,27 +1033,21 @@ public class EntityUpdater
 
     private void FormatItem(Item item)
     {
-        var valueKeyRegex         = new Regex(@"(?<=%)\w+(?=%)");
-        var valuePlaceholderRegex = new Regex(@"%\w+[%]{1,3}");
-        var escapedPercentage     = new Regex(@"%%(?=[^%]?)");
-        var itemSpellRegex        = new Regex(@"<h1>.*?(?=<h1>|\Z|$)", RegexOptions.Singleline);
-        var spellNameRegex        = new Regex(@"<h1>(.+?)</h1>");
-
         if (item.Description == null)
             return;
 
         var itemSpells        = new List<Item.Spell>();
-        var spellDescriptions = itemSpellRegex.Matches(item.Description);
+        var spellDescriptions = Rx.ItemSpells.Matches(item.Description);
         foreach (Match spell in spellDescriptions)
         {
-            var name        = spellNameRegex.Match(spell.Value).Groups[1].Value; //This should match the group
-            var description = spellNameRegex.Replace(spell.Value, string.Empty);
+            var name        = Rx.ItemSpellName.Match(spell.Value).Groups[1].Value; //This should match the group
+            var description = Rx.ItemSpellName.Replace(spell.Value, string.Empty);
 
-            var descriptionPlaceholders = valuePlaceholderRegex.Matches(item.Description);
+            var descriptionPlaceholders = Rx.ValuePlaceholder.Matches(item.Description);
             foreach (Match placeholder in descriptionPlaceholders)
             {
-                var key     = valueKeyRegex.Match(placeholder.Value).Value;
-                var postFix = escapedPercentage.IsMatch(placeholder.Value) ? "%" : string.Empty;
+                var key     = Rx.AbilityKey.Match(placeholder.Value).Value;
+                var postFix = Rx.EscapedPercentage.IsMatch(placeholder.Value) ? "%" : string.Empty;
                 var values  = item.AbilityValues.FirstOrDefault(x => x.Name.Equals(key, StringComparison.InvariantCultureIgnoreCase))?.Values.Select(x => x.ToString() + postFix).ToArray();
                 if (values == null || values.Length == 0)
                     values = GetAbilityProperty(key, item)?.Select(x => x.ToString() + postFix).ToArray();
@@ -1134,7 +1103,7 @@ public class EntityUpdater
         var newNotes = new List<string>();
         foreach (var note in item.Notes)
         {
-            var noteValueKeys = valueKeyRegex.Matches(note);
+            var noteValueKeys = Rx.AbilityKey.Matches(note);
             var newNote = note;
             foreach (var bonusValueKey in noteValueKeys.AsEnumerable())
             {
@@ -1150,7 +1119,7 @@ public class EntityUpdater
                     newNote = Regex.Replace(newNote, @$"%{bonusValueKey.Value}%", formattedValue);
                 }
             }
-            newNote = escapedPercentage.Replace(newNote, "");
+            newNote = Rx.EscapedPercentage.Replace(newNote, "");
             newNote = CleanLocaleValue(newNote);
             newNotes.Add(newNote);
         }
