@@ -115,6 +115,15 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
                 return;
             }
             var summary = player.SimpleSummary;
+            /*TODO - one of the .Single calls is erroring, find and fix
+             * [Magus.Bot.Bot] [App Commands] Error occurred executing stats recent.
+             * Discord.Interactions.InteractionException: Error occurred executing stats recent.
+             *  ---> System.InvalidOperationException: Sequence contains no matching element
+             *    at System.Linq.ThrowHelper.ThrowNoMatchException()
+             *    at Magus.Bot.Modules.StatsModule.Recent(String locale)
+             *    at Discord.Interactions.Builders.ModuleClassBuilder.<>c__DisplayClass11_0.<<CreateCallback>g__ExecuteCallback|1>d.MoveNext()
+             *    --- End of inner exception stack trace ---
+             */
             var userGroup = player.MatchGroupBySteamId.Single();
 
             var longestMatch  = player.Matches.MaxBy(match => match.DurationSeconds);

@@ -71,11 +71,11 @@ public class InfoModule : ModuleBase
     {
         await DeferAsync();
         locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale); // TODO simplify
-        var hero = await _meilisearchService.SearchTopEntityAsync(name, entityType);
-        if (hero is not null)
+        var entity = await _meilisearchService.SearchTopEntityAsync(name, entityType);
+        if (entity is not null)
         {
-            var heroInfo = await _meilisearchService.GetEntityInfoAsync(hero.InternalName, locale);
-            await FollowupAsync(embed: heroInfo.Embed.ToDiscordEmbed());
+            var entityInfo = await _meilisearchService.GetEntityInfoAsync(entity.InternalName, locale);
+            await FollowupAsync(embed: entityInfo.Embed.ToDiscordEmbed());
         }
         else
         {

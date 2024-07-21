@@ -74,7 +74,7 @@ public class AnnouncementService
             var id          = ulong.Parse(new Uri(item.Id).Segments.Last());
             var publishDate = item.PublishDate.ToUnixTimeSeconds();
 
-            if (publishDate <= (latestPublished?.Date ?? 0))
+            if (latestPublished is not null && publishDate <= latestPublished.Date)
                 continue;
 
             var imageUrl = item.Links.Where(l => l.MediaType?.StartsWith("image") ?? false).Select(l => l.Uri.ToString()).FirstOrDefault();

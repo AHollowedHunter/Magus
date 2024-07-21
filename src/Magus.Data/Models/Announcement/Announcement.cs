@@ -10,18 +10,18 @@ public record Announcement : ISnowflakeId, ILocalised
 
     public bool IsPublished { get; set; }
 
-    public string Url { get; set; }
+    public required string Url { get; set; }
 
     public string? ImageUrl { get; set; }
 
-    public string Title { get; set; }
+    public required string Title { get; set; }
 
-    public string Content { get; set; }
+    public required string Content { get; set; }
 
     /// <remarks>
     /// Unix Timestamp
     /// </remarks>
     public long Date { get; set; }
 
-    public string Locale { get; set; }
+    public required string Locale { get; set; }
 }
