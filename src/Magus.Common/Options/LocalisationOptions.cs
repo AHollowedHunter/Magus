@@ -18,7 +18,7 @@ public class LocalisationOptions
     /// <remarks>
     /// Like the rest of this, needs rewriting...
     /// </remarks>
-    public string DefaultLanguage => "english";
+    public string DefaultLanguage { get; } = "english";
 
     /// <summary>
     /// Default IETF language tag with region.
@@ -29,7 +29,7 @@ public class LocalisationOptions
     /// Previously and elsewhere the default is en-GB, so watch for issues with this before
     /// getting around to refactoring/replacing the localisation methods.
     /// </remarks>
-    public string DefaultTag { get; set; } = "en";
+    public string DefaultTag { get; } = "en";
     /// <summary>
     /// Key is language, string array is matching IETF tags
     /// </summary>

@@ -45,7 +45,6 @@ public class InfoModule : ModuleBase
 
     private async Task InfoAghanim(string name, string filter, string? locale = null)
     {
-
         await DeferAsync();
         locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale); // TODO simplify
         var hero = await _meilisearchService.SearchTopEntityAsync(name, EntityType.Hero);
