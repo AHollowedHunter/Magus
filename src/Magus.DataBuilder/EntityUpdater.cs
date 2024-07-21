@@ -448,7 +448,7 @@ public class EntityUpdater
     private IDictionary<string, string> GetDisplayedValues(string language, KVObject kvAbility)
     {
         var displayValues    = new Dictionary<string,string>();
-        var abilityRegex     = new Regex($@"(?i)DOTA_Tooltip_ability_{kvAbility.Name}_");
+        var abilityRegex     = new Regex($@"(?i)DOTA_Tooltip_ability_{kvAbility.Name}_"); // FUTURE Better initial parsing
 
         var values = _abilityValues.Where(x => x.Key.Language == language && abilityRegex.IsMatch(x.Key.Key) && !Rx.OtherDisplayValues.IsMatch(x.Key.Key));
         foreach (var value in values)
@@ -461,7 +461,7 @@ public class EntityUpdater
     private IDictionary<string, string> GetItemDisplayedValues(string language, KVObject kvItem)
     {
         var displayValues    = new Dictionary<string,string>();
-        var abilityRegex     = new Regex($@"(?i)DOTA_Tooltip_ability_{kvItem.Name}_(?=[^\d])");
+        var abilityRegex     = new Regex($@"(?i)DOTA_Tooltip_ability_{kvItem.Name}_(?=[^\d])"); // FUTURE Better initial parsing
 
         var values = _abilityValues.Where(x => x.Key.Language == language && abilityRegex.IsMatch(x.Key.Key) && !Rx.OtherDisplayValues.IsMatch(x.Key.Key));
         foreach (var value in values)
