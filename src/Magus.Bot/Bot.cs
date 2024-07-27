@@ -30,20 +30,19 @@ class Bot
     static void Main(string[] args)
     {
         using IHost host = Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration(x => x.AddEnvironmentVariables(prefix: "MAGUS_"))
-            .ConfigureServices((context, serviceCollection) => ConfigureServices(context.Configuration, serviceCollection))
+            .ConfigureAppConfiguration(AddConfiguration)
             .UseSerilog((hostingContext, services, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration))
+            .ConfigureServices((context, serviceCollection) => ConfigureServices(context.Configuration, serviceCollection))
             .Build();
 
         _services = host.Services;
-        _logger = _services.GetRequiredService<ILogger<Bot>>();
-        _db = _services.GetRequiredService<IAsyncDataService>();
+        _logger   = _services.GetRequiredService<ILogger<Bot>>();
+        _db       = _services.GetRequiredService<IAsyncDataService>();
         RunAsync(host).GetAwaiter().GetResult();
     }
 
     static async Task RunAsync(IHost host)
     {
-
         var botSettings        = _services.GetRequiredService<IOptions<BotSettings>>().Value;
         var client             = _services.GetRequiredService<DiscordSocketClient>();
         var interactionService = _services.GetRequiredService<InteractionService>();
@@ -52,11 +51,11 @@ class Bot
         using var metricsServer = new MetricServer(hostname: botSettings.MetricHost, port: botSettings.MetricPort);
         metricsServer.Start();
 
-        client.Log += LogDiscord;
+        client.Log             += LogDiscord;
         interactionService.Log += LogDiscord;
 
         client.JoinedGuild += JoinedGuild;
-        client.LeftGuild += LeftGuild;
+        client.LeftGuild   += LeftGuild;
 
         await interactionHandler.InitialiseAsync();
         //await services.GetRequiredService<TIService>().Initialise();
@@ -84,14 +83,24 @@ class Bot
 
     static async Task JoinedGuild(SocketGuild guild)
     {
-        _logger.LogInformation("Added to guild Name: {name} ID: {id} Members: {count}, at {joined}", guild.Name, guild.Id, guild.MemberCount, guild.CurrentUser.JoinedAt);
+        _logger.LogInformation(
+            "Added to guild Name: {name} ID: {id} Members: {count}, at {joined}",
+            guild.Name,
+            guild.Id,
+            guild.MemberCount,
+            guild.CurrentUser.JoinedAt);
         await _db.UpsertGuildRecord(guild, DiscordGuildAction.Joined);
         MagusMetrics.Guilds.Inc();
     }
 
     static async Task LeftGuild(SocketGuild guild)
     {
-        _logger.LogInformation("Removed from guild Name: {name} ID: {id} Members: {count}, at {joined}", guild.Name, guild.Id, guild.MemberCount, DateTimeOffset.UtcNow);
+        _logger.LogInformation(
+            "Removed from guild Name: {name} ID: {id} Members: {count}, at {joined}",
+            guild.Name,
+            guild.Id,
+            guild.MemberCount,
+            DateTimeOffset.UtcNow);
         await _db.UpsertGuildRecord(guild, DiscordGuildAction.Left);
         MagusMetrics.Guilds.Dec();
     }
@@ -118,6 +127,11 @@ class Bot
         _logger.Log(severity, message.Exception, "[{source}] {message}", message.Source, message.Message ?? message.Exception.Message);
         return Task.CompletedTask;
     }
+
+    private static void AddConfiguration(IConfigurationBuilder configurationBuilder)
+        => configurationBuilder.AddEnvironmentVariables(prefix: "MAGUS_")
+            .AddUserSecrets<Bot>(optional: true, reloadOnChange: true)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
     static IServiceCollection ConfigureServices(IConfiguration config, IServiceCollection serviceCollection)
         => serviceCollection
