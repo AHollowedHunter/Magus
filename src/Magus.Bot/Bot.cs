@@ -27,18 +27,18 @@ class Bot
     private static IServiceProvider _services;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         using IHost host = Host.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration(AddConfiguration)
             .UseSerilog((hostingContext, services, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration))
-            .ConfigureServices((context, serviceCollection) => ConfigureServices(context.Configuration, serviceCollection))
+            .ConfigureServices(ConfigureServices)
             .Build();
 
         _services = host.Services;
         _logger   = _services.GetRequiredService<ILogger<Bot>>();
         _db       = _services.GetRequiredService<IAsyncDataService>();
-        RunAsync(host).GetAwaiter().GetResult();
+        await RunAsync(host);
     }
 
     static async Task RunAsync(IHost host)
@@ -133,11 +133,12 @@ class Bot
             .AddUserSecrets<Bot>(optional: true, reloadOnChange: true)
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
-    static IServiceCollection ConfigureServices(IConfiguration config, IServiceCollection serviceCollection)
-        => serviceCollection
-            .Configure<BotSettings>(settings => config.GetSection("BotSettings").Bind(settings))
-            .Configure<DataSettings>(settings => config.GetSection("DataSettings").Bind(settings))
-            .Configure<LocalisationOptions>(settings => config.GetSection("Localisation").Bind(settings))
+    static void ConfigureServices(HostBuilderContext context, IServiceCollection serviceCollection)
+    {
+        serviceCollection
+            .Configure<BotSettings>(settings => context.Configuration.GetSection("BotSettings").Bind(settings))
+            .Configure<DataSettings>(settings => context.Configuration.GetSection("DataSettings").Bind(settings))
+            .Configure<LocalisationOptions>(settings => context.Configuration.GetSection("Localisation").Bind(settings))
             .AddSystemMetrics()
             .AddScheduler()
             .AddHttpClient()
@@ -153,6 +154,7 @@ class Bot
             //.AddSingleton<DPCService>()
             //.AddSingleton<TIService>()
             .AddSingleton<AnnouncementService>();
+    }
 
     public static bool IsDebug()
     {
