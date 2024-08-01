@@ -5,10 +5,10 @@ namespace Magus.DataBuilder;
 public class DotaUpdater
 {
     private readonly IAsyncDataService _db;
-    private readonly ILogger<PatchNoteUpdater> _logger;
+    private readonly ILogger<DotaUpdater> _logger;
     private readonly IServiceProvider _services;
 
-    public DotaUpdater(IAsyncDataService db, ILogger<PatchNoteUpdater> logger, IServiceProvider services)
+    public DotaUpdater(IAsyncDataService db, ILogger<DotaUpdater> logger, IServiceProvider services)
     {
         _db = db;
         _logger = logger;

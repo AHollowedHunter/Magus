@@ -19,7 +19,7 @@ internal static partial class Rx
     private static partial Regex _BonusValues();
 
     public static Regex NonValueName => _NonValueName();
-    [GeneratedRegex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet")]
+    [GeneratedRegex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet|dynamic_value")]
     private static partial Regex _NonValueName();
 
     public static Regex NameGender => _NameGender();

@@ -8,11 +8,11 @@ namespace Magus.DataBuilder;
 
 public sealed class PatchListUpdater
 {
-    private readonly ILogger<PatchNoteUpdater> _logger;
+    private readonly ILogger<PatchListUpdater> _logger;
     private readonly MeilisearchService _meilisearchService;
     private readonly KVSerializer _kvSerializer;
 
-    public PatchListUpdater(ILogger<PatchNoteUpdater> logger, MeilisearchService meilisearchService)
+    public PatchListUpdater(ILogger<PatchListUpdater> logger, MeilisearchService meilisearchService)
     {
         _logger = logger;
         _meilisearchService = meilisearchService;

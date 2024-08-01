@@ -24,7 +24,7 @@ namespace Magus.DataBuilder;
 public class EntityUpdater
 {
     private readonly LocalisationOptions _localisationOptions;
-    private readonly ILogger<PatchNoteUpdater> _logger;
+    private readonly ILogger<EntityUpdater> _logger;
     private readonly MeilisearchService _meilisearchService;
     private readonly KVSerializer _kvSerializer;
 
@@ -50,7 +50,7 @@ public class EntityUpdater
     private static readonly char NarrowNoBreakSpace = '\u202F';
     private static readonly string ValueSeparator = $"{NarrowNoBreakSpace}/{NarrowNoBreakSpace}"; // TODO move somewhere reusable, and unify everywhere
 
-    public EntityUpdater(IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger, MeilisearchService meilisearchService)
+    public EntityUpdater(IOptions<LocalisationOptions> localisationOptions, ILogger<EntityUpdater> logger, MeilisearchService meilisearchService)
     {
         _localisationOptions = localisationOptions.Value;
         _logger = logger;
@@ -1012,7 +1012,7 @@ public class EntityUpdater
         item.ItemBaseLevel = kvItem.ParseChildValue<byte>("ItemBaseLevel");
         item.MaxUpgradeLevel = kvItem.ParseChildValue<byte>("MaxUpgradeLevel");
         item.ItemCost = kvItem.ParseChildValue<short>("ItemCost", emptyValueReturnDefault: true);
-        item.ItemInitialCharges = kvItem.ParseChildValue<byte>("ItemInitialCharges");
+        item.ItemInitialCharges = kvItem.ParseChildValue<int>("ItemInitialCharges");
         item.ItemInitialStockTime = kvItem.ParseChildValue<float>("ItemInitialStockTime");
         item.ItemIsNeutralDrop = kvItem.ParseChildValue<bool>("ItemIsNeutralDrop");
         item.ItemNeutralTier = _neutralItemTiers.FirstOrDefault(x => x.Key == item.InternalName).Value;
