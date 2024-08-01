@@ -23,7 +23,7 @@ public class EntityUpdater
 {
     private readonly IAsyncDataService _db;
     private readonly LocalisationOptions _localisationOptions;
-    private readonly ILogger<PatchNoteUpdater> _logger;
+    private readonly ILogger<EntityUpdater> _logger;
     private readonly KVSerializer _kvSerializer;
 
     private readonly Dictionary<string, int> _abilityIds = [];
@@ -44,7 +44,7 @@ public class EntityUpdater
 
     private static readonly Regex NameGender = new("#\\|(\\p{L}+)\\|#");
 
-    public EntityUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<PatchNoteUpdater> logger)
+    public EntityUpdater(IAsyncDataService db, IOptions<LocalisationOptions> localisationOptions, ILogger<EntityUpdater> logger)
     {
         _db = db;
         _localisationOptions = localisationOptions.Value;
@@ -429,7 +429,10 @@ public class EntityUpdater
         var upgradeRegex = new Regex(@"(?i)(shard|scepter)_\w+|\w+(shard|scepter)");
         var bonusRegex   = new Regex(@"(?i)LinkedSpecialBonus|ad_linked_abilities|special_bonus_\w+");
         // has to catch non-values, such as text refs...
-        var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet"); 
+        /*
+         * dynamic_value - true: added patch 7.37
+         */
+        var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet|dynamic_value"); 
 
         var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial");
         if (kvAbilityValues != null)
@@ -1068,7 +1071,7 @@ public class EntityUpdater
         item.ItemBaseLevel = kvItem.ParseChildValue<byte>("ItemBaseLevel");
         item.MaxUpgradeLevel = kvItem.ParseChildValue<byte>("MaxUpgradeLevel");
         item.ItemCost = kvItem.ParseChildValue<short>("ItemCost", emptyValueReturnDefault: true);
-        item.ItemInitialCharges = kvItem.ParseChildValue<byte>("ItemInitialCharges");
+        item.ItemInitialCharges = kvItem.ParseChildValue<int>("ItemInitialCharges");
         item.ItemInitialStockTime = kvItem.ParseChildValue<float>("ItemInitialStockTime");
         item.ItemIsNeutralDrop = kvItem.ParseChildValue<bool>("ItemIsNeutralDrop");
         item.ItemNeutralTier = _neutralItemTiers.FirstOrDefault(x => x.Key == item.InternalName).Value;
