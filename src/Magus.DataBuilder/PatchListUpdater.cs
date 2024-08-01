@@ -8,10 +8,10 @@ namespace Magus.DataBuilder;
 public class PatchListUpdater
 {
     private readonly IAsyncDataService _db;
-    private readonly ILogger<PatchNoteUpdater> _logger;
+    private readonly ILogger<PatchListUpdater> _logger;
     private readonly KVSerializer _kvSerializer;
 
-    public PatchListUpdater(IAsyncDataService db, ILogger<PatchNoteUpdater> logger)
+    public PatchListUpdater(IAsyncDataService db, ILogger<PatchListUpdater> logger)
     {
         _db = db;
         _logger = logger;

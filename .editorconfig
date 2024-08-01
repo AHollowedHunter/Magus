@@ -4,6 +4,11 @@ root = true
 # C# files
 [*.cs]
 
+### Spelling
+spelling_languages = en-GB,en-US,en
+spelling_error_severity = hint
+ij_visual_guides = 80,100,120
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing
