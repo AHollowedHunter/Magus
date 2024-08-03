@@ -10,7 +10,7 @@ namespace Magus.DotaParser;
 
 public class Program
 {
-    public static async Task<int> Main(string[] args)
+    public static async Task Main(string[] args)
     {
         using IHost host = Host.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration(AddConfiguration)
@@ -21,11 +21,7 @@ public class Program
         await host.StartAsync();
         try
         {
-            return await RunAsync();
-        }
-        catch
-        {
-            return -1;
+            await RunAsync();
         }
         finally
         {
@@ -33,9 +29,9 @@ public class Program
         }
     }
 
-    private static ValueTask<int> RunAsync()
+    private static async ValueTask RunAsync()
     {
-        return ValueTask.FromResult(0);
+        
     }
 
 
