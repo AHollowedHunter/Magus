@@ -29,7 +29,7 @@ public class Program
         }
     }
 
-    private static async ValueTask RunAsync()
+    private static async Task RunAsync()
     {
         
     }
