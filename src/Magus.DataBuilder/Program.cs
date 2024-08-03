@@ -36,6 +36,7 @@ class Program
         => new ServiceCollection()
             .Configure<DataSettings>(settings => configuration.GetSection("DataSettings").Bind(settings))
             .Configure<LocalisationOptions>(settings => configuration.GetSection("Localisation").Bind(settings))
+            .AddHttpClient()
             .AddLogging(x => x.AddSerilog(new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger()))
             .AddSingleton<IAsyncDataService, MongoDBService>()
             .AddSingleton<MeilisearchService>()

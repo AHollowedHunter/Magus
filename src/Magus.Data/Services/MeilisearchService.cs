@@ -1,6 +1,7 @@
 ﻿using Magus.Data.Enums;
-using Magus.Data.Models.V2;
+using Magus.Data.Models.Dota;
 using Meilisearch;
+using Meilisearch.QueryParameters;
 
 namespace Magus.Data.Services;
 
@@ -8,12 +9,15 @@ public sealed class MeilisearchService
 {
     private readonly MeilisearchClient _client;
 
-    public MeilisearchService()
+    public MeilisearchService(IHttpClientFactory httpClientFactory)
     {
-        _client = new MeilisearchClient("http://localhost:7700", "12345678"); // HACK testing
+        var httpClient = httpClientFactory.CreateClient("meilisearch");
+        httpClient.BaseAddress = new Uri("http://localhost:7700"); // HACK testing
+        _client = new MeilisearchClient(httpClient, "12345678");
     }
 
     #region Index
+
     /// <summary>
     /// Create a new index. If including a primary key, the index must not exist
     /// or it should have no documents within it.
@@ -53,9 +57,11 @@ public sealed class MeilisearchService
     /// <exception cref="MeilisearchApiError">If the Index does not exist</exception>
     private async Task<Meilisearch.Index> GetIndexAsync(string indexUid)
         => await _client.GetIndexAsync(indexUid).ConfigureAwait(false);
+
     #endregion
 
     #region documents
+
     /// <summary>
     /// Add the documents to the specified index.
     /// </summary>
@@ -71,41 +77,50 @@ public sealed class MeilisearchService
         await WaitForResultAsync(task).ConfigureAwait(false);
     }
 
-    public async Task<EntityInfo> GetEntityInfoAsync(string internalName, string locale = "en", string indexUid = nameof(EntityInfo))
+    public Task<EntityInfo> GetEntityInfoAsync(
+        string internalName,
+        string locale = "en",
+        string indexUid = nameof(EntityInfo))
     {
         var documentId = EntityInfo.MakeUniqueId(internalName, locale);
         var index = _client.Index(indexUid);
-        return await index.GetDocumentAsync<EntityInfo>(documentId).ConfigureAwait(false);
+        return index.GetDocumentAsync<EntityInfo>(documentId);
     }
 
-    public async Task<IEnumerable<EntityInfo>> GetAllEntityInfoAsync(EntityType entityType = EntityType.None, string locale = "en", string indexUid = nameof(EntityInfo))
+    public async Task<IEnumerable<EntityInfo>> GetAllEntityInfoAsync(
+        EntityType entityType = EntityType.None,
+        string locale = "en",
+        string indexUid = nameof(EntityInfo))
     {
         var index = _client.Index(indexUid);
         var filter = $"{nameof(EntityInfo.Locale)}='{locale}'";
         if (entityType is not EntityType.None)
             filter += $" AND {nameof(EntityInfo.EntityType)}='{entityType}'";
 
-        return (await index.GetDocumentsAsync<EntityInfo>(new() { Limit = int.MaxValue, Filter = filter })
-            .ConfigureAwait(false))
+        return (await index.GetDocumentsAsync<EntityInfo>(new DocumentsQuery { Limit = int.MaxValue, Filter = filter })
+                .ConfigureAwait(false))
             .Results;
     }
+
     #endregion
 
     #region search
-    public async Task<IEnumerable<T>> SearchIndexAsync<T>(string? query, int limit = 25, string? indexUid = null) where T : class
+
+    public async Task<IEnumerable<T>> SearchIndexAsync<T>(string? query, int limit = 25, string? indexUid = null)
+        where T : class
     {
         indexUid ??= typeof(T).Name;
         var index = _client.Index(indexUid);
 
-        var searchQuery = new SearchQuery()
-        {
-            Limit = limit,
-        };
+        var searchQuery = new SearchQuery() { Limit = limit, };
         var result = await index.SearchAsync<T>(query, searchQuery).ConfigureAwait(false);
         return result.Hits;
     }
 
-    public async Task<IEnumerable<Entity>> SearchEntityAsync(string? query, EntityType type = EntityType.None, int limit = 25)
+    public async Task<IEnumerable<Entity>> SearchEntityAsync(
+        string? query,
+        EntityType type = EntityType.None,
+        int limit = 25)
     {
         var index = _client.Index(nameof(Entity));
 
@@ -118,14 +133,18 @@ public sealed class MeilisearchService
         return result.Hits;
     }
 
-    public async Task<IEnumerable<Entity>> SearchEntityWithFiltersAsync(string? query, string[] filters, EntityType type = EntityType.None, int limit = 25)
+    public async Task<IEnumerable<Entity>> SearchEntityWithFiltersAsync(
+        string? query,
+        string[] filters,
+        EntityType type = EntityType.None,
+        int limit = 25)
     {
         var index = _client.Index(nameof(Entity));
 
         var searchQuery = new SearchQuery() { Limit = limit, };
 
-        // TODO improve all this, check meiliseach C# docs
-        var filter = string.Empty;
+        // TODO improve all this, check meilisearch C# docs
+        string filter;
         if (filters.Length == 1)
             filter = "EntityFilters = '" + filters[0] + "'";
         else
@@ -133,6 +152,21 @@ public sealed class MeilisearchService
 
         if (type != EntityType.None)
             searchQuery.Filter = filter + $" AND {nameof(Entity.EntityType)} = '{type}'";
+
+        // filter obj test
+        // object objFilter;
+        // if (filters.Length == 1)
+        //     objFilter = new { EntityFilters = filters[0] };
+        // else
+        //     objFilter = new { EntityFilters = filters };
+        // objFilter = $"EntityFilters = '{string.Join("' AND EntityFilters = '", filters)}'";
+        //
+        // if (type != EntityType.None)
+        //     objFilter += $" AND {nameof(Entity.EntityType)} = '{type}'";
+        // searchQuery.Filter = objFilter;
+
+
+        //
 
         var result = await index.SearchAsync<Entity>(query, searchQuery).ConfigureAwait(false);
         return result.Hits;
@@ -143,14 +177,16 @@ public sealed class MeilisearchService
 
     public async Task<Entity?> SearchTopEntityAsync(string? query, EntityType entityType)
         => (await SearchEntityAsync(query, entityType, 1).ConfigureAwait(false)).FirstOrDefault();
+
     #endregion
 
     #region Patch
+
     public async Task<Patch> GetLatestPatchAsync()
     {
         var index = _client.Index(nameof(Patch));
 
-        var searchQuery = new SearchQuery() { Limit = 1, Sort = [$"{nameof(Patch.Timestamp)}:desc"]};
+        var searchQuery = new SearchQuery() { Limit = 1, Sort = [$"{nameof(Patch.Timestamp)}:desc"] };
         return (await index.SearchAsync<Patch>("", searchQuery).ConfigureAwait(false)).Hits.Single();
     }
 
@@ -158,11 +194,20 @@ public sealed class MeilisearchService
     {
         var index = _client.Index(nameof(Patch));
 
-        var searchQuery = new SearchQuery() { Limit = limit, Sort = [$"{nameof(Patch.Timestamp)}:{(orderByDesc ? "desc" : "asc")}"]};
+        var searchQuery = new SearchQuery()
+        {
+            Limit = limit, Sort = [$"{nameof(Patch.Timestamp)}:{(orderByDesc ? "desc" : "asc")}"]
+        };
         return (await index.SearchAsync<Patch>(query, searchQuery).ConfigureAwait(false)).Hits;
     }
 
-    public async Task<IEnumerable<PatchNote>> SearchPatchNotesAsync(string? query, string? patch = null, PatchNoteType? patchType = null, string locale = "en", int limit = 25, bool orderByDesc = true)
+    public async Task<IEnumerable<PatchNote>> SearchPatchNotesAsync(
+        string? query,
+        string? patch = null,
+        PatchNoteType? patchType = null,
+        string locale = "en",
+        int limit = 25,
+        bool orderByDesc = true)
     {
         var index = _client.Index(nameof(PatchNote));
 
@@ -173,11 +218,7 @@ public sealed class MeilisearchService
         if (patchType is not null)
             filter += $" AND {nameof(PatchNote.PatchNoteType)}='{patchType}'";
 
-        var searchQuery = new SearchQuery()
-        {
-            Limit = limit,
-            Filter = filter,
-        };
+        var searchQuery = new SearchQuery() { Limit = limit, Filter = filter, };
 
         if (orderByDesc)
             searchQuery.Sort = [$"{nameof(PatchNote.Timestamp)}:desc"];
@@ -187,9 +228,11 @@ public sealed class MeilisearchService
         var result = await index.SearchAsync<PatchNote>(query, searchQuery).ConfigureAwait(false);
         return result.Hits;
     }
+
     #endregion
 
     #region private helpers
+
     /// <summary>
     /// Wait for the task to finish. Throws if failed.
     /// </summary>
@@ -198,7 +241,9 @@ public sealed class MeilisearchService
     {
         var result = await _client.WaitForTaskAsync(taskInfo.TaskUid).ConfigureAwait(false);
         if (result.Status is TaskInfoStatus.Failed)
-            throw new Exception($"Task failed: {result.Uid}. Please check Meilisearch for specific error."); // TODO specific exception?
+            throw new Exception(
+                $"Task failed: {result.Uid}. Please check Meilisearch for specific error."); // TODO specific exception?
     }
+
     #endregion
 }
