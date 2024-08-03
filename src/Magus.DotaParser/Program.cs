@@ -29,7 +29,7 @@ public class Program
         }
         finally
         {
-            await host.WaitForShutdownAsync();
+            await host.StopAsync();
         }
     }
 
