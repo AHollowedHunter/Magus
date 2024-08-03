@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{C30CB8
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Magus.DotaParser", "src\Magus.DotaParser\Magus.DotaParser.csproj", "{C6223072-4AEC-4942-A492-3ABFA4C97EA7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{3E0981B6-7F0B-4D7D-B4F8-E7D79DFB4AA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E0981B6-7F0B-4D7D-B4F8-E7D79DFB4AA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E0981B6-7F0B-4D7D-B4F8-E7D79DFB4AA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6223072-4AEC-4942-A492-3ABFA4C97EA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6223072-4AEC-4942-A492-3ABFA4C97EA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6223072-4AEC-4942-A492-3ABFA4C97EA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6223072-4AEC-4942-A492-3ABFA4C97EA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
