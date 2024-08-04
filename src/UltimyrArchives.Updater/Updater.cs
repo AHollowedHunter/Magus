@@ -2,18 +2,18 @@
 
 namespace UltimyrArchives.Updater;
 
-internal sealed class DotaParser
+internal sealed class Updater
 {
-    private readonly ILogger<DotaParser> _logger;
+    private readonly ILogger<Updater> _logger;
     private readonly IServiceProvider _serviceProvider;
 
-    public DotaParser(ILogger<DotaParser> logger, IServiceProvider serviceProvider)
+    public Updater(ILogger<Updater> logger, IServiceProvider serviceProvider)
     {
         _logger          = logger;
         _serviceProvider = serviceProvider;
     }
 
-    public async Task RunParser()
+    public async Task RunAsync()
     {
         _logger.LogInformation("Starting Parsing");
 

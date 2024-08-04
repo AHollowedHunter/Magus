@@ -22,8 +22,8 @@ public class Program
         await host.StartAsync();
         try
         {
-            var dotaParser = host.Services.GetRequiredService<DotaParser>();
-            await dotaParser.RunParser();
+            var dotaParser = host.Services.GetRequiredService<Updater>();
+            await dotaParser.RunAsync();
         }
         finally
         {
@@ -46,6 +46,6 @@ public class Program
             .AddSingleton<IAsyncDataService, MongoDBService>()
             .AddSingleton<MeilisearchService>()
             .AddTransient<GameFileProvider>()
-            .AddSingleton<DotaParser>();
+            .AddSingleton<Updater>();
     }
 }
