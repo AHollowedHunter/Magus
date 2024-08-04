@@ -1,7 +1,7 @@
 ﻿namespace Magus.Bot.Attributes;
 
 /// <summary>
-/// Use to annotate classes implementing InteractionModuleBase<>
+/// Use to annotate classes implementing InteractionModuleBase
 /// 
 /// NOTE: A module is not the same as a command group, a module may have individual top-level commands.
 /// </summary>

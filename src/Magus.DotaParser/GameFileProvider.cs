@@ -51,6 +51,6 @@ internal sealed class GameFileProvider : IDisposable
 
     void IDisposable.Dispose()
     {
-        _pak01?.Dispose();
+        _pak01.Dispose();
     }
 }

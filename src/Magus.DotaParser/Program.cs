@@ -21,19 +21,14 @@ public class Program
         await host.StartAsync();
         try
         {
-            await RunAsync();
+            var dotaParser = host.Services.GetRequiredService<DotaParser>();
+            await dotaParser.RunParser();
         }
         finally
         {
             await host.StopAsync();
         }
     }
-
-    private static async Task RunAsync()
-    {
-        
-    }
-
 
     private static void AddConfiguration(IConfigurationBuilder configurationBuilder)
         => configurationBuilder.AddEnvironmentVariables(prefix: "MAGUS_")
@@ -49,6 +44,7 @@ public class Program
             .AddHttpClient()
             .AddSingleton<IAsyncDataService, MongoDBService>()
             .AddSingleton<MeilisearchService>()
-            .AddSingleton<GameFileProvider>();
+            .AddSingleton<GameFileProvider>()
+            .AddSingleton<DotaParser>();
     }
 }
