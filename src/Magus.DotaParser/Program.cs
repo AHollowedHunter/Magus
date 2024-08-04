@@ -44,7 +44,7 @@ public class Program
             .AddHttpClient()
             .AddSingleton<IAsyncDataService, MongoDBService>()
             .AddSingleton<MeilisearchService>()
-            .AddSingleton<GameFileProvider>()
+            .AddTransient<GameFileProvider>()
             .AddSingleton<DotaParser>();
     }
 }
