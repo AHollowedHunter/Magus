@@ -5,8 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using UltimyrArchives.Updater.Utils;
 
-namespace Magus.DotaParser;
+namespace UltimyrArchives.Updater;
 
 public class Program
 {
@@ -38,7 +39,7 @@ public class Program
     static void ConfigureServices(HostBuilderContext context, IServiceCollection serviceCollection)
     {
         serviceCollection
-            .Configure<DotaParserConfig>(settings => context.Configuration.GetSection("DotaParser").Bind(settings))
+            .Configure<UpdaterConfig>(settings => context.Configuration.GetSection("Updater").Bind(settings))
             .Configure<DataSettings>(settings => context.Configuration.GetSection("DataSettings").Bind(settings))
             .Configure<LocalisationOptions>(settings => context.Configuration.GetSection("Localisation").Bind(settings))
             .AddHttpClient()

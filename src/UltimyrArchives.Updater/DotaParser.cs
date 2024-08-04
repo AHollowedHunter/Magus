@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace Magus.DotaParser;
+namespace UltimyrArchives.Updater;
 
 internal sealed class DotaParser
 {

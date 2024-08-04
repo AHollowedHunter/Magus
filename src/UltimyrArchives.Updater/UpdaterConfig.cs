@@ -1,6 +1,6 @@
-﻿namespace Magus.DotaParser;
+﻿namespace UltimyrArchives.Updater;
 
-public class DotaParserConfig
+public class UpdaterConfig
 {
     public string GameFileLocation { get; set; } = string.Empty;
 }

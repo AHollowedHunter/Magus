@@ -1,11 +1,11 @@
-﻿using Magus.DotaParser.DotaFilePaths;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using SteamDatabase.ValvePak;
+using UltimyrArchives.Updater.DotaFilePaths;
 using ValveKeyValue;
 using ValveResourceFormat;
 using ValveResourceFormat.IO;
 
-namespace Magus.DotaParser;
+namespace UltimyrArchives.Updater.Utils;
 
 internal sealed class GameFileProvider : IDisposable
 {
@@ -14,7 +14,7 @@ internal sealed class GameFileProvider : IDisposable
 
     private readonly string _rootGamePath;
 
-    public GameFileProvider(IOptions<DotaParserConfig> config)
+    public GameFileProvider(IOptions<UpdaterConfig> config)
     {
         _rootGamePath = config.Value.GameFileLocation;
 

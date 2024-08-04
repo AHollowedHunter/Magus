@@ -1,4 +1,4 @@
-﻿namespace Magus.DotaParser.DotaFilePaths;
+﻿namespace UltimyrArchives.Updater.DotaFilePaths;
 
 internal static class Pak01
 {
