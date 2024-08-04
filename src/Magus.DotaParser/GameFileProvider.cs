@@ -18,33 +18,45 @@ internal sealed class GameFileProvider : IDisposable
     {
         _rootGamePath = config.Value.GameFileLocation;
 
-        _pak01 = ReadPak01();
+        _pak01 = ReadPackage(Pak01.FilePath);
     }
 
     public KVDocument GetPak01TextFile(string path, KVSerializerOptions? options = default)
     {
         options ??= KVSerializerOptions.DefaultOptions;
 
-        var entry = _pak01.FindEntry(path) ?? throw new FileNotFoundException($"pak01 entry not found: {path}");
+        var entryBytes = GetEntryBytes(path, _pak01);
 
-        _pak01.ReadEntry(entry, out byte[] entryData);
-
-        ContentFile contentFile;
+        byte[] entryData;
         using (var entryResource = new Resource())
         {
-            using var entryStream = new MemoryStream(entryData);
+            using var entryStream = new MemoryStream(entryBytes);
             entryResource.Read(entryStream);
-            contentFile = FileExtract.Extract(entryResource, null);
+            using var contentFile = FileExtract.Extract(entryResource, null);
+            entryData = contentFile.Data;
         }
 
-        using var dataStream = new MemoryStream(contentFile.Data);
+        using var dataStream = new MemoryStream(entryData);
         return _kvTextSerializer.Deserialize(dataStream, options);
     }
 
-    private Package ReadPak01()
+    public string GetPak01FileChecksum(string path)
+        => GetEntry(path, _pak01).CRC32.ToString("X");
+
+    private static PackageEntry GetEntry(string path, Package package)
+        => package.FindEntry(path) ?? throw new FileNotFoundException($"Entry path '{path}' not found in package '{package.FileName}'.");
+
+    private static byte[] GetEntryBytes(string path, Package package)
+    {
+        var entry = GetEntry(path, package);
+        package.ReadEntry(entry, out byte[] entryData);
+        return entryData;
+    }
+
+    private Package ReadPackage(string path)
     {
         var package = new Package();
-        package.Read(Path.Combine(_rootGamePath, Pak01.FilePath));
+        package.Read(Path.Combine(_rootGamePath, path));
         package.VerifyHashes();
         return package;
     }
