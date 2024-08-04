@@ -1,23 +1,24 @@
 ﻿using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.Dota;
-public sealed class Patch : IPatch
+
+public sealed record Patch : IPatch
 {
     public Patch(string uniqueId, string patchNumber, ulong timestamp)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(patchNumber);
 
-        UniqueId = uniqueId;
+        UniqueId    = uniqueId;
         PatchNumber = patchNumber;
-        Timestamp = timestamp;
+        Timestamp   = timestamp;
     }
 
     [JsonPropertyName(nameof(UniqueId))]
-    public string UniqueId { get; set; }
+    public string UniqueId { get; init; }
 
     [JsonPropertyName(nameof(PatchNumber))]
-    public string PatchNumber { get; set; }
+    public string PatchNumber { get; init; }
 
     [JsonPropertyName(nameof(Timestamp))]
-    public ulong Timestamp { get; set; }
+    public ulong Timestamp { get; init; }
 }
