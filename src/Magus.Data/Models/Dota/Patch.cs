@@ -4,13 +4,16 @@ namespace Magus.Data.Models.Dota;
 
 public sealed record Patch : IPatch
 {
-    public Patch(string uniqueId, string patchNumber, ulong timestamp)
+    [JsonConstructor]
+    private Patch(string uniqueId, string patchNumber, ulong timestamp)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(patchNumber);
-
         UniqueId    = uniqueId;
         PatchNumber = patchNumber;
         Timestamp   = timestamp;
+    }
+
+    public Patch(string patchNumber, ulong timestamp) : this(patchNumber.Replace('.', '-'), patchNumber, timestamp)
+    {
     }
 
     [JsonPropertyName(nameof(UniqueId))]

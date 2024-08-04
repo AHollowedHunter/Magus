@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using UltimyrArchives.Updater.Services;
 using UltimyrArchives.Updater.Utils;
 
 namespace UltimyrArchives.Updater;
@@ -45,7 +46,9 @@ public class Program
             .AddHttpClient()
             .AddSingleton<IAsyncDataService, MongoDBService>()
             .AddSingleton<MeilisearchService>()
+            .AddSingleton<StorageService>()
             .AddTransient<GameFileProvider>()
+            .AddTransient<PatchListUpdater>()
             .AddSingleton<Updater>();
     }
 }

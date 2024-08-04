@@ -68,7 +68,6 @@ public sealed class PatchListUpdater
     {
         var patchNumber = patch.Children.First(x => x.Name == "patch_name").Value.ToString()!.Replace("patch ", "");
         return new(
-            patchNumber.Replace('.', '-'),
             patchNumber,
             GetPatchTimestamp(patch));
     }

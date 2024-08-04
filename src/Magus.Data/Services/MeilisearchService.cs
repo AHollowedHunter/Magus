@@ -13,7 +13,7 @@ public sealed class MeilisearchService
     {
         var httpClient = httpClientFactory.CreateClient("meilisearch");
         httpClient.BaseAddress = new Uri("http://localhost:7700"); // HACK testing
-        _client = new MeilisearchClient(httpClient, "12345678");
+        _client                = new MeilisearchClient(httpClient, "12345678");
     }
 
     #region Index
@@ -30,7 +30,7 @@ public sealed class MeilisearchService
 
         if (settings is not null)
         {
-            var index = _client.Index(indexUid);
+            var index      = _client.Index(indexUid);
             var updateTask = await index.UpdateSettingsAsync(settings).ConfigureAwait(false);
             await WaitForResultAsync(updateTask).ConfigureAwait(false);
         }
@@ -40,11 +40,11 @@ public sealed class MeilisearchService
     /// Deletes the Index
     /// </summary>
     /// <exception cref="Exception"/>
-    public async Task DeleteIndexAsync(string indexUid)
+    public async Task DeleteIndexAsync(string indexUid, bool ignoreMissingIndex = true)
     {
         var index = _client.Index(indexUid);
-        var task = await index.DeleteAsync().ConfigureAwait(false);
-        await WaitForResultAsync(task).ConfigureAwait(false);
+        var task  = await index.DeleteAsync().ConfigureAwait(false);
+        await WaitForResultAsync(task, ignoreMissingIndex ? ["index_not_found"] : []).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -57,6 +57,12 @@ public sealed class MeilisearchService
     /// <exception cref="MeilisearchApiError">If the Index does not exist</exception>
     private async Task<Meilisearch.Index> GetIndexAsync(string indexUid)
         => await _client.GetIndexAsync(indexUid).ConfigureAwait(false);
+
+    public async Task SwapIndexes(params (string, string)[] indexes)
+    {
+        var task = await _client.SwapIndexesAsync(indexes.Select(x => new IndexSwap(x.Item1, x.Item2)).ToList()).ConfigureAwait(false);
+        await WaitForResultAsync(task).ConfigureAwait(false);
+    }
 
     #endregion
 
@@ -73,7 +79,7 @@ public sealed class MeilisearchService
     {
         indexUid ??= typeof(T).Name;
         var index = _client.Index(indexUid);
-        var task = await index.AddDocumentsAsync(values).ConfigureAwait(false);
+        var task  = await index.AddDocumentsAsync(values).ConfigureAwait(false);
         await WaitForResultAsync(task).ConfigureAwait(false);
     }
 
@@ -83,7 +89,7 @@ public sealed class MeilisearchService
         string indexUid = nameof(EntityInfo))
     {
         var documentId = EntityInfo.MakeUniqueId(internalName, locale);
-        var index = _client.Index(indexUid);
+        var index      = _client.Index(indexUid);
         return index.GetDocumentAsync<EntityInfo>(documentId);
     }
 
@@ -92,7 +98,7 @@ public sealed class MeilisearchService
         string locale = "en",
         string indexUid = nameof(EntityInfo))
     {
-        var index = _client.Index(indexUid);
+        var index  = _client.Index(indexUid);
         var filter = $"{nameof(EntityInfo.Locale)}='{locale}'";
         if (entityType is not EntityType.None)
             filter += $" AND {nameof(EntityInfo.EntityType)}='{entityType}'";
@@ -113,7 +119,7 @@ public sealed class MeilisearchService
         var index = _client.Index(indexUid);
 
         var searchQuery = new SearchQuery() { Limit = limit, };
-        var result = await index.SearchAsync<T>(query, searchQuery).ConfigureAwait(false);
+        var result      = await index.SearchAsync<T>(query, searchQuery).ConfigureAwait(false);
         return result.Hits;
     }
 
@@ -194,10 +200,7 @@ public sealed class MeilisearchService
     {
         var index = _client.Index(nameof(Patch));
 
-        var searchQuery = new SearchQuery()
-        {
-            Limit = limit, Sort = [$"{nameof(Patch.Timestamp)}:{(orderByDesc ? "desc" : "asc")}"]
-        };
+        var searchQuery = new SearchQuery() { Limit = limit, Sort = [$"{nameof(Patch.Timestamp)}:{(orderByDesc ? "desc" : "asc")}"] };
         return (await index.SearchAsync<Patch>(query, searchQuery).ConfigureAwait(false)).Hits;
     }
 
@@ -241,9 +244,24 @@ public sealed class MeilisearchService
     {
         var result = await _client.WaitForTaskAsync(taskInfo.TaskUid).ConfigureAwait(false);
         if (result.Status is TaskInfoStatus.Failed)
-            throw new Exception(
-                $"Task failed: {result.Uid}. Please check Meilisearch for specific error."); // TODO specific exception?
+            ThrowTaskFailed(result);
     }
+
+    /// <summary>
+    /// Wait for the task to finish. Throws if failed.
+    /// </summary>
+    /// <exception cref="Exception">Throws an exception if the task failed, containing the TaskUid</exception>
+    private async Task WaitForResultAsync(TaskInfo taskInfo, params string[] ignoreErrorCodes)
+    {
+        var result = await _client.WaitForTaskAsync(taskInfo.TaskUid).ConfigureAwait(false);
+        if (result is { Status: TaskInfoStatus.Failed } && !ignoreErrorCodes.Contains(result.Error["code"]))
+            ThrowTaskFailed(result);
+    }
+
+    // TODO specific exception?
+    private static void ThrowTaskFailed(TaskResource result)
+        => throw new Exception(
+            $"Task '{result.Uid}' failed with code '{result.Error.GetValueOrDefault("code")}'. Please check Meilisearch for specific error.");
 
     #endregion
 }
