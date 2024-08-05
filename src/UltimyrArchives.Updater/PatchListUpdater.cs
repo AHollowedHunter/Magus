@@ -47,7 +47,7 @@ internal sealed class PatchListUpdater
 
     private static Patch CreatePatchInfo(KVObject patch)
     {
-        var patchNumber = patch.GetRequiredString("patch_name", CultureInfo.InvariantCulture).Replace("patch ", "").Trim();
+        var patchNumber = patch.GetRequiredString("patch_name", CultureInfo.InvariantCulture).Replace("patch", "").Trim();
         return new Patch(patchNumber, PatchUtils.GetPatchTimestamp(patch));
     }
 }
