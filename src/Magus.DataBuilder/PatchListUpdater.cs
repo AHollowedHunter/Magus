@@ -72,6 +72,6 @@ public sealed class PatchListUpdater
             GetPatchTimestamp(patch));
     }
 
-    private static ulong GetPatchTimestamp(KVObject patch)
-        => (ulong)DateTimeOffset.Parse(patch.Children.First(x => x.Name == "patch_date").Value.ToString()!).ToUnixTimeSeconds();
+    private static long GetPatchTimestamp(KVObject patch)
+        => DateTimeOffset.Parse(patch.Children.First(x => x.Name == "patch_date").Value.ToString()!).ToUnixTimeSeconds();
 }

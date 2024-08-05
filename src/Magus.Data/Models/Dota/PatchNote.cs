@@ -14,7 +14,7 @@ public sealed record PatchNote : IEntity, ILocalised, IPatch
         string uniqueId,
         string locale,
         string patchNumber,
-        ulong timestamp,
+        long timestamp,
         PatchNoteType patchNoteType,
         string internalName,
         int entityId,
@@ -40,7 +40,7 @@ public sealed record PatchNote : IEntity, ILocalised, IPatch
     public PatchNote(
         string locale,
         string patchNumber,
-        ulong timestamp,
+        long timestamp,
         PatchNoteType patchNoteType,
         string internalName,
         int entityId,
@@ -75,7 +75,7 @@ public sealed record PatchNote : IEntity, ILocalised, IPatch
     public string PatchNumber { get; init; }
 
     [JsonPropertyName(nameof(Timestamp))]
-    public ulong Timestamp { get; init; }
+    public long Timestamp { get; init; }
 
     [JsonPropertyName(nameof(PatchNoteType))]
     [JsonConverter(typeof(JsonStringEnumConverter))]

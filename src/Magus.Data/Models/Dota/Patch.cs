@@ -5,14 +5,14 @@ namespace Magus.Data.Models.Dota;
 public sealed record Patch : IPatch
 {
     [JsonConstructor]
-    private Patch(string uniqueId, string patchNumber, ulong timestamp)
+    private Patch(string uniqueId, string patchNumber, long timestamp)
     {
         UniqueId    = uniqueId;
         PatchNumber = patchNumber;
         Timestamp   = timestamp;
     }
 
-    public Patch(string patchNumber, ulong timestamp) : this(patchNumber.Replace('.', '-'), patchNumber, timestamp)
+    public Patch(string patchNumber, long timestamp) : this(patchNumber.Replace('.', '-'), patchNumber, timestamp)
     {
     }
 
@@ -23,5 +23,5 @@ public sealed record Patch : IPatch
     public string PatchNumber { get; init; }
 
     [JsonPropertyName(nameof(Timestamp))]
-    public ulong Timestamp { get; init; }
+    public long Timestamp { get; init; }
 }

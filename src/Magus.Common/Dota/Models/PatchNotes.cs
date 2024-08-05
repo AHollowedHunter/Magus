@@ -3,7 +3,7 @@
 public record PatchNotes
 {
     public string PatchName { get; set; }
-    public ulong Timestamp { get; set; }
+    public long Timestamp { get; set; }
     public string Language { get; set; }
     public string? Website { get; set; }
     public IList<Note> GenericNotes { get; set; } = new List<Note>();
