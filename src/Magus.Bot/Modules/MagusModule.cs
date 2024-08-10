@@ -21,7 +21,7 @@ public class MagusModule : ModuleBase
 
     public MagusModule(IOptions<BotSettings> config, MeilisearchService meilisearchService)
     {
-        _config = config.Value;
+        _config             = config.Value;
         _meilisearchService = meilisearchService;
     }
 
@@ -29,22 +29,25 @@ public class MagusModule : ModuleBase
     public async Task About()
     {
         await DeferAsync();
-        var latestPatch = await _meilisearchService.GetLatestPatchAsync();
+        var latestPatch      = await _meilisearchService.GetLatestPatchAsync();
         var latestPatchValue = $"[{latestPatch.PatchNumber}](https://www.dota2.com/patches/{latestPatch.PatchNumber}) - <t:{latestPatch.Timestamp}:R>";
         var response = new EmbedBuilder()
         {
             Title = "MagusBot",
             Description = "A DotA 2 focused Discord bot, providing distinct patch notes and information regarding DotA 2 heroes, abilities, and items.\n"
                           + "New and improved features are constantly in development.",
-            Color = Color.Purple,
+            Color  = Color.Purple,
             Footer = new() { Text = "Hot Damn!", IconUrl = Context.Client.CurrentUser.GetAvatarUrl() },
         };
         response.AddField("Version", version, true);
-        response.AddField("Latest Patch", latestPatchValue, true);
-        response.AddField("Total Guilds", Context.Client.Guilds.Count, true);
+        response.AddField("Latest Patch", latestPatchValue, false);
+        var appInfo = await Context.Client.GetApplicationInfoAsync();
+        response.AddField("Total Guilds", appInfo.ApproximateGuildCount, true);
+        // response.AddField("Total User Installs", appInfo.ApproximateUserInstallCount, true); // TODO when dnet updates
         response.AddField("Acknowledgements", "SteamDB for various libraries\nDiscord.NET library", false);
 
-        var links = $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n[Privacy Policy]({_config.BotPrivacyPolicy})\n[Terms of Service]({_config.BotTermsOfService})\n";
+        var links =
+            $"[Bot Invite Link]({_config.BotInvite})\n[Discord Server]({_config.BotServer})\n[MagusBot.xyz](https://magusbot.xyz)\n[Privacy Policy]({_config.BotPrivacyPolicy})\n[Terms of Service]({_config.BotTermsOfService})\n";
         response.AddField("Links", links, false);
         response.AddField(MagusEmotes.Spacer.ToString(), "Dota and the Dota Logo are trademarks and/or registered trademarks of Valve Corporation");
 

@@ -68,8 +68,10 @@ class Bot
         else
             client.Ready += interactionHandler.RegisterModulesAsync;
 
+        // var x = await client.GetApplicationInfoAsync();
         // Set the Guild Gauge to current guilds on ready, and inc/dec in respective event.
         // This could be moved to a separate scheduled task to ensure correct (such as missed gateway events), but not critical.
+        // TODO scehdule, include current user installs too when available
         client.Ready += async () => await Task.Run(() => MagusMetrics.Guilds.Set(client.Guilds.Count));
 
         await client.LoginAsync(TokenType.Bot, botSettings.BotToken);
