@@ -28,9 +28,15 @@ internal sealed class GameFileProvider : IDisposable
         var entryBytes = GetEntryBytes(path, _pak01);
 
         byte[] entryData;
-        using (var entryResource = new Resource())
+        // .txt files don't need any special manipulation, just load the bytes.
+        if (path.EndsWith(".txt"))
         {
-            using var entryStream = new MemoryStream(entryBytes);
+            entryData = entryBytes;
+        }
+        else
+        {
+            using var entryResource = new Resource();
+            using var entryStream   = new MemoryStream(entryBytes);
             entryResource.Read(entryStream);
             using var contentFile = FileExtract.Extract(entryResource, null);
             entryData = contentFile.Data;
