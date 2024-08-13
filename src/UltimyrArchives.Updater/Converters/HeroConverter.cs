@@ -97,8 +97,8 @@ public sealed class HeroConverter(KVObject baseHero)
 
     private static FacetAbility FacetAbilitiesConverter(KVObject obj) => new()
     {
-        AbilityName  = obj.GetRequiredString("AbilityName", CultureInfo.InvariantCulture),
-        AbilityIndex = obj["AbilityIndex"]?.ToInt32(CultureInfo.InvariantCulture),
+        AbilityName      = obj.GetRequiredString("AbilityName", CultureInfo.InvariantCulture),
+        AbilityIndex     = obj["AbilityIndex"]?.ToInt32(CultureInfo.InvariantCulture),
         AutoLevelAbility = obj["AutoLevelAbility"].ToBoolFromString(),
         ReplaceAbility   = obj["ReplaceAbility"]?.ToString(CultureInfo.InvariantCulture),
     };
@@ -109,9 +109,9 @@ public sealed class HeroConverter(KVObject baseHero)
     private static (string Name, string) AbilityIconReplacementsConverter(KVObject o)
         => (o.Name, o.Value.ToString(CultureInfo.InvariantCulture));
 
-    private static T[] ConvertList<T>(KVValue kvValue, Func<KVObject, T> converter)
+    private static T[] ConvertList<T>(KVValue? kvValue, Func<KVObject, T> converter)
     {
-        if (kvValue.AsEnumerable()?.ToArray() is not { Length: > 0 } kvValues)
+        if (kvValue?.CastEnumerable().ToArray() is not { Length: > 0 } kvValues)
             return [];
 
         var values = new T[kvValues.Length];

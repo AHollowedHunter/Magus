@@ -21,6 +21,10 @@ public static partial class KVValueExtensions
         => kvValue as IEnumerable<KVObject>;
 
     [Pure]
+    public static IEnumerable<KVObject> CastEnumerable(this KVValue kvValue)
+        => (IEnumerable<KVObject>) kvValue;
+
+    [Pure]
     public static T ToEnum<T>(this KVValue? kvValue) where T : struct, Enum
     {
         if (kvValue is null)
