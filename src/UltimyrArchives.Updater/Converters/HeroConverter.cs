@@ -1,7 +1,5 @@
 ﻿using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.ModelsV2;
-using MongoDB.Driver.Linq;
-using System.Diagnostics;
 using System.Globalization;
 using UltimyrArchives.Updater.Extensions;
 using ValveKeyValue;
@@ -27,6 +25,7 @@ public sealed class HeroConverter(KVObject baseHero)
             Rolelevels         = kvHero["Rolelevels"].ParseArray<byte>(),
             Abilities          = ParseAbilities(kvHero),
             AbilityTalentStart = kvHero["AbilityTalentStart"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.AbilityTalentStart,
+            Facets             = ConvertList(kvHero.GetRequiredValue("Facets"), FacetConverter),
             // Attributes
             AttributePrimary          = kvHero.GetRequiredEnum<AttributePrimary>("AttributePrimary"),
             AttributeBaseAgility      = kvHero.GetRequiredInt16("AttributeBaseAgility", CultureInfo.InvariantCulture),
@@ -82,6 +81,45 @@ public sealed class HeroConverter(KVObject baseHero)
         }
 
         return abilities;
+    }
+
+    private static Facet FacetConverter(KVObject facet) => new()
+    {
+        InternalName            = facet.Name,
+        Icon                    = facet.GetRequiredString("Icon", CultureInfo.InvariantCulture),
+        Color                   = facet.GetRequiredString("Color", CultureInfo.InvariantCulture),
+        GradientId              = facet["GradientId"]?.ToInt16(CultureInfo.InvariantCulture) ?? 0,
+        Deprecated              = facet["Deprecated"].ToBoolFromString(),
+        Abilities               = ConvertList(facet["Abilities"], FacetAbilitiesConverter),
+        KeyValueOverrides       = ConvertList(facet["KeyValueOverrides"], KeyValueOverridesConverter),
+        AbilityIconReplacements = ConvertList(facet["AbilityIconReplacements"], AbilityIconReplacementsConverter),
+    };
+
+    private static FacetAbility FacetAbilitiesConverter(KVObject obj) => new()
+    {
+        AbilityName  = obj.GetRequiredString("AbilityName", CultureInfo.InvariantCulture),
+        AbilityIndex = obj["AbilityIndex"]?.ToInt32(CultureInfo.InvariantCulture),
+        AutoLevelAbility = obj["AutoLevelAbility"].ToBoolFromString(),
+        ReplaceAbility   = obj["ReplaceAbility"]?.ToString(CultureInfo.InvariantCulture),
+    };
+
+    private static (string Name, string) KeyValueOverridesConverter(KVObject o)
+        => (o.Name, o.Value.ToString(CultureInfo.InvariantCulture));
+
+    private static (string Name, string) AbilityIconReplacementsConverter(KVObject o)
+        => (o.Name, o.Value.ToString(CultureInfo.InvariantCulture));
+
+    private static T[] ConvertList<T>(KVValue kvValue, Func<KVObject, T> converter)
+    {
+        if (kvValue.AsEnumerable()?.ToArray() is not { Length: > 0 } kvValues)
+            return [];
+
+        var values = new T[kvValues.Length];
+        var index  = 0;
+        foreach (var value in kvValues)
+            values[index++] = converter(value);
+
+        return values;
     }
 
     private static BaseHeroValues ConvertBaseHero(KVObject baseHero) => new()

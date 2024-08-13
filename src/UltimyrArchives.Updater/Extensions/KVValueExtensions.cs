@@ -8,6 +8,14 @@ namespace UltimyrArchives.Updater.Extensions;
 
 public static partial class KVValueExtensions
 {
+    /// <summary>
+    /// ValveKeyValue expects booleans as 0/1 and parses int,
+    /// but some values are a string version, so...😭
+    /// </summary>
+    [Pure]
+    public static bool ToBoolFromString(this KVValue? value)
+        => value?.ToString(CultureInfo.InvariantCulture).Equals("true") ?? false;
+
     [Pure]
     public static IEnumerable<KVObject>? AsEnumerable(this KVValue kvValue)
         => kvValue as IEnumerable<KVObject>;

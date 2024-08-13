@@ -1,7 +1,9 @@
 ﻿using Magus.Common.Dota.Enums;
+using System.Diagnostics;
 
 namespace Magus.Common.Dota.ModelsV2;
 
+[DebuggerDisplay("{InternalName}")]
 public class Hero
 {
     // Info
@@ -18,7 +20,7 @@ public class Hero
     public required int[] SimilarHeroes { get; init; }
 
     /// <summary>
-    /// Key: Ability index
+    /// Key: Ability index, 1 base
     /// <br/>
     /// Value: Ability Name
     /// </summary>
@@ -28,6 +30,8 @@ public class Hero
     public required Dictionary<int, string> Abilities { get; init; }
 
     public int AbilityTalentStart { get; init; }
+
+    public required Facet[] Facets { get; init; }
 
     // Attributes
     public AttributePrimary AttributePrimary { get; init; }
