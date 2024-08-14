@@ -957,6 +957,11 @@ public class EntityUpdater
         {
             return _heroLoreValues[localeKey];
         }
+        else if (_abilityValues.ContainsKey(localeKey))
+        {
+            _logger.LogDebug("Found Hero Value in ability localisation with key: {key}", localeKey);
+            return _abilityValues[localeKey];
+        }
         else
         {
             if (!_dotaValues.TryGetValue((_localisationOptions.DefaultLanguage, localeKey.Key), out var value))
