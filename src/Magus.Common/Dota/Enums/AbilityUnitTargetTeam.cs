@@ -6,7 +6,7 @@ namespace Magus.Common.Dota.Enums;
 public enum AbilityUnitTargetTeam : byte
 {
     DOTA_UNIT_TARGET_TEAM_NONE     = 0,
-    [Display(Name = "Allies")]
+    [Display(Name = "Allies")]// Localise DOTA_ToolTip_Targeting
     DOTA_UNIT_TARGET_TEAM_FRIENDLY = 1,
     [Display(Name = "Enemy")]
     DOTA_UNIT_TARGET_TEAM_ENEMY    = 2,

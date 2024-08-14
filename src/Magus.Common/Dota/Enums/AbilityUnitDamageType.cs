@@ -6,7 +6,7 @@ namespace Magus.Common.Dota.Enums;
 public enum AbilityUnitDamageType : byte
 {
     DAMAGE_TYPE_NONE            = 0,
-    [Display(Name = "Physical")]
+    [Display(Name = "Physical")] // Localise DOTA_ToolTip_Damage
     DAMAGE_TYPE_PHYSICAL        = 1,
     [Display(Name = "Magical")]
     DAMAGE_TYPE_MAGICAL         = 2,

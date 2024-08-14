@@ -245,7 +245,7 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
     private string MatchSummary(StatsRecentResult.PlayerType.MatchType match, string locale)
     {
         var sb = new StringBuilder();
-        sb.Append(match.Players.Single().IsVictory ? "Won" : "Lost");
+        sb.Append(match.Players.Single().IsVictory ? "Won" : "Lost"); // LOCALISE dota_<language>: dota_match_result_won
         if (match.AnalysisOutcome != null && match.AnalysisOutcome != StatsRecentResult.PlayerType.MatchType.MatchAnalysisOutcome.NONE)
         {
             sb.Append(' ');
@@ -258,7 +258,7 @@ public class StatsModule : InteractionModuleBase<SocketInteractionContext>
         sb.Append('\u202F');
         sb.AppendLine(_localisationService.GetLocalisedHeroName(match.Players.Single().HeroId, locale));
 
-        sb.Append("KDA: **");
+        sb.Append("KDA: **"); // LOCALISE custom_end_screen_legend_kills / dota_page_match_details_legend_kills
         sb.Append(match.Players.Single().Kills);
         sb.Append("\u202F/\u202F");
         sb.Append(match.Players.Single().Deaths);

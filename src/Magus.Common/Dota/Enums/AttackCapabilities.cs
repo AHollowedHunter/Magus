@@ -6,7 +6,7 @@ public enum AttackCapabilities
 {
     [Display(Name = "No Attack")]
     DOTA_UNIT_CAP_NO_ATTACK                 = 0,
-    [Display(Name = "Melee")]
+    [Display(Name = "Melee")] // LOCALISE DOTA_AttackCapability_Melee
     DOTA_UNIT_CAP_MELEE_ATTACK              = 1,
     [Display(Name = "Ranged")]
     DOTA_UNIT_CAP_RANGED_ATTACK             = 2,

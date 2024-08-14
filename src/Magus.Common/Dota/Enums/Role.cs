@@ -2,7 +2,7 @@
 
 public enum Role
 {
-    Carry,
+    Carry, // LOCALISE DOTA_HeroRole_Carry etc
     Support,
     Nuker,
     Disabler,

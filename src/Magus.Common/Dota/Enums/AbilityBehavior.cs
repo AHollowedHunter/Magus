@@ -7,7 +7,7 @@ public enum AbilityBehavior : ulong
 {
     DOTA_ABILITY_BEHAVIOR_NONE                           = 0,
     DOTA_ABILITY_BEHAVIOR_HIDDEN                         = 1,
-    [Display(Name                                        = "Passive")]
+    [Display(Name                                        = "Passive")] // Localise see DOTA_ToolTip_Ability etc
     DOTA_ABILITY_BEHAVIOR_PASSIVE                        = 2,
     [Display(Name                                        = "No Target")]
     DOTA_ABILITY_BEHAVIOR_NO_TARGET                      = 4,

@@ -3,7 +3,7 @@
 [Flags]
 public enum AbilityUnitTargetType : short
 {
-    DOTA_UNIT_TARGET_NONE              = 0,
+    DOTA_UNIT_TARGET_NONE              = 0,// Localise DOTA_ToolTip_Targeting
     DOTA_UNIT_TARGET_HERO              = 1,
     DOTA_UNIT_TARGET_CREEP             = 2,
     DOTA_UNIT_TARGET_BUILDING          = 4,
