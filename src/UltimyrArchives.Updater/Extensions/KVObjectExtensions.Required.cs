@@ -13,7 +13,12 @@ public static partial class KVObjectExtensions
     public static T GetRequiredEnum<T>(this KVObject kvObject, string key) where T : struct, Enum
         => kvObject.GetRequiredValue(key).ToEnum<T>();
 
+    [Pure]
+    public static T[] GetRequiredArray<T>(this KVObject kvObject, string key) where T : IConvertible
+        => kvObject.GetRequiredValue(key).ParseArray<T>();
+
     #region IConvertible
+
     [Pure]
     public static string GetRequiredString(this KVObject kvObject, string key, IFormatProvider? provider = null)
         => kvObject.GetRequiredValue(key).ToString(provider);
@@ -73,5 +78,6 @@ public static partial class KVObjectExtensions
     [Pure]
     public static ulong GetRequiredUInt64(this KVObject kvObject, string key, IFormatProvider? provider = null)
         => kvObject.GetRequiredValue(key).ToUInt32(provider);
+
     #endregion
 }

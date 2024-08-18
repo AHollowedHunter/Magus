@@ -6,55 +6,52 @@ using ValveKeyValue;
 
 namespace UltimyrArchives.Updater.Converters;
 
-public sealed class HeroConverter(KVObject baseHero)
+public sealed class HeroConverter(KVObject baseHero) : KVObjectConverter
 {
     private readonly BaseHeroValues _baseHero = ConvertBaseHero(baseHero);
 
-    public Hero Convert(KVObject kvHero)
+    public Hero Convert(KVObject kvHero) => new()
     {
-        return new Hero
-        {
-            InternalName       = kvHero.Name,
-            Id                 = kvHero.GetRequiredInt32("HeroID", CultureInfo.InvariantCulture),
-            HeroOrderId        = kvHero.GetRequiredInt16("HeroOrderID", CultureInfo.InvariantCulture),
-            NameAliases        = kvHero["NameAliases"].ParseArray<string>(),
-            HeroGlowColor      = ParseColor(kvHero["HeroGlowColor"]),
-            SimilarHeroes      = kvHero["SimilarHeroes"].ParseArray<int>(),
-            Complexity         = kvHero.GetRequiredByte("Complexity", CultureInfo.InvariantCulture),
-            Role               = kvHero["Role"].ParseEnumArray<Role>(),
-            Rolelevels         = kvHero["Rolelevels"].ParseArray<byte>(),
-            Abilities          = ParseAbilities(kvHero),
-            AbilityTalentStart = kvHero["AbilityTalentStart"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.AbilityTalentStart,
-            Facets             = ConvertList(kvHero.GetRequiredValue("Facets"), FacetConverter),
-            // Attributes
-            AttributePrimary          = kvHero.GetRequiredEnum<AttributePrimary>("AttributePrimary"),
-            AttributeBaseAgility      = kvHero.GetRequiredInt16("AttributeBaseAgility", CultureInfo.InvariantCulture),
-            AttributeAgilityGain      = kvHero.GetRequiredSingle("AttributeAgilityGain", CultureInfo.InvariantCulture),
-            AttributeBaseStrength     = kvHero.GetRequiredInt16("AttributeBaseStrength", CultureInfo.InvariantCulture),
-            AttributeStrengthGain     = kvHero.GetRequiredSingle("AttributeStrengthGain", CultureInfo.InvariantCulture),
-            AttributeBaseIntelligence = kvHero.GetRequiredInt16("AttributeBaseIntelligence", CultureInfo.InvariantCulture),
-            AttributeIntelligenceGain = kvHero.GetRequiredSingle("AttributeIntelligenceGain", CultureInfo.InvariantCulture),
-            AttackCapabilities        = kvHero.GetRequiredEnum<AttackCapabilities>("AttackCapabilities"),
-            // Everything below here typically inherits the default.
-            AttackDamageMin      = kvHero["AttackDamageMin"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.AttackDamageMin,
-            AttackDamageMax      = kvHero["AttackDamageMax"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.AttackDamageMax,
-            AttackRate           = kvHero["AttackRate"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.AttackRate,
-            BaseAttackSpeed      = kvHero["BaseAttackSpeed"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.BaseAttackSpeed,
-            AttackAnimationPoint = kvHero["AttackAnimationPoint"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.AttackAnimationPoint,
-            AttackRange          = kvHero["AttackRange"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.AttackRange,
-            ProjectileSpeed      = kvHero["ProjectileSpeed"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.ProjectileSpeed,
-            ArmorPhysical        = kvHero["ArmorPhysical"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.ArmorPhysical,
-            MagicalResistance    = kvHero["MagicalResistance"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.MagicalResistance,
-            MovementSpeed        = kvHero["MovementSpeed"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.MovementSpeed,
-            MovementTurnRate     = kvHero["MovementTurnRate"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.MovementTurnRate,
-            VisionDaytimeRange   = kvHero["VisionDaytimeRange"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.VisionDaytimeRange,
-            VisionNighttimeRange = kvHero["VisionNighttimeRange"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.VisionNighttimeRange,
-            StatusHealth         = kvHero["StatusHealth"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.StatusHealth,
-            StatusHealthRegen    = kvHero["StatusHealthRegen"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.StatusHealthRegen,
-            StatusMana           = kvHero["StatusMana"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.StatusMana,
-            StatusManaRegen      = kvHero["StatusManaRegen"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.StatusManaRegen,
-        };
-    }
+        InternalName       = kvHero.Name,
+        Id                 = kvHero.GetRequiredInt32("HeroID", CultureInfo.InvariantCulture),
+        HeroOrderId        = kvHero.GetRequiredInt16("HeroOrderID", CultureInfo.InvariantCulture),
+        NameAliases        = kvHero["NameAliases"].ParseArray<string>(),
+        HeroGlowColor      = ParseColor(kvHero["HeroGlowColor"]),
+        SimilarHeroes      = kvHero["SimilarHeroes"].ParseArray<int>(),
+        Complexity         = kvHero.GetRequiredByte("Complexity", CultureInfo.InvariantCulture),
+        Role               = kvHero["Role"].ParseEnumArray<Role>(),
+        Rolelevels         = kvHero["Rolelevels"].ParseArray<byte>(),
+        Abilities          = ParseAbilities(kvHero),
+        AbilityTalentStart = kvHero["AbilityTalentStart"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.AbilityTalentStart,
+        Facets             = ConvertList(kvHero.GetRequiredValue("Facets"), FacetConverter),
+        // Attributes
+        AttributePrimary          = kvHero.GetRequiredEnum<AttributePrimary>("AttributePrimary"),
+        AttributeBaseAgility      = kvHero.GetRequiredInt16("AttributeBaseAgility", CultureInfo.InvariantCulture),
+        AttributeAgilityGain      = kvHero.GetRequiredSingle("AttributeAgilityGain", CultureInfo.InvariantCulture),
+        AttributeBaseStrength     = kvHero.GetRequiredInt16("AttributeBaseStrength", CultureInfo.InvariantCulture),
+        AttributeStrengthGain     = kvHero.GetRequiredSingle("AttributeStrengthGain", CultureInfo.InvariantCulture),
+        AttributeBaseIntelligence = kvHero.GetRequiredInt16("AttributeBaseIntelligence", CultureInfo.InvariantCulture),
+        AttributeIntelligenceGain = kvHero.GetRequiredSingle("AttributeIntelligenceGain", CultureInfo.InvariantCulture),
+        AttackCapabilities        = kvHero.GetRequiredEnum<AttackCapabilities>("AttackCapabilities"),
+        // Everything below here typically inherits the default.
+        AttackDamageMin      = kvHero["AttackDamageMin"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.AttackDamageMin,
+        AttackDamageMax      = kvHero["AttackDamageMax"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.AttackDamageMax,
+        AttackRate           = kvHero["AttackRate"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.AttackRate,
+        BaseAttackSpeed      = kvHero["BaseAttackSpeed"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.BaseAttackSpeed,
+        AttackAnimationPoint = kvHero["AttackAnimationPoint"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.AttackAnimationPoint,
+        AttackRange          = kvHero["AttackRange"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.AttackRange,
+        ProjectileSpeed      = kvHero["ProjectileSpeed"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.ProjectileSpeed,
+        ArmorPhysical        = kvHero["ArmorPhysical"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.ArmorPhysical,
+        MagicalResistance    = kvHero["MagicalResistance"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.MagicalResistance,
+        MovementSpeed        = kvHero["MovementSpeed"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.MovementSpeed,
+        MovementTurnRate     = kvHero["MovementTurnRate"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.MovementTurnRate,
+        VisionDaytimeRange   = kvHero["VisionDaytimeRange"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.VisionDaytimeRange,
+        VisionNighttimeRange = kvHero["VisionNighttimeRange"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.VisionNighttimeRange,
+        StatusHealth         = kvHero["StatusHealth"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.StatusHealth,
+        StatusHealthRegen    = kvHero["StatusHealthRegen"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.StatusHealthRegen,
+        StatusMana           = kvHero["StatusMana"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.StatusMana,
+        StatusManaRegen      = kvHero["StatusManaRegen"]?.ToSingle(CultureInfo.InvariantCulture) ?? _baseHero.StatusManaRegen,
+    };
 
     private static uint ParseColor(KVValue? value)
     {
@@ -91,8 +88,8 @@ public sealed class HeroConverter(KVObject baseHero)
         GradientId              = facet["GradientId"]?.ToInt16(CultureInfo.InvariantCulture) ?? 0,
         Deprecated              = facet["Deprecated"].ToBoolFromString(),
         Abilities               = ConvertList(facet["Abilities"], FacetAbilitiesConverter),
-        KeyValueOverrides       = ConvertList(facet["KeyValueOverrides"], KeyValueOverridesConverter),
-        AbilityIconReplacements = ConvertList(facet["AbilityIconReplacements"], AbilityIconReplacementsConverter),
+        KeyValueOverrides       = ConvertList(facet["KeyValueOverrides"], KeyValueTupleConverter),
+        AbilityIconReplacements = ConvertList(facet["AbilityIconReplacements"], KeyValueTupleConverter),
     };
 
     private static FacetAbility FacetAbilitiesConverter(KVObject obj) => new()
@@ -103,24 +100,8 @@ public sealed class HeroConverter(KVObject baseHero)
         ReplaceAbility   = obj["ReplaceAbility"]?.ToString(CultureInfo.InvariantCulture),
     };
 
-    private static (string Name, string) KeyValueOverridesConverter(KVObject o)
+    private static (string Key, string Value) KeyValueTupleConverter(KVObject o)
         => (o.Name, o.Value.ToString(CultureInfo.InvariantCulture));
-
-    private static (string Name, string) AbilityIconReplacementsConverter(KVObject o)
-        => (o.Name, o.Value.ToString(CultureInfo.InvariantCulture));
-
-    private static T[] ConvertList<T>(KVValue? kvValue, Func<KVObject, T> converter)
-    {
-        if (kvValue?.CastEnumerable().ToArray() is not { Length: > 0 } kvValues)
-            return [];
-
-        var values = new T[kvValues.Length];
-        var index  = 0;
-        foreach (var value in kvValues)
-            values[index++] = converter(value);
-
-        return values;
-    }
 
     private static BaseHeroValues ConvertBaseHero(KVObject baseHero) => new()
     {

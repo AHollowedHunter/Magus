@@ -396,7 +396,7 @@ public class EntityUpdater
         // has to catch non-values, such as text refs...
         //var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet"); 
 
-        var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial");
+        var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial"); // AbilitySpecial appears removed - aug '24
         if (kvAbilityValues != null)
         {
             foreach (var kvAbilityValue in kvAbilityValues.Children)
@@ -421,9 +421,9 @@ public class EntityUpdater
 
                     var values      = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>(true) : Array.Empty<float>();
                     var linkedBonus = kvAbilityValue.FirstOrDefault(x => Rx.BonusValues.IsMatch(x.Name));
-                    if (Rx.DigitOnly.IsMatch(kvAbilityValue.Name))
+                    if (Rx.DigitOnly.IsMatch(kvAbilityValue.Name)) // For numbered abilityvalues... seemingly no longer used though
                         valueName = valueObject.Name;
-
+    
                     abilityValue = new()
                     {
                         Name               = valueName,

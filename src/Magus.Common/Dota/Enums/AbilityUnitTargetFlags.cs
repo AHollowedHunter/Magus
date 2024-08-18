@@ -1,7 +1,7 @@
 ﻿namespace Magus.Common.Dota.Enums;
 
 [Flags]
-public enum UnitTargetFlags
+public enum AbilityUnitTargetFlags
 {
     DOTA_UNIT_TARGET_FLAG_NONE                    = 0,
     DOTA_UNIT_TARGET_FLAG_RANGED_ONLY             = 2,
