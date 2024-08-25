@@ -13,6 +13,8 @@ internal static class Pak01
     internal const string NpcUnits = "scripts/npc/npc_units.txt";
     internal const string NpcAbilityIds = "scripts/npc/npc_ability_ids.txt";
 
+    internal static string GetHeroAbilities(string internalName) => $"scripts/npc/heroes/{internalName}.txt";
+
     internal static class Localisation
     {
         private const string LocalisationPatchNotesFormat = "resource/localization/patchnotes/patchnotes_{0}.txt";

@@ -2,6 +2,10 @@
 
 public class UnitAbility : Ability
 {
+    public byte MaxLevel { get; set; }
+
+    public bool IsBreakable { get; set; }
+
     public bool IsGrantedByScepter { get; set; }
 
     public bool HasScepterUpgrade { get; set; }

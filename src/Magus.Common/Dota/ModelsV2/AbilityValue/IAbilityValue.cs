@@ -6,5 +6,5 @@ public interface IAbilityValue
 
     float[] Value { get; }
 
-    bool AffectedByAOEIncrease { get; set; }
+    bool AffectedByAOEIncrease { get; init; }
 }

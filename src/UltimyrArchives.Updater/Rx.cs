@@ -19,4 +19,8 @@ internal static partial class Rx
     [GeneratedRegex(@"([\w]+_empty\d*)|([\w]+_hidden\d*)")]
     private static partial Regex _HiddenOrEmpty();
     public static Regex AbilityHiddenOrEmpty { get => _HiddenOrEmpty(); }
+    
+    [GeneratedRegex(@"special_bonus_\w+")]
+    private static partial Regex _SpecialBonus();
+    public static Regex SpecialBonus => _SpecialBonus();
 }

@@ -13,8 +13,6 @@ public abstract class Ability
 
     public int Id { get; set; }
 
-    public byte MaxLevel { get; set; }
-
     public AbilityType AbilityType { get; set; }
 
     public AbilityBehavior AbilityBehavior { get; set; }
@@ -30,8 +28,6 @@ public abstract class Ability
     public SpellImmunityType SpellImmunityType { get; set; }
 
     public SpellDispellableType SpellDispellableType { get; set; }
-
-    public bool IsBreakable { get; set; }
 
     public string? AbilitySharedCooldown { get; set; }
 

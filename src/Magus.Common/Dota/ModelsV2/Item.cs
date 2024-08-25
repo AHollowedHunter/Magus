@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Magus.Common.Dota.ModelsV2;
 
@@ -10,21 +11,21 @@ public class Item : Ability
 
     public int ItemInitialCharges { get; set; }
 
-    public int ItemStockInitial { get; set; }
+    public bool ItemRequiresCharges { get; set; }
 
-    public int ItemStockMax { get; set; }
+    public int? ItemStockInitial { get; set; }
 
-    public float ItemStockTime { get; set; }
+    public int? ItemStockMax { get; set; }
 
-    public float ItemInitialStockTime { get; set; }
+    public float? ItemStockTime { get; set; }
+
+    public float? ItemInitialStockTime { get; set; }
 
     public bool ItemIsNeutralDrop { get; set; }
 
-    public byte ItemNeutralTier { get; set; }
+    public byte? MaxUpgradeLevel { get; set; }
 
-    public byte MaxUpgradeLevel { get; set; }
-
-    public byte ItemBaseLevel { get; set; }
+    public byte? ItemBaseLevel { get; set; }
 
     public bool ItemDroppable { get; set; }
 
@@ -39,5 +40,12 @@ public class Item : Ability
 
     public string? ItemResult { get; set; }
 
-    public IEnumerable<string[]>? ItemRequirements { get; set; }
+    public ItemRequirement[][]? ItemRequirements { get; set; }
+
+    [DebuggerDisplay("{ItemName} {ReplaceItemSlot}")]
+    public readonly struct ItemRequirement(string itemName, bool replaceItemSlot = false)
+    {
+        public string ItemName        { get; } = itemName;
+        public bool   ReplaceItemSlot { get; } = replaceItemSlot;
+    }
 }
