@@ -8,7 +8,8 @@ public sealed class PatchNoteConverter : KVObjectConverter
 {
     public PatchNote Convert(KVObject kvPatch) => new()
     {
-        PatchNumber       = kvPatch.GetRequiredString("patch_name")[6..], // Only include the patch number
+        // Only include the patch number i.e. 'patch 7.37' => '7.37'
+        PatchNumber       = kvPatch.GetRequiredString("patch_name")[6..],
         Timestamp         = PatchUtils.GetPatchTimestamp(kvPatch),
         Website           = kvPatch["website"]?.ToString(CultureInfo.InvariantCulture),
         GenericNotes      = ConvertList(kvPatch["generic"], ConvertNote),
@@ -35,9 +36,15 @@ public sealed class PatchNoteConverter : KVObjectConverter
 
     private static HeroNote ConvertHero(KVObject obj)
     {
+        // Assuming all ability are keyed with hero name after 'npc_dota_hero_' i.e. npc_dota_hero_alchemist => alchemist_chemical_rage
         var abilities = obj.Where(x => x.Name.StartsWith(obj.Name[14..], StringComparison.InvariantCultureIgnoreCase)).Select(ConvertEntity).ToArray();
-        var facets    = obj.Where(x => x.Name.StartsWith("hero_facet", StringComparison.InvariantCultureIgnoreCase)).Select(ConvertEntity).ToArray();
-        var innate    = obj.SingleOrDefault(x => x.Name == "hero_innate") is { } heroInnate ? ConvertEntity(heroInnate) : null;
+
+        // Assuming all facets follow the 'hero_facet_N' rule i.e. hero_facet_1, hero_facet_2
+        var facets = obj.Where(x => x.Name.StartsWith("hero_facet_", StringComparison.InvariantCultureIgnoreCase)).Select(ConvertEntity).ToArray();
+
+        // So far only used in initial patch 7.36, used to separate innate from 'abilities'
+        var innate = obj.SingleOrDefault(x => x.Name == "hero_innate") is { } heroInnate ? ConvertEntity(heroInnate) : null;
+
         return new HeroNote(
             obj.Name,
             ConvertList(obj["default"], ConvertNote),
