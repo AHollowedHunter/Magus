@@ -1,8 +1,6 @@
 ﻿using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.ModelsV2;
-using System.Globalization;
 using UltimyrArchives.Updater.Extensions;
-using ValveKeyValue;
 
 namespace UltimyrArchives.Updater.Converters;
 

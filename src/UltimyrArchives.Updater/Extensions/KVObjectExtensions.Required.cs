@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.Contracts;
-using ValveKeyValue;
 
 namespace UltimyrArchives.Updater.Extensions;
 

@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
 using UltimyrArchives.Updater.Extensions;
-using ValveKeyValue;
 
 namespace UltimyrArchives.Updater.Converters;
 

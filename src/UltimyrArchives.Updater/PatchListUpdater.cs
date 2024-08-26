@@ -1,12 +1,10 @@
 ﻿using Magus.Data.Models.Dota;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Globalization;
 using UltimyrArchives.Updater.DotaFilePaths;
 using UltimyrArchives.Updater.Extensions;
 using UltimyrArchives.Updater.Services;
 using UltimyrArchives.Updater.Utils;
-using ValveKeyValue;
 
 namespace UltimyrArchives.Updater;
 

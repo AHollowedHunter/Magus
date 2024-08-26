@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using UltimyrArchives.Updater.Extensions;
-using ValveKeyValue;
+﻿using UltimyrArchives.Updater.Extensions;
 
 namespace UltimyrArchives.Updater.Utils;
 

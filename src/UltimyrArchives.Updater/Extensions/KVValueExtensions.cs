@@ -1,8 +1,6 @@
 ﻿using Magus.Common.Extensions;
 using System.Diagnostics.Contracts;
-using System.Globalization;
 using System.Text.RegularExpressions;
-using ValveKeyValue;
 
 namespace UltimyrArchives.Updater.Extensions;
 

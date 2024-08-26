@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using SteamDatabase.ValvePak;
 using UltimyrArchives.Updater.DotaFilePaths;
-using ValveKeyValue;
 using ValveResourceFormat;
 using ValveResourceFormat.IO;
 

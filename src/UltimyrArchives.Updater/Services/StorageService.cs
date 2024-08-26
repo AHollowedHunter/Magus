@@ -30,8 +30,8 @@ public class StorageService
         _logger.LogInformation("Saving Patch List in temporary index.");
 
         string[] searchAndSortAttributes = [nameof(Patch.PatchNumber), nameof(Patch.Timestamp)];
-        Settings settings                = new() { SortableAttributes = searchAndSortAttributes, SearchableAttributes = searchAndSortAttributes, };
 
+        Settings settings = new() { SortableAttributes = searchAndSortAttributes, SearchableAttributes = searchAndSortAttributes, };
 
         await _meilisearchService.CreateIndexAsync(PatchTempIndex, nameof(Patch.UniqueId), settings);
         await _meilisearchService.AddDocumentsAsync(patchList, PatchTempIndex);
