@@ -20,6 +20,9 @@ internal sealed class GameFileProvider : IDisposable
         _pak01 = ReadPackage(Pak01.FilePath);
     }
 
+    public Task<KVDocument> GetPak01TextFileAsync(string path, KVSerializerOptions? options = default)
+        => Task.Run(() => GetPak01TextFile(path, options));
+
     public KVDocument GetPak01TextFile(string path, KVSerializerOptions? options = default)
     {
         options ??= KVSerializerOptions.DefaultOptions;
