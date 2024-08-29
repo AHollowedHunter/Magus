@@ -12,6 +12,7 @@ namespace Magus.Bot.Modules;
 
 [Group(GroupName, "Get TI info (BETA)")]
 [ModuleRegistration(Location.GLOBAL, isEnabled: true)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class DPCModule : InteractionModuleBase<SocketInteractionContext>
 {
     const string GroupName = "ti";
