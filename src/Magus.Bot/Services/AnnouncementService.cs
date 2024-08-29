@@ -52,7 +52,8 @@ public class AnnouncementService
             await Task.Delay(1000);
             await SendDotaAnnouncement(announcement);
         }
-        await _db.InsertRecords(newAnnouncements);
+        if (newAnnouncements.Count > 0)
+            await _db.InsertRecords(newAnnouncements);
     }
 
     private async Task<IList<Announcement>> GetNewDotaAnnouncements()

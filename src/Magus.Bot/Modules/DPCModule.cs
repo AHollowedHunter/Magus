@@ -10,8 +10,9 @@ using System.Text.RegularExpressions;
 
 namespace Magus.Bot.Modules;
 
-[Group(GroupName, "Get DPC info (BETA)")]
-[ModuleRegistration(Location.GLOBAL, isEnabled: false)]
+[Group(GroupName, "Get TI info (BETA)")]
+[ModuleRegistration(Location.GLOBAL, isEnabled: true)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class DPCModule : InteractionModuleBase<SocketInteractionContext>
 {
     const string GroupName = "ti";
@@ -33,6 +34,20 @@ public class DPCModule : InteractionModuleBase<SocketInteractionContext>
         _dpc = dpc;
         _stratz = stratz;
         _localisationService = localisationService;
+    }
+
+    [SlashCommand("prize-pool", "Get current TI Prize pool.")]
+    public async Task PrizePool()
+    {
+        var embed = new EmbedBuilder()
+        {
+            Title        = "The International 2024 Prize Pool",
+            Description  = $"Current Prize Pool stands at:\n\n**${string.Format("{0:n0}", _dpc.BracketInfo.PrizePool)}**",
+            Timestamp    = DateTimeOffset.UtcNow,
+            Color        = Color.Gold,
+            ThumbnailUrl = DotaUrls.DotaColourLogo,
+        };
+        await RespondAsync(embed: embed.Build());
     }
 
     [SlashCommand("bracket", "Get the current event bracket standings. Updates every 5 minutes. (BETA)")]

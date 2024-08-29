@@ -59,7 +59,7 @@ public class DPCService
 
     private async Task UpdateTeamLogos()
     {
-        var league = await _stratz.GetLeagueInfo(ti2023ID);
+        var league = await _stratz.GetLeagueInfo(ti2024ID);
 
         foreach (var team in league.Tables.TableTeams)
         {
@@ -85,7 +85,7 @@ public class DPCService
                                                      .RunOnceAtStart();
 
     const int baliId = 15438;
-    const int ti2023ID = 15728;
+    const int ti2024ID = 16935;
 
     private LeagueInfo _bracketInfo;
 
@@ -100,14 +100,15 @@ public class DPCService
 
     private async Task UpdateLeague()
     {
-        var league = await _stratz.GetLeagueInfo(ti2023ID);
-        var playoffNodeGroup = league.NodeGroups.Single(IsPlayoffNodeGroup);
+        var league = await _stratz.GetLeagueInfo(ti2024ID);
+        var playoffNodeGroup = league.NodeGroups.SingleOrDefault(IsPlayoffNodeGroup);
 
-        var bracketImage = Image.Load<Rgba32>(Common.Images.BracketTemplateTI2023);
+        var bracketImage = Image.Load<Rgba32>(Common.Images.BracketTemplateDefault);
 
         try
         {
-            PopulateBracketImage(bracketImage, playoffNodeGroup);
+            if (playoffNodeGroup is not null) // While no nodes, don't try populating image
+                PopulateBracketImage(bracketImage, playoffNodeGroup);
         }
         catch (Exception ex)
         {
@@ -220,13 +221,17 @@ public class DPCService
     private static bool IsGrandFinalNode(LeagueNodeType node)
         => node.NodeType == LeagueNodeDefaultGroupEnum.BestOfFive || (node.LosingNodeId == null && node.WinningNodeId == null && node.ScheduledTime != null);
 
-    private static IEnumerable<LeagueNodeType> GetLiveGroupNodes(LeagueNodeGroupType nodeGroup)
+    private static IEnumerable<LeagueNodeType> GetLiveGroupNodes(LeagueNodeGroupType? nodeGroup)
     {
+        if (nodeGroup is null) return [];
+
         var currentNodes = nodeGroup.Nodes.Where(x => (x.HasStarted ?? false) && (!x.IsCompleted ?? false)).OrderBy(x => x.ActualTime ?? x.ScheduledTime);
         return currentNodes;
     }
-    private static IEnumerable<LeagueNodeType> GetUpcomingGroupNodes(LeagueNodeGroupType nodeGroup)
+    private static IEnumerable<LeagueNodeType> GetUpcomingGroupNodes(LeagueNodeGroupType? nodeGroup)
     {
+        if (nodeGroup is null) return [];
+
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         // BALI: 313-316 are ghost seed rounds, will manually exclude them now but need to work on this as before event scheduled times are all null. check during event if they get filled right
         //var upcomingNodes = nodeGroup.Nodes.Where(x => x.HasStarted is false && x.ScheduledTime >= now).OrderBy(x => x.ScheduledTime).ToList();
