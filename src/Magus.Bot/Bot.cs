@@ -54,8 +54,8 @@ class Bot
         client.Log += LogDiscord;
         interactionService.Log += LogDiscord;
 
-        client.JoinedGuild += async (SocketGuild guild) => await JoinedGuild(guild);
-        client.LeftGuild += async (SocketGuild guild) => await LeftGuild(guild);
+        client.JoinedGuild += JoinedGuild;
+        client.LeftGuild += LeftGuild;
 
         await interactionHandler.InitialiseAsync();
         //await services.GetRequiredService<TIService>().Initialise();
@@ -126,7 +126,7 @@ class Bot
             .AddSingleton<LocalisationService>()
             .AddSingleton<StratzService>()
             .AddSingleton<DPCService>()
-            .AddSingleton<TIService>()
+            //.AddSingleton<TIService>()
             .AddSingleton<AnnouncementService>();
 
     public static bool IsDebug()
