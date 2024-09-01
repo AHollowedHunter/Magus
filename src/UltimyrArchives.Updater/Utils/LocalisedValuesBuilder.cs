@@ -19,7 +19,7 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
         return new LocalisedValues(_values.ToDictionary());
     }
 
-    public LocalisedValuesBuilder WithAbilities()
+    public LocalisedValuesBuilder WithAbilities(Func<string, string>? valueConverter = null)
     {
         if (_abilities)
             return this;
@@ -28,12 +28,12 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
         _buildTasks.Add(
             Parallel.ForEachAsync(
                 LanguageMap.Languages,
-                (language, _) => AddValuesAsync(language, Pak01.Localisation.GetAbilities(language))));
+                (language, _) => AddTokensAsync(language, Pak01.Localisation.GetAbilities(language), valueConverter)));
 
         return this;
     }
 
-    public LocalisedValuesBuilder WithDota()
+    public LocalisedValuesBuilder WithDota(Func<string, string>? valueConverter = null)
     {
         if (_dota)
             return this;
@@ -42,12 +42,12 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
         _buildTasks.Add(
             Parallel.ForEachAsync(
                 LanguageMap.Languages,
-                (language, _) => AddValuesAsync(language, Pak01.Localisation.GetDota(language))));
+                (language, _) => AddTokensAsync(language, Pak01.Localisation.GetDota(language), valueConverter)));
 
         return this;
     }
 
-    public LocalisedValuesBuilder WithHeroLoreAsync()
+    public LocalisedValuesBuilder WithHeroLoreAsync(Func<string, string>? valueConverter = null)
     {
         if (_heroLore)
             return this;
@@ -56,12 +56,12 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
         _buildTasks.Add(
             Parallel.ForEachAsync(
                 LanguageMap.Languages,
-                (language, _) => AddValuesAsync(language, Pak01.Localisation.GetHeroLore(language))));
+                (language, _) => AddTokensAsync(language, Pak01.Localisation.GetHeroLore(language), valueConverter)));
 
         return this;
     }
 
-    public LocalisedValuesBuilder WithPatchNotes()
+    public LocalisedValuesBuilder WithPatchNotes(Func<string, string>? valueConverter = null)
     {
         if (_patchNotes)
             return this;
@@ -70,15 +70,38 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
         _buildTasks.Add(
             Parallel.ForEachAsync(
                 LanguageMap.Languages,
-                (language, _) => AddValuesAsync(language, Pak01.Localisation.GetPatchNotes(language))));
+                (language, _) => AddChildrenAsync(language, Pak01.Localisation.GetPatchNotes(language), valueConverter)));
 
         return this;
     }
 
-    private async ValueTask AddValuesAsync(string language, string path)
+    /// <summary>
+    /// Use for localisation files where the key-values are children under the document. e.g. PatchNotes
+    /// </summary>
+    private async ValueTask AddChildrenAsync(string language, string path, Func<string, string>? valueConverter = null)
     {
         var values = await gameFileProvider.GetPak01KVFileAsync(path, new KVSerializerOptions() { HasEscapeSequences = true });
-        foreach (var value in values)
-            _values.TryAdd((language, value.Name), value.Value.ToString(LanguageMap.GetCulture(language)));
+        AddValues(language, values, valueConverter);
+    }
+
+    /// <summary>
+    /// Used for standard 'lang' localisation files.
+    /// </summary>
+    private async ValueTask AddTokensAsync(string language, string path, Func<string, string>? valueConverter = null)
+    {
+        var values = await gameFileProvider.GetPak01KVFileAsync(path, new KVSerializerOptions() { HasEscapeSequences = true });
+        AddValues(language, values.Children.Single(x => x.Name.Equals("Tokens", StringComparison.InvariantCultureIgnoreCase)), valueConverter);
+    }
+
+    private void AddValues(string language, KVObject valuesObj, Func<string, string>? valueConverter = null)
+    {
+        foreach (var valueObj in valuesObj)
+        {
+            var value = valueObj.Value.ToString(LanguageMap.GetCulture(language));
+            if (valueConverter != null)
+                value = valueConverter(value);
+            if (!_values.TryAdd((language, valueObj.Name), value))
+                throw new InvalidOperationException($"Failed to add value for ('{language}', '{valueObj.Name}') as it already exists.");
+        }
     }
 }

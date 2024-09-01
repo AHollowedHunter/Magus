@@ -8,6 +8,11 @@ public static class LanguageMap
 
     static LanguageMap()
     {
+        /*
+         * This should match the Languages available in Dota with a suitable
+         * culture info.
+         * Update with additional languages if added.
+         */
         Map = new Dictionary<string, CultureInfo>(StringComparer.OrdinalIgnoreCase)
         {
             ["english"]    = CultureInfo.GetCultureInfo("en"),
@@ -42,6 +47,9 @@ public static class LanguageMap
         Languages = Map.Keys.ToArray();
     }
 
+    /// <summary>
+    /// The default language should be english, as that is the primary language in Dota.
+    /// </summary>
     public static string DefaultLanguage => "english";
 
     public static CultureInfo DefaultCulture => Map[DefaultLanguage];

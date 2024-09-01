@@ -23,4 +23,17 @@ internal static partial class Rx
     [GeneratedRegex(@"special_bonus_\w+")]
     private static partial Regex _SpecialBonus();
     public static Regex SpecialBonus => _SpecialBonus();
+    
+    
+    [GeneratedRegex(@"<[/]?\s*b\s*/?>", RegexOptions.IgnoreCase)]
+    private static partial Regex _HtmlBold();
+    public static Regex HtmlBold => _HtmlBold();
+
+    [GeneratedRegex(@"<[/]?\s*i\s*/?>", RegexOptions.IgnoreCase)]
+    private static partial Regex _HtmlItalics();
+    public static Regex HtmlItalics => _HtmlItalics();
+
+    [GeneratedRegex(@"<[/]?\s*[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex _AnyHtmlTag();
+    public static Regex HtmlAny => _AnyHtmlTag();
 }

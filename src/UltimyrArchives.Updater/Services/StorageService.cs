@@ -37,17 +37,17 @@ public class StorageService
         await _meilisearchService.AddDocumentsAsync(patchList, PatchTempIndex);
     }
 
-    public async Task StorePatchNotesTempAsync(IEnumerable<PatchNote> patchNotes)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task StoreEntityTempAsync(IEnumerable<Entity> entities)
     {
         throw new NotImplementedException();
     }
 
     public async Task StoreEntityInfoTempAsync(IEnumerable<EntityInfo> entityInfos)
+    {
+        throw new NotImplementedException();
+    }
+    
+    public async Task StorePatchNotesTempAsync(IEnumerable<PatchNote> patchNotes)
     {
         throw new NotImplementedException();
     }
