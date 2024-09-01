@@ -47,8 +47,9 @@ public class Program
             .AddSingleton<IAsyncDataService, MongoDBService>()
             .AddSingleton<MeilisearchService>()
             .AddSingleton<StorageService>()
-            .AddTransient<GameFileProvider>()
-            .AddTransient<PatchListUpdater>()
+            .AddSingleton<GameFileProviderFactory>()
+            .AddSingleton<PatchListProcessor>()
+            .AddSingleton<PatchNotesProcessor>()
             .AddSingleton<Updater>();
     }
 }

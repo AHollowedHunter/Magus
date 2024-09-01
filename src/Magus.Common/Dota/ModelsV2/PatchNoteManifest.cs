@@ -1,6 +1,6 @@
 ﻿namespace Magus.Common.Dota.ModelsV2;
 
-public sealed class PatchNote
+public sealed class PatchNoteManifest
 {
     public required string  PatchNumber { get; init; }
     public          long    Timestamp   { get; init; }
@@ -15,7 +15,7 @@ public sealed class PatchNote
 
 public record Note(int Indent, string? NoteKey, string? InfoKey);
 
-public record EntityNote(string InternalName, string? Title, Note[] Notes);
+public record EntityNote(string InternalName, string? TitleKey, Note[] Notes);
 
 public record HeroNote(
     string InternalName,

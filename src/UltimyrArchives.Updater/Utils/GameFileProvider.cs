@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using SteamDatabase.ValvePak;
+﻿using SteamDatabase.ValvePak;
 using UltimyrArchives.Updater.DotaFilePaths;
 using ValveResourceFormat;
 using ValveResourceFormat.IO;
@@ -13,17 +12,17 @@ internal sealed class GameFileProvider : IDisposable
 
     private readonly string _rootGamePath;
 
-    public GameFileProvider(IOptions<UpdaterConfig> config)
+    public GameFileProvider(string rootGamePath)
     {
-        _rootGamePath = config.Value.GameFileLocation;
+        _rootGamePath = rootGamePath;
 
         _pak01 = ReadPackage(Pak01.FilePath);
     }
 
-    public Task<KVDocument> GetPak01TextFileAsync(string path, KVSerializerOptions? options = default)
-        => Task.Run(() => GetPak01TextFile(path, options));
+    public Task<KVDocument> GetPak01KVFileAsync(string path, KVSerializerOptions? options = default)
+        => Task.Run(() => GetPak01KVFile(path, options));
 
-    public KVDocument GetPak01TextFile(string path, KVSerializerOptions? options = default)
+    public KVDocument GetPak01KVFile(string path, KVSerializerOptions? options = default)
     {
         options ??= KVSerializerOptions.DefaultOptions;
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using UltimyrArchives.Updater.Services;
 
 namespace UltimyrArchives.Updater;
@@ -7,25 +8,33 @@ namespace UltimyrArchives.Updater;
 internal sealed class Updater
 {
     private readonly ILogger<Updater> _logger;
-    private readonly IServiceProvider _serviceProvider;
     private readonly StorageService _storageService;
+    private readonly PatchListProcessor _patchListProcessor;
+    private readonly PatchNotesProcessor _patchNotesProcessor;
 
-    public Updater(ILogger<Updater> logger, IServiceProvider serviceProvider, StorageService storageService)
+    public Updater(ILogger<Updater> logger, StorageService storageService, PatchListProcessor patchListProcessor, PatchNotesProcessor patchNotesProcessor)
     {
-        _logger          = logger;
-        _serviceProvider = serviceProvider;
-        _storageService  = storageService;
+        _logger              = logger;
+        _storageService      = storageService;
+        _patchListProcessor  = patchListProcessor;
+        _patchNotesProcessor = patchNotesProcessor;
     }
 
     public async Task RunAsync()
     {
         _logger.LogInformation("Updating Archives...");
+        var stopwatch = Stopwatch.StartNew();
         await _storageService.CleanTempIndexesAsync();
 
-        var patchListUpdater = _serviceProvider.GetRequiredService<PatchListUpdater>();
-        var latestPatch      = await patchListUpdater.UpdateAndGetLatest();
-        
+        var patchList   = await _patchListProcessor.GetProcessedAsync();
+        var latestPatch = patchList.MaxBy(p => p.Timestamp);
+        await _storageService.StorePatchListTempAsync(patchList);
+
+
         // TODO - process entities and patchnotes
+        var patchNotes = await _patchNotesProcessor.GetProcessedAsync();
+
+        // await _storageService.StorePatchNotesTempAsync(patchNotes);
 
         // TODO add conditions to swap? Possibly error percentage?
         await _storageService.SwapAllTempIndexesAsync();
@@ -35,6 +44,7 @@ internal sealed class Updater
          */
         await _storageService.CleanTempIndexesAsync();
 
-        _logger.LogInformation("Finished Updating.");
+        stopwatch.Stop();
+        _logger.LogInformation("Finished Updating, total time taken {TimeTaken}.", stopwatch.Elapsed);
     }
 }

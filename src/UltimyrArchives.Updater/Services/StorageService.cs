@@ -25,7 +25,7 @@ public class StorageService
         await _meilisearchService.DeleteIndexAsync(PatchTempIndex);
     }
 
-    public async Task StorePatchListTempAsync(List<Patch> patchList)
+    public async Task StorePatchListTempAsync(IEnumerable<Patch> patchList)
     {
         _logger.LogInformation("Saving Patch List in temporary index.");
 
@@ -37,17 +37,17 @@ public class StorageService
         await _meilisearchService.AddDocumentsAsync(patchList, PatchTempIndex);
     }
 
-    public async Task StorePatchNotesTempAsync(List<PatchNote> patchNotes)
+    public async Task StorePatchNotesTempAsync(IEnumerable<PatchNote> patchNotes)
     {
         throw new NotImplementedException();
     }
 
-    public async Task StoreEntityTempAsync(List<Entity> entities)
+    public async Task StoreEntityTempAsync(IEnumerable<Entity> entities)
     {
         throw new NotImplementedException();
     }
 
-    public async Task StoreEntityInfoTempAsync(List<EntityInfo> entityInfos)
+    public async Task StoreEntityInfoTempAsync(IEnumerable<EntityInfo> entityInfos)
     {
         throw new NotImplementedException();
     }

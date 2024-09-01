@@ -6,10 +6,10 @@ namespace UltimyrArchives.Updater.Converters;
 
 public sealed class PatchNoteConverter : KVObjectConverter
 {
-    public PatchNote Convert(KVObject kvPatch) => new()
+    public PatchNoteManifest Convert(KVObject kvPatch) => new()
     {
         // Only include the patch number i.e. 'patch 7.37' => '7.37'
-        PatchNumber       = kvPatch.GetRequiredString("patch_name")[6..],
+        PatchNumber       = kvPatch.GetRequiredString("patch_name", CultureInfo.InvariantCulture)[6..],
         Timestamp         = PatchUtils.GetPatchTimestamp(kvPatch),
         Website           = kvPatch["website"]?.ToString(CultureInfo.InvariantCulture),
         GenericNotes      = ConvertList(kvPatch["generic"], ConvertNote),
@@ -24,15 +24,20 @@ public sealed class PatchNoteConverter : KVObjectConverter
 
     private static Note ConvertNote(KVObject obj) => new(
         obj["indent"]?.ToInt32(CultureInfo.InvariantCulture) ?? 0,
-        obj["note"]?.ToString(CultureInfo.InvariantCulture),
-        obj["info"]?.ToString(CultureInfo.InvariantCulture)
+        TrimKey(obj["note"]?.ToString(CultureInfo.InvariantCulture)),
+        TrimKey(obj["info"]?.ToString(CultureInfo.InvariantCulture))
     );
 
     private static EntityNote ConvertEntity(KVObject obj) => new(
         obj.Name,
-        obj["title"]?.ToString(CultureInfo.InvariantCulture),
+        TrimKey(obj["title"]?.ToString(CultureInfo.InvariantCulture)),
         ConvertList(GetOnlyNotes(obj), ConvertNote)
     );
+
+    /// <summary>
+    /// Remove the beginning '#' from each key, localisation does not include it.
+    /// </summary>
+    private static string? TrimKey(string? key) => key?.TrimStart('#');
 
     private static HeroNote ConvertHero(KVObject obj)
     {
