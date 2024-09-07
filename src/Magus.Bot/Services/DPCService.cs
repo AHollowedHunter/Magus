@@ -115,7 +115,17 @@ public class DPCService
             _logger.LogError(ex, "Can't populate bracket image.");
         }
 
-        var playoffInfo = new LeagueStageInfo(GetLiveGroupNodes(playoffNodeGroup), GetUpcomingGroupNodes(playoffNodeGroup));
+        List<LeagueNodeType> liveNodes = [];
+        List<LeagueNodeType> upcomingNodes = [];
+        foreach (var node in league.NodeGroups)
+        {
+            if (node.Nodes.Count > 0)
+            {
+                liveNodes.AddRange(GetLiveGroupNodes(node));
+                upcomingNodes.AddRange(GetUpcomingGroupNodes(node));
+            }
+        }
+        var playoffInfo = new LeagueStageInfo(liveNodes, upcomingNodes);
 
         _bracketInfo = new LeagueInfo((int)league.Id!,
                                       league.DisplayName,
