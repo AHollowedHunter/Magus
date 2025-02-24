@@ -152,7 +152,7 @@ public static class PatchNoteExtensions
             var indent = notes.Any(x=> x.Indent == 0) ? note.Indent : note.Indent - 1; // Some set of notes are all indedented, so remove a level
             var tab = string.Empty;
 
-            if (!Regex.Match(note.Value, @"^\s+$").Success)
+            if (!Regex.Match(note.Value ?? "", @"^\s+$").Success)
             {
                 tab = GetTab(indent);
             }

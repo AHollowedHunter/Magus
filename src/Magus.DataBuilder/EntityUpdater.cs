@@ -432,7 +432,7 @@ public class EntityUpdater
         /*
          * dynamic_value - true: added patch 7.37
          */
-        var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet|dynamic_value"); 
+        var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet|dynamic_value");
 
         var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial");
         if (kvAbilityValues != null)
@@ -445,7 +445,6 @@ public class EntityUpdater
                 AbilityValue abilityValue;
                 if (kvAbilityValue.Value.ValueType == KVValueType.Collection)
                 {
-
                     var valueName   = kvAbilityValue.Name;
                     // .. and this assumes there is only 1 value in the list? correct?
                     // should 'nonValueName' check for 'value'? or does this need to be a specific list of values to exclude?
@@ -457,7 +456,7 @@ public class EntityUpdater
                         continue;
                     }
 
-                    var values      = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>() : Array.Empty<float>();
+                    var values      = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>(true) : Array.Empty<float>();
                     var linkedBonus = kvAbilityValue.FirstOrDefault(x => bonusRegex.IsMatch(x.Name));
                     if (Regex.IsMatch(kvAbilityValue.Name, @"\d+"))
                         valueName = valueObject.Name;
@@ -1027,7 +1026,7 @@ public class EntityUpdater
     {
         Dictionary<string, byte> neutralItems = new Dictionary<string, byte>();
 
-        foreach (var tier in kvNeutralItems)
+        foreach (var tier in kvNeutralItems.First(x => x.Name.Equals("neutral_tiers")))
             foreach (var item in tier.First(x => x.Name == "items").Children)
                 neutralItems.Add(item.Name, byte.Parse(tier.Name));
 
