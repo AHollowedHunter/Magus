@@ -69,12 +69,12 @@ public static class PatchNoteExtensions
             foreach (var abilityNote in hero.AbilityNotes)
             {
                 var abilityName = GetLanguageValue(abilityValues, patch.Language, abilityNote.InternalName);
-                fields.Add(new() { Name = $"{abilityName}:", Value = CreateFormattedDescription(abilityNote.Notes) });
+                fields.Add(new() { Name = $"{abilityName}:", Value = CreateFormattedDescription(abilityNote.Notes, 1024) });
             }
 
             if (hero.TalentNotes.Count > 0)
             {
-                fields.Add(new() { Name = "Talents:", Value = CreateFormattedDescription(hero.TalentNotes) });
+                fields.Add(new() { Name = "Talents:", Value = CreateFormattedDescription(hero.TalentNotes, 1024) });
             }
 
             var heroPatchNoteEmbed = new Data.Models.Embeds.Embed()
