@@ -103,6 +103,8 @@ public class ConfigUserModule : ModuleBase
         {
             await DeferAsync(true);
 
+            // TODO don't rely on 3rd party APIs to set Steam, validate against Stream directly. See issue #24
+
             var accountID = await ConvertToAccountID(account.Trim());
 
             if (accountID == null)
