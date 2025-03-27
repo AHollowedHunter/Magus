@@ -546,7 +546,7 @@ public class EntityUpdater
                     var values = kvAbilityValue.ParseChildValueList<float>($"special_bonus_{type.ToLower()}", true);
                     if (kvAbilityValue.ParseChildValue<string>($"special_bonus_{type.ToLower()}")?.Contains("%") ?? false)
                     {
-                        var mainValues = valueObject.ParseList<float>() ?? Array.Empty<float>();
+                        var mainValues = valueObject.ParseList<float>(true) ?? Array.Empty<float>();
                         for (var i = 0; i < mainValues.Count; i++)
                         {
                             var percentage = values.Count == 1 ? values.First() : values[i];
@@ -555,7 +555,7 @@ public class EntityUpdater
                         values = mainValues;
                     }
                     if (values == null || values.Count() == 0)
-                        values = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>() : Array.Empty<float>();
+                        values = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>(true) : Array.Empty<float>();
 
                     if (Regex.IsMatch(kvAbilityValue.Name, @"\d+"))
                         valueName = valueObject.Name;
@@ -573,7 +573,7 @@ public class EntityUpdater
                     abilityValue = new()
                     {
                         Name = kvAbilityValue.Name,
-                        Values = kvAbilityValue.ParseList<float>(),
+                        Values = kvAbilityValue.ParseList<float>(true),
                         Description = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
                     };
                 }
