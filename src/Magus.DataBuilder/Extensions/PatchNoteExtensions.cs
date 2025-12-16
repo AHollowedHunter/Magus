@@ -2,6 +2,7 @@
 using Magus.Data;
 using Magus.Data.Models.Dota;
 using Magus.Data.Models.Embeds;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -62,7 +63,14 @@ public static class PatchNoteExtensions
         var heroPatchNotesList = new List<HeroPatchNoteEmbed>();
         foreach (var hero in patch.HeroesNotes)
         {
-            var heroInfo = heroes.Where(x => x.InternalName == hero.InternalName).First();
+            var heroInfo = heroes.Where(x => x.InternalName == hero.InternalName).FirstOrDefault();
+            
+            if (heroInfo is null)
+            {
+                // TODO maybe log this shit
+                Console.WriteLine("Shitty log for missing hero info: {0}", hero.InternalName);
+                continue;
+            }
 
             var fields = new List<Field>();
 
