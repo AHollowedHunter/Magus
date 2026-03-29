@@ -114,13 +114,17 @@ public class EntityUpdater
         _abilityIds.Clear();
         foreach (var ability in abilityIds.Children.Single(x => x.Name == "UnitAbilities").Children.Single(x => x.Name == "Locked"))
         {
-            _abilityIds.Add(ability.Name, ability.ParseValue<int>());
+            if (_abilityIds.TryAdd(ability.Name, ability.ParseValue<int>()) is false)
+                _logger.LogWarning("Possible duplicate ability_id for {name}, tried adding {newId} alongside {existingId}", ability.Name, ability.ParseValue<int>(), _abilityIds[ability.Name]);
         }
 
         _ItemIds.Clear();
         foreach (var item in abilityIds.Children.Single(x => x.Name == "ItemAbilities").Children.Single(x => x.Name == "Locked"))
         {
             _ItemIds.Add(item.Name, item.ParseValue<int>());
+
+            if (_ItemIds.TryAdd(item.Name, item.ParseValue<int>()) is false)
+                _logger.LogWarning("Possible duplicate item_id for {name}, tried adding {newId} alongside {existingId}", item.Name, item.ParseValue<int>(), _ItemIds[item.Name]);
         }
 
         // bodge this
@@ -511,7 +515,7 @@ public class EntityUpdater
                     var values = kvAbilityValue.ParseChildValueList<float>($"special_bonus_{type.ToLower()}", true);
                     if (kvAbilityValue.ParseChildValue<string>($"special_bonus_{type.ToLower()}")?.Contains("%") ?? false)
                     {
-                        var mainValues = valueObject.ParseList<float>() ?? Array.Empty<float>();
+                        var mainValues = valueObject.ParseList<float>(true) ?? Array.Empty<float>();
                         for (var i = 0; i < mainValues.Count; i++)
                         {
                             var percentage = values.Count == 1 ? values.First() : values[i];
@@ -522,7 +526,7 @@ public class EntityUpdater
                     }
 
                     if (values == null || values.Count() == 0)
-                        values = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>() : Array.Empty<float>();
+                        values = valueObject.Value.ToString() != "FIELD_INTEGER" ? valueObject.ParseList<float>(true) : Array.Empty<float>();
 
                     if (Rx.DigitOnly.IsMatch(kvAbilityValue.Name))
                         valueName = valueObject.Name;
@@ -534,7 +538,7 @@ public class EntityUpdater
                     abilityValue = new()
                     {
                         Name        = kvAbilityValue.Name,
-                        Values      = kvAbilityValue.ParseList<float>(),
+                        Values      = kvAbilityValue.ParseList<float>(true),
                         Description = GetAbilityValue(language, kvAbility.Name, kvAbilityValue.Name),
                     };
                 }
@@ -940,6 +944,11 @@ public class EntityUpdater
         {
             return _heroLoreValues[localeKey];
         }
+        else if (_abilityValues.ContainsKey(localeKey))
+        {
+            _logger.LogDebug("Found Hero Value in ability localisation with key: {key}", localeKey);
+            return _abilityValues[localeKey];
+        }
         else
         {
             if (!_dotaValues.TryGetValue((_localisationOptions.DefaultLanguage, localeKey.Key), out var value))
@@ -1004,9 +1013,9 @@ public class EntityUpdater
     {
         Dictionary<string, byte> neutralItems = new Dictionary<string, byte>();
 
-        foreach (var tier in kvNeutralItems)
-        foreach (var item in tier.First(x => x.Name == "items").Children)
-            neutralItems.Add(item.Name, byte.Parse(tier.Name));
+        foreach (var tier in kvNeutralItems.First(x => x.Name.Equals("neutral_tiers")))
+            foreach (var item in tier.First(x => x.Name == "items").Children)
+                neutralItems.Add(item.Name, byte.Parse(tier.Name));
 
         return neutralItems;
     }

@@ -47,7 +47,14 @@ public static class PatchNoteExtensions
         var heroPatchNotesList = new List<PatchNote>();
         foreach (var hero in patch.HeroesNotes)
         {
-            var heroInfo = heroes.Where(x => x.InternalName == hero.InternalName).First();
+            var heroInfo = heroes.Where(x => x.InternalName == hero.InternalName).FirstOrDefault();
+            
+            if (heroInfo is null)
+            {
+                // TODO maybe log this shit
+                Console.WriteLine("Shitty log for missing hero info: {0}", hero.InternalName);
+                continue;
+            }
 
             var fields = new List<SerializableField>();
 
@@ -113,7 +120,7 @@ public static class PatchNoteExtensions
             var indent = notes.Any(x => x.Indent == 0) ? note.Indent : note.Indent - 1; // Some set of notes are all indedented, so remove a level
             var tab = string.Empty;
 
-            if (!Regex.Match(note.Value, @"^\s+$").Success)
+            if (!Regex.Match(note.Value ?? "", @"^\s+$").Success)
             {
                 tab = GetTab(indent);
             }
