@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<Version>1.5.0</Version>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<UserSecretsId>b29c3c92-b66f-48b1-8c91-a83e5abdd038</UserSecretsId>
 	</PropertyGroup>
