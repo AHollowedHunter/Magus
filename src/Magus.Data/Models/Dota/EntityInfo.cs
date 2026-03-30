@@ -3,31 +3,33 @@ using Magus.Data.Enums;
 using System.Text.Json.Serialization;
 
 namespace Magus.Data.Models.Dota;
+
 public sealed record EntityInfo : IEntity, ILocalised
 {
     /// <summary>
     /// Constructor for Json, due to the UniqueId property already existing.
     /// </summary>
     [JsonConstructor]
-    private EntityInfo(string uniqueId, string internalName, int entityId, EntityType type, string locale, SerializableEmbed embed)
+    private EntityInfo(string uniqueId, string internalName, int entityId, EntityType entityType, string locale, SerializableEmbed embed)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(uniqueId);
         ArgumentException.ThrowIfNullOrWhiteSpace(internalName);
         ArgumentException.ThrowIfNullOrWhiteSpace(locale);
+        ArgumentNullException.ThrowIfNull(embed);
 
         UniqueId     = uniqueId;
         InternalName = internalName;
         EntityId     = entityId;
-        EntityType   = type;
+        EntityType   = entityType;
         Locale       = locale;
-        Embed        = embed ?? throw new ArgumentNullException(nameof(embed));
+        Embed        = embed;
     }
 
-    public EntityInfo(string internalName, int entityId, EntityType type, string locale, SerializableEmbed embed) : this(
+    public EntityInfo(string internalName, int entityId, EntityType entityType, string locale, SerializableEmbed embed) : this(
         MakeUniqueId(internalName, locale),
         internalName,
         entityId,
-        type,
+        entityType,
         locale,
         embed)
     {

@@ -103,9 +103,8 @@ public sealed class MeilisearchService
         if (entityType is not EntityType.None)
             filter += $" AND {nameof(EntityInfo.EntityType)}='{entityType}'";
 
-        return (await index.GetDocumentsAsync<EntityInfo>(new DocumentsQuery { Limit = int.MaxValue, Filter = filter })
-                .ConfigureAwait(false))
-            .Results;
+        var resultSet = await index.GetDocumentsAsync<EntityInfo>(new DocumentsQuery { Limit = int.MaxValue, Filter = filter }).ConfigureAwait(false);
+        return resultSet.Results;
     }
 
     #endregion
