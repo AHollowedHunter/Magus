@@ -2,18 +2,19 @@
 using Discord.Interactions;
 using Magus.Bot.Attributes;
 using Magus.Bot.Services;
+using Magus.Common.Dota;
 using Magus.Common.Emotes;
 using Magus.Data.Extensions;
 using Magus.Data.Services;
 using Microsoft.Extensions.Options;
 using STRATZ;
-using System.Text.RegularExpressions;
 
 namespace Magus.Bot.Modules;
 
 [Group(GroupName, "Get DPC info (BETA)")]
 [ModuleRegistration(Location.GLOBAL, isEnabled: false)]
-[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]public class DPCModule : InteractionModuleBase<SocketInteractionContext>
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
+public class DPCModule : InteractionModuleBase<SocketInteractionContext>
 {
     const string GroupName = "dpc";
 
@@ -45,7 +46,7 @@ namespace Magus.Bot.Modules;
             Description  = $"Current Prize Pool stands at:\n\n**${string.Format("{0:n0}", _dpc.BracketInfo.PrizePool)}**",
             Timestamp    = DateTimeOffset.UtcNow,
             Color        = Color.Gold,
-            ThumbnailUrl = DotaUrls.DotaColourLogo,
+            ThumbnailUrl = URLs.DotaColourLogo,
         };
         await RespondAsync(embed: embed.Build());
     }
