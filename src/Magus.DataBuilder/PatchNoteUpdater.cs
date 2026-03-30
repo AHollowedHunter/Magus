@@ -111,6 +111,7 @@ public sealed class PatchNoteUpdater
 
         foreach (var genericNote in patch.Children.First(x => x.Name == "generic"))
         {
+            // TODO think about when implementing v2, new patch note formatting e.g. 7.41
             patchNote.GenericNotes.Add(MakeNote(genericNote, language));
         }
 

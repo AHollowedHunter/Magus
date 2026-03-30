@@ -5,42 +5,36 @@ namespace Magus.Common.Utilities;
 
 public static partial class DiscordMessageFormatter
 {
-    private static readonly Regex _rssRegex = RssRegex();
-
     private static readonly HtmlSanitizer _sanitizer;
     private static readonly ReverseMarkdown.Converter _markdownConverter;
     static DiscordMessageFormatter()
     {
-        var sanitizerOptions = new HtmlSanitizerOptions
-        {
-            AllowedTags = AllowedTags,
-            AllowedAttributes = AllowedAttributes,
-        };
-        _sanitizer = new HtmlSanitizer(sanitizerOptions);
+        var sanitizerOptions = new HtmlSanitizerOptions { AllowedTags = AllowedTags, AllowedAttributes = AllowedAttributes, };
+        _sanitizer         = new HtmlSanitizer(sanitizerOptions);
         _markdownConverter = new(new() { CleanupUnnecessarySpaces = false });
     }
 
     public static string HtmlToDiscordEmbedMarkdown(string htmlSource, bool sanitize = true)
     {
         // TODO tidy/check/improve, probably this whole class...
-        var sanitizedSource = sanitize ?_sanitizer.Sanitize(htmlSource) : htmlSource;
+        var sanitizedSource = sanitize ? _sanitizer.Sanitize(htmlSource) : htmlSource;
 
-        sanitizedSource = _rssRegex.Replace(sanitizedSource, ""); // DO this first to prevent inadvertently removing markdown URLs
+        sanitizedSource = RssRegex.Replace(sanitizedSource, ""); // DO this first to prevent inadvertently removing Markdown URLs
         sanitizedSource = _markdownConverter.Convert(sanitizedSource);
 
         return sanitizedSource;
     }
 
-    static ISet<string> AllowedTags { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static HashSet<string> AllowedTags { get; } = new(StringComparer.OrdinalIgnoreCase)
     {
-        "a", "b", "br", "div", "i", "li", "ol", "strong", "ul"
+        "a", "b", "br", "div", "i", "li", "p", "ol", "strong", "ul"
     };
 
-    static ISet<string> AllowedAttributes { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static HashSet<string> AllowedAttributes { get; } = new(StringComparer.OrdinalIgnoreCase)
     {
         "href"
     };
 
     [GeneratedRegex(@"\[[^\]]*\](?:.*)\[/[^\]]*\]")]
-    private static partial Regex RssRegex();
+    private static partial Regex RssRegex { get; }
 }

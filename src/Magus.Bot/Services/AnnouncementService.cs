@@ -50,11 +50,12 @@ public class AnnouncementService
         if (newAnnouncements.Any() is false)
             return;
 
+        // TODO handle failed to publish items better
         foreach (var announcement in newAnnouncements)
         {
             _logger.LogInformation("Processing new Dota news: {id} {title}", announcement.Id, announcement.Title);
-            await Task.Delay(1000);
             await SendDotaAnnouncement(announcement);
+            await Task.Delay(1000);
         }
         if (newAnnouncements.Count > 0)
             await _db.InsertRecords(newAnnouncements);
@@ -119,7 +120,8 @@ public class AnnouncementService
         var sentMessage = await sourceChannel!.SendMessageAsync(embed: embed);
         try
         {
-            await sentMessage.CrosspostAsync();
+            var requestOptions = new RequestOptions { RetryMode = RetryMode.AlwaysFail };
+            await sentMessage.CrosspostAsync(requestOptions);
             announcement.IsPublished = true;
         }
         catch (Exception ex)
