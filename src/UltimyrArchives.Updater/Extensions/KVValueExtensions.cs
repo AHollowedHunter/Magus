@@ -62,19 +62,13 @@ public static partial class KVValueExtensions
     #region Regex
 
     [GeneratedRegex(@"[,;\s]+")]
-    private static partial Regex _SeparatorsWithSpaces(); // TODO change when rider supports partial properties
-
-    private static Regex SeparatorsWithSpace { get => _SeparatorsWithSpaces(); }
+    private static partial Regex SeparatorsWithSpace { get; }
 
     [GeneratedRegex(@"[,;]+")]
-    private static partial Regex _SeparatorsWithoutSpace(); // TODO change when rider supports partial properties
-
-    private static Regex SeparatorsWithoutSpace { get => _SeparatorsWithoutSpace(); }
+    private static partial Regex SeparatorsWithoutSpace { get; }
 
     [GeneratedRegex(@"[^\d\-+.,:\s]*")]
-    private static partial Regex _NonNumericChars();
-
-    private static Regex NonNumericChars { get => _NonNumericChars(); }
+    private static partial Regex NonNumericChars { get; }
 
     #endregion
 }

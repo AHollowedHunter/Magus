@@ -29,18 +29,11 @@ public static partial class StringUtils
 
 
     [GeneratedRegex(@"^\s*<br>\s*$", RegexOptions.IgnoreCase)]
-    private static partial Regex _OnlyBreak();
-
-    public static Regex OnlyBreak => _OnlyBreak();
+    public static partial Regex OnlyBreak { get; }
 
     [GeneratedRegex(@"<table>(.|\n)*<\/table>", RegexOptions.IgnoreCase)]
-    private static partial Regex _Table();
-
-    public static Regex Table => _Table();
-
+    public static partial Regex Table { get; }
 
     [GeneratedRegex(@"</?\s*(span|font)[^>]*>", RegexOptions.IgnoreCase)]
-    private static partial Regex _Highlight();
-
-    public static Regex Highlight => _Highlight();
+    public static partial Regex Highlight { get; }
 }
