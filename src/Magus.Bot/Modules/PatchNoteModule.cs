@@ -22,6 +22,7 @@ public class PatchNoteModule : ModuleBase
         _meilisearchService = meilisearchService;
     }
 
+    // TODO by the time v2 is real, this should be automated so update command
     [SlashCommand("when", "how long is a piece of string?")]
     public async Task When()
         => await RespondAsync("After a new patch is announced, it may take around ~30-60 minutes for me to fully update depending on different factors.\nIf they make breaking changes in game files it will take longer.\nIf they patch after midnight UTC... I'm sleeping 😅.");
@@ -35,7 +36,7 @@ public class PatchNoteModule : ModuleBase
         number ??= (await _meilisearchService.GetLatestPatchAsync().ConfigureAwait(false)).PatchNumber;
         var patchNotes = await _meilisearchService.SearchPatchNotesAsync(null, number, PatchNoteType.General, locale, 1).ConfigureAwait(false);
 
-        if (patchNotes != null)
+        if (patchNotes.Count > 0)
             await FollowupAsync(embed: patchNotes.Single().Embed.ToDiscordEmbed());
         else
             await FollowupAsync($"Could not find a patch note numbered **{number}**.");
@@ -47,16 +48,16 @@ public class PatchNoteModule : ModuleBase
                                 [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
     {
         await DeferAsync();
-        var embeds = await GetEntityPatchNotesEmbeds(name, patch, PatchNoteType.Item, locale, 3);
-        if (!embeds.Any())
-        {
-            if (patch != null)
-                await FollowupAsync($"No changes for this item in Patch **{patch}**.", ephemeral: true);
-            else
-                await FollowupAsync($"No patch notes for this item.", ephemeral: true);
-            return;
-        }
-        await FollowupAsync(embeds: embeds.Reverse().ToArray());
+        var embeds = (await GetEntityPatchNotesEmbeds(name, patch, PatchNoteType.Item, locale, 3))
+            .Reverse()
+            .ToArray();
+        // TODO Check if random items also show e.g. Shawl in patch 7.41/7.41a shows "crude" patchnote too
+        if (embeds.Length > 0)
+            await FollowupAsync(embeds: embeds);
+        else if (patch is null)
+            await FollowupAsync($"No changes for this item in Patch **{patch}**.", ephemeral: true);
+        else
+            await FollowupAsync("No patch notes for this item.", ephemeral: true);
     }
 
     [SlashCommand("hero", "Get the latest patch note for a hero.")]
@@ -65,27 +66,22 @@ public class PatchNoteModule : ModuleBase
                                 [Summary(description: "The language/locale of the response")][Autocomplete(typeof(LocaleAutocompleteHandler))] string? locale = null)
     {
         await DeferAsync();
-        var embeds = await GetEntityPatchNotesEmbeds(name, patch, PatchNoteType.Hero, locale);
-        if (!embeds.Any())
-        {
-            if (patch != null)
-                await FollowupAsync($"No changes for this hero in Patch **{patch}**.", ephemeral: true);
-            else
-                await FollowupAsync($"No patch notes for this hero.", ephemeral: true);
-            return;
-        }
-        await FollowupAsync(embeds: embeds.ToArray());
+        var embeds = (await GetEntityPatchNotesEmbeds(name, patch, PatchNoteType.Hero, locale)).ToArray();
+        
+        
+        if (embeds.Length > 0)
+            await FollowupAsync(embeds: embeds);
+        else if (patch is null)
+            await FollowupAsync($"No changes for this hero in Patch **{patch}**.", ephemeral: true);
+        else
+            await FollowupAsync("No patch notes for this hero.", ephemeral: true);
     }
 
-    private async Task<IEnumerable<Discord.Embed>> GetEntityPatchNotesEmbeds(string name, string? patch = null, PatchNoteType? type = null, string? locale = null, int limit = 1)
+    private async Task<IEnumerable<Embed>> GetEntityPatchNotesEmbeds(string name, string? patch = null, PatchNoteType? type = null, string? locale = null, int limit = 1)
     {
         locale = _localisationService.LocaleConfirmOrDefault(locale ?? Context.Interaction.UserLocale);
-        var patchNotes = await _meilisearchService.SearchPatchNotesAsync(name, patch, type, locale, limit).ConfigureAwait(false); // TODO ensure only gets hero
+        var patchNotes = await _meilisearchService.SearchPatchNotesAsync(name, patch, type, locale, limit).ConfigureAwait(false);
 
-        var embeds = new List<Discord.Embed>();
-        foreach (var patchNote in patchNotes)
-            embeds.Add(patchNote.Embed.ToDiscordEmbed());
-
-        return embeds;
+        return patchNotes.Select(pn => pn.Embed.ToDiscordEmbed());
     }
 }

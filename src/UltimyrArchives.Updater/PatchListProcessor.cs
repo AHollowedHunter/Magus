@@ -16,7 +16,7 @@ internal sealed class PatchListProcessor(ILogger<PatchListProcessor> logger, Gam
 
         logger.LogInformation("Finished Processing Patch List.");
 
-        return patchList;
+        return patchList.AsReadOnly();
     }
 
     private Task<List<Patch>> GetPatchList()

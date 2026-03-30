@@ -203,7 +203,7 @@ public sealed class MeilisearchService
         return (await index.SearchAsync<Patch>(query, searchQuery).ConfigureAwait(false)).Hits;
     }
 
-    public async Task<IEnumerable<PatchNote>> SearchPatchNotesAsync(
+    public async Task<IReadOnlyCollection<PatchNote>> SearchPatchNotesAsync(
         string? query,
         string? patch = null,
         PatchNoteType? patchType = null,
