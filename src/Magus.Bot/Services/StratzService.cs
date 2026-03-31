@@ -28,6 +28,7 @@ public sealed class StratzService
         _httpClient = httpClientFactory.CreateClient();
         _httpClient.DefaultRequestHeaders.Authorization = new("Bearer", _botSettings.StratzToken);
         _httpClient.BaseAddress = new Uri(StratzApiUrl);
+        // TODO Stratz useragent header 'STRATZ_API'
 
         _stratz = new GraphQLHttpClient(new GraphQLHttpClientOptions(), new SystemTextJsonSerializer(), _httpClient);
     }
