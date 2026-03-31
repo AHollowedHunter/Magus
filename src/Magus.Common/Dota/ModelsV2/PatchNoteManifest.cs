@@ -6,21 +6,21 @@ public sealed class PatchNoteManifest
     public          long    Timestamp   { get; init; }
     public          string? Website     { get; init; }
 
-    public required Note[]       GenericNotes      { get; init; }
-    public required HeroNote[]   HeroesNotes       { get; init; }
-    public required EntityNote[] ItemNotes         { get; init; }
-    public required EntityNote[] NeutralItemNotes  { get; init; }
-    public required EntityNote[] NeutralCreepNotes { get; init; }
+    public required NoteGroup[] GenericNotes      { get; init; }
+    public required HeroNote[]  HeroesNotes       { get; init; }
+    public required NoteGroup[] ItemNotes         { get; init; }
+    public required NoteGroup[] NeutralItemNotes  { get; init; }
+    public required NoteGroup[] NeutralCreepNotes { get; init; }
 }
 
 public record Note(int Indent, string? NoteKey, string? InfoKey);
 
-public record EntityNote(string InternalName, string? TitleKey, Note[] Notes);
+public record NoteGroup(string InternalName, string? TitleKey, Note[] Notes);
 
 public record HeroNote(
     string InternalName,
     Note[] General,
-    EntityNote[] Abilities,
-    EntityNote[] Facets,
-    EntityNote? Innate,
+    NoteGroup[] Abilities,
+    NoteGroup[] Facets,
+    NoteGroup? Innate,
     Note[] Talents);
