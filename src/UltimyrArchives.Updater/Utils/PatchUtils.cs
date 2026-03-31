@@ -12,4 +12,12 @@ public static class PatchUtils
         var patchDate = patchObject.GetRequiredString("patch_date", CultureInfo.InvariantCulture);
         return DateTimeOffset.Parse(patchDate + " -08:00").ToUnixTimeSeconds();
     }
+    
+    /// <summary>
+    /// Only include the patch number i.e. 'patch 7.37' => '7.37'
+    /// </summary>
+    public static string GetPatchNumber(KVObject patchObject)
+    {
+        return patchObject.GetRequiredString("patch_name", CultureInfo.InvariantCulture)[6..];
+    }
 }

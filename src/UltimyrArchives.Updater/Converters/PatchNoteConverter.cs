@@ -1,5 +1,4 @@
 ﻿using Magus.Common.Dota.ModelsV2;
-using UltimyrArchives.Updater.Extensions;
 using UltimyrArchives.Updater.Utils;
 
 namespace UltimyrArchives.Updater.Converters;
@@ -8,8 +7,7 @@ public sealed class PatchNoteConverter : KVObjectConverter
 {
     public PatchNoteManifest Convert(KVObject kvPatch) => new()
     {
-        // Only include the patch number i.e. 'patch 7.37' => '7.37'
-        PatchNumber       = kvPatch.GetRequiredString("patch_name", CultureInfo.InvariantCulture)[6..],
+        PatchNumber       = PatchUtils.GetPatchNumber(kvPatch),
         Timestamp         = PatchUtils.GetPatchTimestamp(kvPatch),
         Website           = kvPatch["website"]?.ToString(CultureInfo.InvariantCulture),
         GenericNotes      = ConvertList(kvPatch["generic"], ConvertNoteGroup),

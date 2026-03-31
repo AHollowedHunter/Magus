@@ -21,7 +21,7 @@ public sealed class HeroConverter(KVObject baseHero) : KVObjectConverter
         Rolelevels         = kvHero["Rolelevels"].ParseArray<byte>(),
         Abilities          = ParseAbilities(kvHero),
         AbilityTalentStart = kvHero["AbilityTalentStart"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.AbilityTalentStart,
-        Facets             = ConvertList(kvHero.GetRequiredValue("Facets"), FacetConverter),
+        Facets             = ConvertList(kvHero["Facets"] , FacetConverter),
         // Attributes
         AttributePrimary          = kvHero.GetRequiredEnum<AttributePrimary>("AttributePrimary"),
         AttributeBaseAgility      = kvHero.GetRequiredInt16("AttributeBaseAgility", CultureInfo.InvariantCulture),
