@@ -73,7 +73,7 @@ public sealed class SerializableEmbed
             Description = discordEmbed.Description,
             Url = discordEmbed.Url,
             ImageUrl = discordEmbed.Image?.Url,
-            ThumbnailUrl = discordEmbed.Image?.Url,
+            ThumbnailUrl = discordEmbed.Thumbnail?.Url,
             ColorRaw = discordEmbed.Color?.RawValue,
             Timestamp = discordEmbed.Timestamp,
             Footer = discordEmbed.Footer.HasValue ? new SerializableFooter(discordEmbed.Footer.Value.Text, discordEmbed.Footer?.IconUrl) : null,

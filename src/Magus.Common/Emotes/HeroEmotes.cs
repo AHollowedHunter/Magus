@@ -13,7 +13,7 @@ public static class HeroEmotes
     {
         var props = typeof(HeroEmotes)
             .GetProperties()
-            .Where(x => x.CustomAttributes.Any(x => x.AttributeType == typeof(EntityEmoteAttribute)));
+            .Where(prop => prop.CustomAttributes.Any(attr => attr.AttributeType == typeof(EntityEmoteAttribute)));
         _idEmotes = props.ToDictionary(x => x.GetCustomAttribute<EntityEmoteAttribute>()!.EntityId, x => (Emote)x.GetValue(null, null)!);
         _nameEmotes = props.ToDictionary(x => x.GetCustomAttribute<EntityEmoteAttribute>()!.InternalName, x => (Emote)x.GetValue(null, null)!);
     }

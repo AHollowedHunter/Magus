@@ -771,7 +771,7 @@ public class EntityUpdater
         hero.InternalName = kvhero.Name;
         hero.Language     = language;
         hero.Id           = kvhero.ParseChildValue<int>("HeroID");
-        hero.Name         = Rx.NameGender.Replace(GetHeroValue(language, hero.InternalName, isName: true), string.Empty);
+        hero.Name         = GetHeroValue(language, hero.InternalName, isName: true);
         hero.NameAliases  = kvhero.ParseChildValueList<string>("NameAliases", spaceIsSeparator: false);
         hero.Bio          = GetHeroValue(language, hero.InternalName, "bio");
         hero.Hype         = GetHeroValue(language, hero.InternalName, "hype");
@@ -931,7 +931,10 @@ public class EntityUpdater
 
     private string GetHeroValue(string language, string internalName, string? postfix = null, bool isName = false)
     {
-        var key       = $"{internalName}{(postfix != null ? $"_{postfix}" : "")}{(isName ? ":n" : null)}".ToLower();
+        var key = isName
+            ? Rx.NameGender.Replace($"{internalName}{(postfix != null ? $"_{postfix}" : "")}:n".ToLower(), string.Empty)
+            : $"{internalName}{(postfix != null ? $"_{postfix}" : "")}".ToLower();
+
         var localeKey = (language, Key: key);
         if (_dotaValues.ContainsKey(localeKey))
         {
