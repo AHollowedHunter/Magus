@@ -23,13 +23,16 @@ public sealed class PatchNoteConverter : KVObjectConverter
     private static Note ConvertNote(KVObject obj) => new(
         obj["indent"]?.ToInt32(CultureInfo.InvariantCulture) ?? 0,
         TrimKey(obj["note"]?.ToString(CultureInfo.InvariantCulture)),
-        TrimKey(obj["info"]?.ToString(CultureInfo.InvariantCulture))
+        TrimKey(obj["info"]?.ToString(CultureInfo.InvariantCulture)),
+        obj["scepter"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false,
+        obj["shard"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false
     );
 
     private static NoteGroup ConvertNoteGroup(KVObject obj) => new(
         obj.Name,
         TrimKey(obj["title"]?.ToString(CultureInfo.InvariantCulture)),
-        ConvertList(GetOnlyNotes(obj), ConvertNote)
+        ConvertList(GetOnlyNotes(obj), ConvertNote),
+        obj["is_general"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false
     );
 
     /// <summary>

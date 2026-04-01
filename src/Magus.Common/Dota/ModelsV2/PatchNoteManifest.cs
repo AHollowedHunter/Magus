@@ -13,9 +13,9 @@ public sealed class PatchNoteManifest
     public required NoteGroup[] NeutralCreepNotes { get; init; }
 }
 
-public record Note(int Indent, string? NoteKey, string? InfoKey);
+public record Note(int Indent, string? NoteKey, string? InfoKey, bool IsScepter, bool IsShard);
 
-public record NoteGroup(string InternalName, string? TitleKey, Note[] Notes);
+public record NoteGroup(string InternalName, string? TitleKey, Note[] Notes, bool IsGeneral);
 
 public record HeroNote(
     string InternalName,
