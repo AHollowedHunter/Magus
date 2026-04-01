@@ -2,5 +2,9 @@
 
 public static partial class KVObjectExtensions
 {
-    
+    extension(KVObject kvObject)
+    {
+        public (string Key, string Value) KeyValueTupleConverter()
+            => (kvObject.Name, kvObject.Value.ToString(CultureInfo.InvariantCulture));
+    }
 }

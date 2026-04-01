@@ -397,9 +397,6 @@ public class EntityUpdater
     {
         var abilityValues = new List<AbilityValue>();
 
-        // has to catch non-values, such as text refs...
-        //var nonValueName = new Regex(@"(?i)special_bonus_\w+|var_type|ad_linked_abilities|LinkedSpecialBonus|RequiresScepter|RequiresShard|\w+[^_]Tooltip|RequiresFacet"); 
-
         var kvAbilityValues = kvAbility.Children.FirstOrDefault(x => x.Name == "AbilityValues" || x.Name == "AbilitySpecial"); // AbilitySpecial appears removed - aug '24
         if (kvAbilityValues != null)
         {

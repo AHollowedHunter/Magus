@@ -6,8 +6,6 @@ public sealed record HeroesAbilityValue : BasicValue
 
     public bool Innate { get; set; }
 
-    public string? RequiresFacet { get; set; }
-
     public bool RequiresScepter { get; set; }
 
     public bool RequiresShard { get; set; }

@@ -31,8 +31,6 @@ public class Hero
 
     public int AbilityTalentStart { get; init; }
 
-    public required Facet[] Facets { get; init; }
-
     // Attributes
     public AttributePrimary AttributePrimary { get; init; }
 

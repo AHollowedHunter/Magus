@@ -19,10 +19,10 @@ internal sealed class GameFileProvider : IDisposable
         _pak01 = ReadPackage(Pak01.FilePath);
     }
 
-    public Task<KVDocument> GetPak01KVFileAsync(string path, KVSerializerOptions? options = default)
+    public Task<KVDocument> GetPak01KVFileAsync(string path, KVSerializerOptions? options = null)
         => Task.Run(() => GetPak01KVFile(path, options));
 
-    public KVDocument GetPak01KVFile(string path, KVSerializerOptions? options = default)
+    public KVDocument GetPak01KVFile(string path, KVSerializerOptions? options = null)
     {
         options ??= KVSerializerOptions.DefaultOptions;
 
@@ -39,8 +39,8 @@ internal sealed class GameFileProvider : IDisposable
             using var entryResource = new Resource();
             using var entryStream   = new MemoryStream(entryBytes);
             entryResource.Read(entryStream);
-            using var contentFile = FileExtract.Extract(entryResource, null);
-            entryData = contentFile.Data;
+            using var contentFile = FileExtract.Extract(entryResource, new NullFileLoader());
+            entryData = contentFile.Data ?? throw new NullReferenceException("Content file is null.");
         }
 
         using var dataStream = new MemoryStream(entryData);

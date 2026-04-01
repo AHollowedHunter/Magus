@@ -139,7 +139,6 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
             AffectedByAOEIncrease       = kvObject["affected_by_aoe_increase"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false,
             SpecialBonuses              = specialBonus,
             Innate                      = kvObject["Innate"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false,
-            RequiresFacet               = kvObject["RequiresFacet"]?.ToString(CultureInfo.InvariantCulture),
             RequiresScepter             = kvObject["RequiresScepter"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false,
             RequiresShard               = kvObject["RequiresShard"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false,
             LinkedSpecialBonus          = kvObject["LinkedSpecialBonus"]?.ToString(CultureInfo.InvariantCulture),

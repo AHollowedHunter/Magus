@@ -21,7 +21,6 @@ public sealed class HeroConverter(KVObject baseHero) : KVObjectConverter
         Rolelevels         = kvHero["Rolelevels"].ParseArray<byte>(),
         Abilities          = ParseAbilities(kvHero),
         AbilityTalentStart = kvHero["AbilityTalentStart"]?.ToInt16(CultureInfo.InvariantCulture) ?? _baseHero.AbilityTalentStart,
-        Facets             = ConvertList(kvHero["Facets"] , FacetConverter),
         // Attributes
         AttributePrimary          = kvHero.GetRequiredEnum<AttributePrimary>("AttributePrimary"),
         AttributeBaseAgility      = kvHero.GetRequiredInt16("AttributeBaseAgility", CultureInfo.InvariantCulture),
@@ -77,29 +76,6 @@ public sealed class HeroConverter(KVObject baseHero) : KVObjectConverter
 
         return abilities;
     }
-
-    private static Facet FacetConverter(KVObject facet) => new()
-    {
-        InternalName            = facet.Name,
-        Icon                    = facet.GetRequiredString("Icon", CultureInfo.InvariantCulture),
-        Color                   = facet.GetRequiredString("Color", CultureInfo.InvariantCulture),
-        GradientId              = facet["GradientId"]?.ToInt16(CultureInfo.InvariantCulture) ?? 0,
-        Deprecated              = facet["Deprecated"].ToBoolFromString(),
-        Abilities               = ConvertList(facet["Abilities"], FacetAbilitiesConverter),
-        KeyValueOverrides       = ConvertList(facet["KeyValueOverrides"], KeyValueTupleConverter),
-        AbilityIconReplacements = ConvertList(facet["AbilityIconReplacements"], KeyValueTupleConverter),
-    };
-
-    private static FacetAbility FacetAbilitiesConverter(KVObject obj) => new()
-    {
-        AbilityName      = obj.GetRequiredString("AbilityName", CultureInfo.InvariantCulture),
-        AbilityIndex     = obj["AbilityIndex"]?.ToInt32(CultureInfo.InvariantCulture),
-        AutoLevelAbility = obj["AutoLevelAbility"].ToBoolFromString(),
-        ReplaceAbility   = obj["ReplaceAbility"]?.ToString(CultureInfo.InvariantCulture),
-    };
-
-    private static (string Key, string Value) KeyValueTupleConverter(KVObject o)
-        => (o.Name, o.Value.ToString(CultureInfo.InvariantCulture));
 
     private static BaseHeroValues ConvertBaseHero(KVObject baseHero) => new()
     {
