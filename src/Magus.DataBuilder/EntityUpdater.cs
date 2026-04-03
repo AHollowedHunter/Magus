@@ -121,8 +121,6 @@ public class EntityUpdater
         _ItemIds.Clear();
         foreach (var item in abilityIds.Children.Single(x => x.Name == "ItemAbilities").Children.Single(x => x.Name == "Locked"))
         {
-            _ItemIds.Add(item.Name, item.ParseValue<int>());
-
             if (_ItemIds.TryAdd(item.Name, item.ParseValue<int>()) is false)
                 _logger.LogWarning("Possible duplicate item_id for {name}, tried adding {newId} alongside {existingId}", item.Name, item.ParseValue<int>(), _ItemIds[item.Name]);
         }
