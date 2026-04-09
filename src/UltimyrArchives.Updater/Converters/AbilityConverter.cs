@@ -1,6 +1,7 @@
 ﻿using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.ModelsV2;
 using Magus.Common.Dota.ModelsV2.AbilityValue;
+using Serilog;
 using UltimyrArchives.Updater.Extensions;
 
 namespace UltimyrArchives.Updater.Converters;
@@ -14,13 +15,22 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
     public UnitAbility ConvertUnitAbility(KVObject kvAbility)
     {
         var abilityType = kvAbility["AbilityType"]?.ToEnum<AbilityType>() ?? _baseAbility.AbilityType;
-        var maxLevel    = kvAbility["MaxLevel"]?.ToByte(CultureInfo.InvariantCulture) ?? (byte) (abilityType is AbilityType.DOTA_ABILITY_TYPE_ULTIMATE ? 3 : 4);
+
+        byte maxLevel = 4;
+        if (kvAbility["MaxLevel"]?.ToByte(CultureInfo.InvariantCulture) is { } level)
+            maxLevel = level;
+        else if (kvAbility.Name == "meepo_divided_we_stand")
+            maxLevel = 4;
+        else if (abilityType is AbilityType.ABILITY_TYPE_ULTIMATE)
+            maxLevel = 3;
+
         return new UnitAbility
         {
             InternalName          = kvAbility.Name,
             Id                    = _unitAbilityIds[kvAbility.Name],
             AbilityValues         = ConvertList(kvAbility["AbilityValues"], HeroAbilityValueConverter),
             AbilitySharedCooldown = kvAbility["AbilitySharedCooldown"]?.ToString(CultureInfo.InvariantCulture),
+            MaxLevel              = maxLevel,
 
             // Enums
             AbilityType            = abilityType,
@@ -47,7 +57,6 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
             AbilityHealthCost         = kvAbility["AbilityHealthCost"]?.ParseArray<float>() ?? _baseAbility.AbilityHealthCost,
 
             // Unit Ability
-            MaxLevel           = maxLevel,
             IsBreakable        = kvAbility["IsBreakable"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false,
             IsGrantedByScepter = kvAbility["IsGrantedByScepter"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false,
             HasScepterUpgrade  = kvAbility["HasScepterUpgrade"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false,
@@ -62,6 +71,7 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
         Id                    = _itemAbilityIds[item.Name],
         AbilityValues         = ConvertList(item["AbilityValues"], ItemAbilityValueConverter),
         AbilitySharedCooldown = item["AbilitySharedCooldown"]?.ToString(CultureInfo.InvariantCulture),
+        MaxLevel              = item["MaxLevel"]?.ToByte(CultureInfo.InvariantCulture) ?? 1,
 
         // Enums
         AbilityType            = _baseAbility.AbilityType,
@@ -122,7 +132,7 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
             case <= 2 when values.All(x => BasicValue.Keys.Contains(x.Name)):
                 return new BasicValue(
                     kvObject.Name,
-                    kvObject.GetRequiredArray<float>("value"),
+                    kvObject.GetRequiredArray<float>("value", ignoreNonNumericChars: true),
                     kvObject["affected_by_aoe_increase"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false);
         }
 
@@ -130,6 +140,8 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
         if (values.Where(x => Rx.SpecialBonus.IsMatch(x.Name)) is { } specialBonuses)
             specialBonus =
             [
+                // TODO handle nested values
+                // e.g. duration_increase_per_kill.special_bonus_facet_windrunner_whirlwind and attacks_to_proc.special_bonus_facet_phantom_assassin_methodical
                 ..specialBonuses.Select(x => new SpecialBonus(x.Name, SpecialBonusValue.Parse(x.Value.ToString(CultureInfo.InvariantCulture).Split())))
             ];
         return new HeroesAbilityValue
@@ -150,8 +162,14 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
     private static IAbilityValue ItemAbilityValueConverter(KVObject kvObject)
     {
         return kvObject.Value is not IEnumerable<KVObject>
-            ? new BasicValue(kvObject.Name, kvObject.Value.ParseArray<float>())
-            : new BasicValue(kvObject.Name, kvObject.GetRequiredArray<float>("value"), kvObject.GetRequiredBoolean("affected_by_aoe_increase"));
+            ? new BasicValue(
+                kvObject.Name,
+                kvObject.Value.ParseArray<float>(),
+                kvObject["affected_by_aoe_increase"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false)
+            : new BasicValue(
+                kvObject.Name,
+                kvObject.GetRequiredArray<float>("value"),
+                kvObject["affected_by_aoe_increase"]?.ToBoolean(CultureInfo.InvariantCulture) ?? false);
     }
 
     private static Item.ItemRequirement[] ItemRequirementConverter(KVObject kvObject)
@@ -165,10 +183,23 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
         return requirements;
     }
 
-    private static Dictionary<string, int> ConvertAbilityIds(KVObject abilityIds, string groupKey)
-        => abilityIds[groupKey]["Locked"]
-            .CastEnumerable()
-            .ToDictionary(x => x.Name, x => x.Value.ToInt32(CultureInfo.InvariantCulture));
+    private static Dictionary<string, int> ConvertAbilityIds(KVObject kvAbilityIds, string groupKey)
+    {
+        Dictionary<string, int> abilityIds = [];
+        foreach (var ability in kvAbilityIds[groupKey]["Locked"].CastEnumerable())
+        {
+            var abilityId = ability.Value.ToInt32(CultureInfo.InvariantCulture);
+            if (abilityIds.TryAdd(ability.Name, ability.Value.ToInt32(CultureInfo.InvariantCulture)) is false)
+                // TODO improve logging/handling
+                Log.Warning(
+                    "Possible duplicate ability_id for {name}, tried adding {newId} alongside {existingId}",
+                    ability.Name,
+                    abilityId,
+                    abilityIds[ability.Name]);
+        }
+
+        return abilityIds;
+    }
 
     private static BaseAbilityValues ConvertBaseAbility(KVObject baseAbility) => new()
     {

@@ -65,7 +65,7 @@ public sealed class HeroConverter(KVObject baseHero) : KVObjectConverter
 
     private static Dictionary<int, string> ParseAbilities(KVObject kvHero)
     {
-        var abilityValues = kvHero.Where(x => Rx.AbilityKey.Match(x.Name).Success).ToArray();
+        var abilityValues = kvHero.Where(x => Rx.AbilityKey.IsMatch(x.Name)).ToArray();
         var abilities     = new Dictionary<int, string>(abilityValues.Length);
         foreach (var ability in abilityValues)
         {

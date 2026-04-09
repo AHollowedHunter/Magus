@@ -48,8 +48,9 @@ public class Program
             .AddSingleton<MeilisearchService>()
             .AddSingleton<StorageService>()
             .AddSingleton<GameFileProviderFactory>()
-            .AddSingleton<PatchListProcessor>()
-            .AddSingleton<PatchNotesProcessor>()
+            .AddTransient<EntityProcessor>()
+            .AddTransient<PatchListProcessor>()
+            .AddTransient<PatchNotesProcessor>()
             .AddSingleton<Updater>();
     }
 }

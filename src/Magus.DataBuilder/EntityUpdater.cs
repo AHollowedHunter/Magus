@@ -114,7 +114,7 @@ public class EntityUpdater
         _abilityIds.Clear();
         foreach (var ability in abilityIds.Children.Single(x => x.Name == "UnitAbilities").Children.Single(x => x.Name == "Locked"))
         {
-            if (_abilityIds.TryAdd(ability.Name, ability.ParseValue<int>()) is false)
+            if (_abilityIds.TryAdd(ability.Name, ability.Value.ParseValue<int>()) is false)
                 _logger.LogWarning("Possible duplicate ability_id for {name}, tried adding {newId} alongside {existingId}", ability.Name, ability.ParseValue<int>(), _abilityIds[ability.Name]);
         }
 
@@ -173,6 +173,7 @@ public class EntityUpdater
 
         _baseHero = CreateHero("", heroes.Children.First(x => x.Name == "npc_dota_hero_base"));
 
+        // TODO check for 'Enabled' property instead in v2
         foreach (var hero in heroes.Children.Where(x => x.Name != "Version" && x.Name != "npc_dota_hero_base" && x.Name != "npc_dota_hero_target_dummy"))
         {
             _logger.LogDebug("Processing hero {0}", hero.Name);

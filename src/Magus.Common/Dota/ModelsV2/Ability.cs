@@ -30,6 +30,8 @@ public abstract class Ability
     public SpellDispellableType SpellDispellableType { get; set; }
 
     public string? AbilitySharedCooldown { get; set; }
+    
+    public byte MaxLevel { get; set; }
 
     // Stats
     public required float[] AbilityCastRange { get; set; }

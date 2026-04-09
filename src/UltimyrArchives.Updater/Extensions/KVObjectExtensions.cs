@@ -1,4 +1,6 @@
-﻿namespace UltimyrArchives.Updater.Extensions;
+﻿using Magus.Common.Extensions;
+
+namespace UltimyrArchives.Updater.Extensions;
 
 public static partial class KVObjectExtensions
 {

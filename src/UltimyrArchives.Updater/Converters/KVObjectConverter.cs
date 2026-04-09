@@ -8,6 +8,9 @@ public abstract class KVObjectConverter
     [Pure]
     protected static T[] ConvertList<T>(KVValue? kvValue, Func<KVObject, T> converter)
     {
+        if (kvValue?.ValueType is KVValueType.String)
+            return []; // TODO sort this
+        
         if (kvValue?.CastEnumerable().ToArray() is not { Length: > 0 } kvObjects)
             return [];
 

@@ -8,13 +8,15 @@ internal sealed class Updater
 {
     private readonly ILogger<Updater> _logger;
     private readonly StorageService _storageService;
+    private readonly EntityProcessor _entityProcessor;
     private readonly PatchListProcessor _patchListProcessor;
     private readonly PatchNotesProcessor _patchNotesProcessor;
 
-    public Updater(ILogger<Updater> logger, StorageService storageService, PatchListProcessor patchListProcessor, PatchNotesProcessor patchNotesProcessor)
+    public Updater(ILogger<Updater> logger, StorageService storageService, EntityProcessor entityProcessor, PatchListProcessor patchListProcessor, PatchNotesProcessor patchNotesProcessor)
     {
         _logger              = logger;
         _storageService      = storageService;
+        _entityProcessor     = entityProcessor;
         _patchListProcessor  = patchListProcessor;
         _patchNotesProcessor = patchNotesProcessor;
     }
@@ -31,6 +33,8 @@ internal sealed class Updater
 
 
         // TODO - process entities and patchnotes
+        var entities = await _entityProcessor.GetProcessedAsync();
+        
         // TODO get Entity and EntityInfo before PatchNotes.
 
         var patchNotes = await _patchNotesProcessor.GetProcessedAsync([ /* TODO */]);

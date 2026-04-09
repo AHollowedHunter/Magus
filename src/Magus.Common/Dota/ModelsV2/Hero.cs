@@ -102,13 +102,14 @@ public class Hero
     public string GetAttackType()
         => AttackCapabilities.ToString(); // TODO localise/remove
 
+    private const double UniversalAttributeDamageMultiplier = 0.7;
     public double GetAttackDamageMin()
         => AttributePrimary switch
         {
             AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AttackDamageMin + AttributeBaseAgility,
             AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => AttackDamageMin + AttributeBaseIntelligence,
             AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => AttackDamageMin + AttributeBaseStrength,
-            AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMin + (AttributeBaseTotal * 0.7),
+            AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMin + (AttributeBaseTotal * UniversalAttributeDamageMultiplier),
 
             _ => throw new ArgumentOutOfRangeException(nameof(AttributePrimary), AttributePrimary, null)
         };
@@ -119,7 +120,7 @@ public class Hero
             AttributePrimary.DOTA_ATTRIBUTE_AGILITY   => AttackDamageMax + AttributeBaseAgility,
             AttributePrimary.DOTA_ATTRIBUTE_INTELLECT => AttackDamageMax + AttributeBaseIntelligence,
             AttributePrimary.DOTA_ATTRIBUTE_STRENGTH  => AttackDamageMax + AttributeBaseStrength,
-            AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMax + (AttributeBaseTotal * 0.7),
+            AttributePrimary.DOTA_ATTRIBUTE_ALL       => AttackDamageMax + (AttributeBaseTotal * UniversalAttributeDamageMultiplier),
 
             _ => throw new ArgumentOutOfRangeException(nameof(AttributePrimary), AttributePrimary, null)
         };

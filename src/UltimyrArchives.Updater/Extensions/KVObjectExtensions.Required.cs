@@ -13,8 +13,9 @@ public static partial class KVObjectExtensions
         => kvObject.GetRequiredValue(key).ToEnum<T>();
 
     [Pure]
-    public static T[] GetRequiredArray<T>(this KVObject kvObject, string key) where T : IConvertible
-        => kvObject.GetRequiredValue(key).ParseArray<T>();
+    public static T[] GetRequiredArray<T>(this KVObject kvObject, string key, bool spaceIsSeparator = true, bool ignoreNonNumericChars = false)
+        where T : IConvertible
+        => kvObject.GetRequiredValue(key).ParseArray<T>(spaceIsSeparator, ignoreNonNumericChars);
 
     #region IConvertible
 

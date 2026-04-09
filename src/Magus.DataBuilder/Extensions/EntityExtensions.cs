@@ -82,7 +82,7 @@ public static class EntityExtensions
         foreach (var ability in hero.Abilities)
         {
             var name = ability.Name;
-            if (ability.AbilityType == AbilityType.DOTA_ABILITY_TYPE_ULTIMATE)
+            if (ability.AbilityType == AbilityType.ABILITY_TYPE_ULTIMATE)
                 name = Discord.Format.Bold(name);
 
             if (ability.AbilityIsGrantedByScepter)
