@@ -28,7 +28,7 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
         _buildTasks.Add(
             Parallel.ForEachAsync(
                 LanguageMap.Languages,
-                (language, _) => AddTokensAsync(language, Pak01.Localisation.GetAbilities(language), valueConverter)));
+                (language, _) => AddTokensAsync(language, Pak01.Localization.GetAbilities(language), valueConverter)));
 
         return this;
     }
@@ -42,7 +42,7 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
         _buildTasks.Add(
             Parallel.ForEachAsync(
                 LanguageMap.Languages,
-                (language, _) => AddTokensAsync(language, Pak01.Localisation.GetDota(language), valueConverter)));
+                (language, _) => AddTokensAsync(language, Pak01.Localization.GetDota(language), valueConverter)));
 
         return this;
     }
@@ -56,7 +56,7 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
         _buildTasks.Add(
             Parallel.ForEachAsync(
                 LanguageMap.Languages,
-                (language, _) => AddTokensAsync(language, Pak01.Localisation.GetHeroLore(language), valueConverter)));
+                (language, _) => AddTokensAsync(language, Pak01.Localization.GetHeroLore(language), valueConverter)));
 
         return this;
     }
@@ -70,7 +70,7 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
         _buildTasks.Add(
             Parallel.ForEachAsync(
                 LanguageMap.Languages,
-                (language, _) => AddChildrenAsync(language, Pak01.Localisation.GetPatchNotes(language), valueConverter)));
+                (language, _) => AddChildrenAsync(language, Pak01.Localization.GetPatchNotes(language), valueConverter)));
 
         return this;
     }

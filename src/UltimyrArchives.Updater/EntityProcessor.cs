@@ -1,43 +1,40 @@
 ﻿using Magus.Data.Models.Dota;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using UltimyrArchives.Updater.Converters;
-using UltimyrArchives.Updater.DotaFilePaths;
 using UltimyrArchives.Updater.Utils;
 
 namespace UltimyrArchives.Updater;
 
-internal sealed class PatchNotesProcessor(ILogger<PatchNotesProcessor> logger, GameFileProviderFactory gameFileProviderFactory)
+internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileProviderFactory gameFileProviderFactory)
 {
-    public async Task<IReadOnlyList<PatchNote>> GetProcessedAsync(Entity[] entities)
+    public async Task<IReadOnlyList<Entity>> GetProcessedAsync()
     {
-        logger.LogInformation("Processing Patch Notes.");
+        logger.LogInformation("Processing Entities.");
         var stopwatch = Stopwatch.StartNew();
 
-        var patchNotes = await GetPatchNotesAsync(entities);
+        var entities = await GetEntitiesAsync();
 
         stopwatch.Stop();
-        logger.LogInformation("Finished Processing Patch Notes, took {timeTaken}.", stopwatch.Elapsed);
+        logger.LogInformation("Finished Processing Entities, took {timeTaken}.", stopwatch.Elapsed);
 
-        return patchNotes;
+        return entities;
     }
 
-    private async Task<PatchNote[]> GetPatchNotesAsync(Entity[] entities)
+    private async Task<Entity[]> GetEntitiesAsync()
     {
         LocalisedValues localisedValues;
-        KVDocument      patchManifest;
+        
         using (var gameFileProvider = gameFileProviderFactory.Create())
         {
             localisedValues = await new LocalisedValuesBuilder(gameFileProvider)
-                .WithPatchNotes(StringUtils.CleanPatchNote)
+                .WithAbilities(StringUtils.CleanSimple) // TODO should 'clean' here or later when formatting values? 
+                .WithDota(StringUtils.CleanSimple)
+                .WithHeroLoreAsync(StringUtils.CleanSimple)
                 .BuildAsync()
                 .ConfigureAwait(false);
-            patchManifest = await gameFileProvider.GetPak01KVFileAsync(Pak01.PatchNotes).ConfigureAwait(false);
+            
         }
-
-        var patchNoteConverter = new PatchNoteConverter();
-        var manifests          = patchManifest.Select(patchNoteConverter.Convert).ToArray();
-
+        
         // TODO process
 
         return [];

@@ -15,16 +15,16 @@ internal static class Pak01
 
     internal static string GetHeroAbilities(string internalName) => $"scripts/npc/heroes/{internalName}.txt";
 
-    internal static class Localisation
+    internal static class Localization
     {
-        private const string LocalisationPatchNotesFormat = "resource/localization/patchnotes/patchnotes_{0}.txt";
-        private const string LocalisationAbilitiesFormat = "resource/localization/abilities_{0}.txt";
-        private const string LocalisationDotaFormat = "resource/localization/dota_{0}.txt";
-        private const string LocalisationHeroLoreFormat = "resource/localization/hero_lore_{0}.txt";
+        private const string LocalizationPatchNotesFormat = "resource/localization/patchnotes/patchnotes_{0}.txt";
+        private const string LocalizationAbilitiesFormat = "resource/localization/abilities_{0}.txt";
+        private const string LocalizationDotaFormat = "resource/localization/dota_{0}.txt";
+        private const string LocalizationHeroLoreFormat = "resource/localization/hero_lore_{0}.txt";
 
-        public static string GetPatchNotes(string language) => string.Format(LocalisationPatchNotesFormat, language);
-        public static string GetAbilities(string language) => string.Format(LocalisationAbilitiesFormat, language);
-        public static string GetDota(string language) => string.Format(LocalisationDotaFormat, language);
-        public static string GetHeroLore(string language) => string.Format(LocalisationHeroLoreFormat, language);
+        public static string GetPatchNotes(string language) => string.Format(LocalizationPatchNotesFormat, language);
+        public static string GetAbilities(string language) => string.Format(LocalizationAbilitiesFormat, language);
+        public static string GetDota(string language) => string.Format(LocalizationDotaFormat, language);
+        public static string GetHeroLore(string language) => string.Format(LocalizationHeroLoreFormat, language);
     }
 }
