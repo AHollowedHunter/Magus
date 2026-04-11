@@ -24,9 +24,9 @@ internal sealed class PatchListProcessor(ILogger<PatchListProcessor> logger, Gam
 
         var patchManifest = gameFileProvider.GetPak01KVFile(Pak01.PatchNotes);
 
-        return Task.FromResult<List<Patch>>([..patchManifest.Children.Select(CreatePatchInfo)]);
+        return Task.FromResult<List<Patch>>([..patchManifest.Root.Select(CreatePatchInfo)]);
     }
 
-    private static Patch CreatePatchInfo(KVObject kvPatch)
-        => new(PatchUtils.GetPatchNumber(kvPatch), PatchUtils.GetPatchTimestamp(kvPatch));
+    private static Patch CreatePatchInfo(KVOPair pair)
+        => new(DotaUtils.GetPatchNumber(pair.Value), DotaUtils.GetPatchTimestamp(pair.Value));
 }

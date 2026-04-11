@@ -1,33 +1,21 @@
 ﻿using System.Diagnostics.Contracts;
-using UltimyrArchives.Updater.Extensions;
 
 namespace UltimyrArchives.Updater.Converters;
 
 public abstract class KVObjectConverter
 {
     [Pure]
-    protected static T[] ConvertList<T>(KVValue? kvValue, Func<KVObject, T> converter)
+    protected static T[] ConvertList<T>(KVObject? kvObject, Func<KVOPair, T> converter)
     {
-        if (kvValue?.ValueType is KVValueType.String)
+        if (kvObject is null or { Count: 0 })
+            return [];
+        
+        if (kvObject.ValueType is KVValueType.String)
             return []; // TODO sort this
         
-        if (kvValue?.CastEnumerable().ToArray() is not { Length: > 0 } kvObjects)
-            return [];
-
-        var values = new T[kvObjects.Length];
+        var values = new T[kvObject.Count];
         var index  = 0;
-        foreach (var value in kvObjects)
-            values[index++] = converter(value);
-
-        return values;
-    }
-
-    [Pure]
-    protected static T[] ConvertList<T>(KVObject[] kvObjects, Func<KVObject, T> converter)
-    {
-        var values = new T[kvObjects.Length];
-        var index  = 0;
-        foreach (var value in kvObjects)
+        foreach (var value in kvObject)
             values[index++] = converter(value);
 
         return values;

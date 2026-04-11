@@ -36,7 +36,7 @@ internal sealed class PatchNotesProcessor(ILogger<PatchNotesProcessor> logger, G
         }
 
         var patchNoteConverter = new PatchNoteConverter();
-        var manifests          = patchManifest.Select(patchNoteConverter.Convert).ToArray();
+        var manifests          = patchManifest.Root.Select(x => patchNoteConverter.Convert(x.Value)).ToArray();
 
         // TODO process
 

@@ -16,7 +16,7 @@ public readonly struct SpecialBonusValue(float value, bool isEquals = false, boo
     {
         var results = new SpecialBonusValue[values.Length];
         for (int i = 0; i < values.Length; i++)
-            results[i] = SpecialBonusValue.Parse(values[i]);
+            results[i] = Parse(values[i]);
         return results;
     }
 

@@ -26,9 +26,9 @@
         <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-        <PackageReference Include="ValveKeyValue" Version="0.31.0.460" />
+        <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
         <PackageReference Include="ValvePak" Version="4.0.0.142" />
-        <PackageReference Include="ValveResourceFormat" Version="18.0.5805" />
+        <PackageReference Include="ValveResourceFormat" Version="19.1.6199" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,6 +1,7 @@
 ﻿using Magus.Common.Dota;
 using System.Collections.Concurrent;
 using UltimyrArchives.Updater.DotaFilePaths;
+using UltimyrArchives.Updater.Extensions;
 
 namespace UltimyrArchives.Updater.Utils;
 
@@ -90,18 +91,18 @@ internal sealed class LocalisedValuesBuilder(GameFileProvider gameFileProvider)
     private async ValueTask AddTokensAsync(string language, string path, Func<string, string>? valueConverter = null)
     {
         var values = await gameFileProvider.GetPak01KVFileAsync(path, new KVSerializerOptions() { HasEscapeSequences = true });
-        AddValues(language, values.Children.Single(x => x.Name.Equals("Tokens", StringComparison.InvariantCultureIgnoreCase)), valueConverter);
+        AddValues(language, values.GetSingleValue("Tokens"), valueConverter);
     }
 
-    private void AddValues(string language, KVObject valuesObj, Func<string, string>? valueConverter = null)
+    private void AddValues(string language, KVObject tokens, Func<string, string>? valueConverter = null)
     {
-        foreach (var valueObj in valuesObj)
+        foreach (var tokenPair in tokens)
         {
-            var value = valueObj.Value.ToString(LanguageMap.GetCulture(language));
+            var value = tokenPair.Value.ToString(LanguageMap.GetCulture(language));
             if (valueConverter != null)
                 value = valueConverter(value);
-            if (!_values.TryAdd((language, valueObj.Name), value))
-                throw new InvalidOperationException($"Failed to add value for ('{language}', '{valueObj.Name}') as it already exists.");
+            if (!_values.TryAdd((language, tokenPair.Key), value))
+                throw new InvalidOperationException($"Failed to add value for ('{language}', '{tokenPair.Key}') as it already exists.");
         }
     }
 }

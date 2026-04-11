@@ -13,7 +13,12 @@ internal static partial class Rx
     [GeneratedRegex(@"([\w]+_empty\d*)|([\w]+_hidden\d*)")]
     public static partial Regex AbilityHiddenOrEmpty { get; }
 
-    [GeneratedRegex(@"special_bonus_\w+")]
+    /// <summary>
+    /// We specifically exclude anything with 'facet' due to lingering values
+    /// that are just not worth dealing with (was only a handful of facets
+    /// before they were removed creating an edge case).
+    /// </summary>
+    [GeneratedRegex(@"special_bonus_(?!facet)\w+")]
     public static partial Regex SpecialBonus { get; }
 
     [GeneratedRegex(@"<[/]?\s*b\s*/?>", RegexOptions.IgnoreCase)]
