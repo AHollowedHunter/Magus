@@ -1,11 +1,13 @@
 ﻿using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.ModelsV2.AbilityValue;
+using System.Diagnostics;
 
 namespace Magus.Common.Dota.ModelsV2;
 
 /// <summary>
 /// Common Properties shared across all abilities.
 /// </summary>
+[DebuggerDisplay("{InternalName} - {Id}")]
 public abstract class Ability
 {
     // Info

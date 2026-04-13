@@ -13,10 +13,9 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
     private readonly BaseAbilityValues _baseAbility = ConvertBaseAbility(baseAbility);
     private readonly Dictionary<string, int> _unitAbilityIds = ConvertAbilityIds(abilityIds, "UnitAbilities");
     private readonly Dictionary<string, int> _itemAbilityIds = ConvertAbilityIds(abilityIds, "ItemAbilities");
-
-    public UnitAbility ConvertUnitAbility(KVOPair kvoPair)
+    
+    public UnitAbility ConvertUnitAbility(string name, KVObject ability)
     {
-        (string name, KVObject ability) = kvoPair;
         var abilityType = ability.GetEnumOrDefault("AbilityType", _baseAbility.AbilityType);
 
         byte maxLevel = 4;
@@ -68,9 +67,8 @@ public sealed class AbilityConverter(KVObject baseAbility, KVObject abilityIds) 
         };
     }
 
-    public Item ConvertItem(KVOPair kvoPair)
+    public Item ConvertItem(string name, KVObject item)
     {
-        (string name, KVObject item) = kvoPair;
         // TEST
         // if (item.GetValueOrDefault("AbilityCastRange") is { } abilityCastRange)
         // {
