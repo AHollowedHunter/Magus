@@ -48,26 +48,23 @@ internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileP
         var baseAbility         = npcAbilities.GetSingleValue(InternalName.AbilityBase);
         var abilityConverter    = new AbilityConverter(baseAbility, abilityIds);
 
-        // NOTE these include generic talents, e.g. special_bonus_agility_15
-        List<UnitAbility> unitAbilities = ConvertEntity(
+        Dictionary<string, UnitAbility> unitAbilities = ConvertEntity(
             npcAbilities.Root.Where(x => x.Value != baseAbility && x.Key is not "Version"),
-            EntityType.Ability,
             abilityConverter.ConvertUnitAbility);
-        List<Item> items = ConvertEntity(itemFile.Root.Where(x => x.Key is not "Version"), EntityType.Item, abilityConverter.ConvertItem);
+        Dictionary<string, Item> items = ConvertEntity(itemFile.Root.Where(x => x.Key is not "Version"), abilityConverter.ConvertItem);
 
 
         var heroObjects    = await gameFileProvider.GetPak01KVFileAsync(Pak01.NpcHeroes, new KVSerializerOptions { HasEscapeSequences = true });
         var baseHeroObject = heroObjects.GetSingleValue(InternalName.HeroBase);
         var heroConverter  = new HeroConverter(baseHeroObject);
-        List<Hero> heroes = ConvertEntity(
+        Dictionary<string, Hero> heroes = ConvertEntity(
             heroObjects.Root.Where(x => x.Value.GetBooleanOrDefault("Enabled", false, CultureInfo.InvariantCulture)),
-            EntityType.Hero,
             heroConverter.Convert);
-        List<UnitAbility> heroAbilities = [];
-        foreach (var hero in heroes)
+        foreach ((string heroName, _) in heroes)
         {
-            var heroAbilityFile = await gameFileProvider.GetPak01KVFileAsync(Pak01.GetHeroAbilities(hero.InternalName));
-            heroAbilities.AddRange(ConvertEntity(heroAbilityFile.Root.Where(x => x.Key is not "Version"), EntityType.Ability, abilityConverter.ConvertUnitAbility));
+            var heroAbilityFile = await gameFileProvider.GetPak01KVFileAsync(Pak01.GetHeroAbilities(heroName));
+            unitAbilities.AddRange(
+                ConvertEntity(heroAbilityFile.Root.Where(x => x.Key is not "Version"), abilityConverter.ConvertUnitAbility));
         }
         // END TEST
 
@@ -77,24 +74,25 @@ internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileP
         return [];
     }
 
-    private List<TEntity> ConvertEntity<TEntity>(IEnumerable<KVOPair> entities, EntityType entityType, Func<string, KVObject, TEntity> converter)
+    private Dictionary<string, TEntity> ConvertEntity<TEntity>(IEnumerable<KVOPair> entities, Func<string, KVObject, TEntity> converter)
     {
-        List<TEntity> converted = [];
+        Dictionary<string, TEntity> converted = [];
         foreach ((string name, KVObject entity) in entities)
         {
             if (entity.Count is 0)
             {
-                logger.EntityNoChildren(name, entityType);
+                logger.EntityNoChildren(name, typeof(TEntity).Name);
                 continue;
             }
 
             try
             {
-                converted.Add(converter(name, entity));
+                if (!converted.TryAdd(name, converter(name, entity)))
+                    logger.EntityDuplicate(name, typeof(TEntity).Name);
             }
             catch (Exception ex)
             {
-                logger.EntityParsingError(name, entityType, ex);
+                logger.EntityParsingError(name, typeof(TEntity).Name, ex);
             }
         }
 
