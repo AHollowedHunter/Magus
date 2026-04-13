@@ -11,15 +11,13 @@ namespace Magus.DataBuilder.Extensions;
 
 public static class PatchNoteExtensions
 {
-    private static readonly string _patchUrlBase = "https://www.dota2.com/patches/";
-
     public static PatchNote GetGeneralPatchNoteEmbeds(this PatchNotes patch, string locale)
     {
         var generalPatchEmbed = new SerializableEmbed()
         {
             Title        = $"Patch {patch.PatchName} - General changes",
             Description  = CreateFormattedDescription(patch.GenericNotes), // LIMIT IT
-            Url          = _patchUrlBase + patch.PatchName,
+            Url          = URLs.PatchSite + patch.PatchName,
             ColorRaw     = Color.DarkRed,
             Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
             ThumbnailUrl = URLs.DotaColourLogo,
@@ -73,7 +71,7 @@ public static class PatchNoteExtensions
             {
                 Title        = $"{heroInfo.Embed.Title} - changes {patch.PatchName}", // TODO use Entity instead for name?
                 Description  = CreateFormattedDescription(hero.GeneralNotes),
-                Url          = _patchUrlBase + patch.PatchName,
+                Url          = URLs.PatchSite + patch.PatchName,
                 ColorRaw     = Color.DarkOrange,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
                 ThumbnailUrl = URLs.GetHeroImage(hero.InternalName), // Store this in a hero object?
@@ -99,7 +97,7 @@ public static class PatchNoteExtensions
             {
                 Title        = $"{itemInfo.Embed.Title} - changes {patch.PatchName}",
                 Description  = CreateFormattedDescription(item.Notes),
-                Url          = _patchUrlBase + patch.PatchName,
+                Url          = URLs.PatchSite + patch.PatchName,
                 ColorRaw     = Color.DarkBlue,
                 Timestamp    = DateTimeOffset.FromUnixTimeSeconds((long)patch.Timestamp),
                 ThumbnailUrl = URLs.GetItemImage(item.InternalName),
