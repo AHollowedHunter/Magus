@@ -5,9 +5,9 @@ using UltimyrArchives.Updater.Utils;
 
 namespace UltimyrArchives.Updater.Converters;
 
-public sealed class PatchNoteConverter : KVObjectConverter
+public sealed class PatchNoteConverter : IKVObjectConverter<PatchNoteManifest>
 {
-    public PatchNoteManifest Convert(KVObject kvPatch) => new()
+    public PatchNoteManifest Convert(string name, KVObject kvPatch) => new()
     {
         PatchNumber       = DotaUtils.GetPatchNumber(kvPatch),
         Timestamp         = DotaUtils.GetPatchTimestamp(kvPatch),

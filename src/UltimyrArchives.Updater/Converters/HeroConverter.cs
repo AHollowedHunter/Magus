@@ -4,7 +4,7 @@ using UltimyrArchives.Updater.Extensions;
 
 namespace UltimyrArchives.Updater.Converters;
 
-public sealed class HeroConverter(KVObject baseHero) : KVObjectConverter
+public sealed class HeroConverter(KVObject baseHero) : IKVObjectConverter<Hero>
 {
     private readonly BaseHeroValues _baseHero = ConvertBaseHero(baseHero);
 

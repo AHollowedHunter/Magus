@@ -1,5 +1,4 @@
 ﻿using Magus.Common.Dota.ModelsV2;
-using Magus.Data.Enums;
 using Magus.Data.Models.Dota;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -46,12 +45,13 @@ internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileP
         var npcAbilities        = await gameFileProvider.GetPak01KVFileAsync(Pak01.NpcAbilities, kvSerializerOptions);
         var itemFile            = await gameFileProvider.GetPak01KVFileAsync(Pak01.Items, kvSerializerOptions);
         var baseAbility         = npcAbilities.GetSingleValue(InternalName.AbilityBase);
-        var abilityConverter    = new AbilityConverter(baseAbility, abilityIds);
+        var abilityConverter    = new UnitAbilityConverter(baseAbility, abilityIds);
+        var itemConverter       = new ItemConverter(baseAbility, abilityIds);
 
         Dictionary<string, UnitAbility> unitAbilities = ConvertEntity(
             npcAbilities.Root.Where(x => x.Value != baseAbility && x.Key is not "Version"),
-            abilityConverter.ConvertUnitAbility);
-        Dictionary<string, Item> items = ConvertEntity(itemFile.Root.Where(x => x.Key is not "Version"), abilityConverter.ConvertItem);
+            abilityConverter);
+        Dictionary<string, Item> items = ConvertEntity(itemFile.Root.Where(x => x.Key is not "Version"), itemConverter);
 
 
         var heroObjects    = await gameFileProvider.GetPak01KVFileAsync(Pak01.NpcHeroes, new KVSerializerOptions { HasEscapeSequences = true });
@@ -59,12 +59,12 @@ internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileP
         var heroConverter  = new HeroConverter(baseHeroObject);
         Dictionary<string, Hero> heroes = ConvertEntity(
             heroObjects.Root.Where(x => x.Value.GetBooleanOrDefault("Enabled", false, CultureInfo.InvariantCulture)),
-            heroConverter.Convert);
+            heroConverter);
         foreach ((string heroName, _) in heroes)
         {
             var heroAbilityFile = await gameFileProvider.GetPak01KVFileAsync(Pak01.GetHeroAbilities(heroName));
             unitAbilities.AddRange(
-                ConvertEntity(heroAbilityFile.Root.Where(x => x.Key is not "Version"), abilityConverter.ConvertUnitAbility));
+                ConvertEntity(heroAbilityFile.Root.Where(x => x.Key is not "Version"), abilityConverter));
         }
         // END TEST
 
@@ -74,7 +74,7 @@ internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileP
         return [];
     }
 
-    private Dictionary<string, TEntity> ConvertEntity<TEntity>(IEnumerable<KVOPair> entities, Func<string, KVObject, TEntity> converter)
+    private Dictionary<string, TEntity> ConvertEntity<TEntity>(IEnumerable<KVOPair> entities, IKVObjectConverter<TEntity> converter)
     {
         Dictionary<string, TEntity> converted = [];
         foreach ((string name, KVObject entity) in entities)
@@ -87,7 +87,7 @@ internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileP
 
             try
             {
-                if (!converted.TryAdd(name, converter(name, entity)))
+                if (!converted.TryAdd(name, converter.Convert(name, entity)))
                     logger.EntityDuplicate(name, typeof(TEntity).Name);
             }
             catch (Exception ex)
