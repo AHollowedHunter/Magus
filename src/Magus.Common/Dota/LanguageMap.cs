@@ -50,7 +50,7 @@ public static class LanguageMap
     /// <summary>
     /// The default language should be english, as that is the primary language in Dota.
     /// </summary>
-    public static string DefaultLanguage => "english";
+    public const string DefaultLanguage = "english";
 
     public static CultureInfo DefaultCulture => Map[DefaultLanguage];
 

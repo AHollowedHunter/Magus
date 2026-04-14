@@ -24,11 +24,11 @@ internal sealed class PatchNotesProcessor(ILogger<PatchNotesProcessor> logger, G
 
     private async Task<PatchNote[]> GetPatchNotesAsync(Entity[] entities)
     {
-        LocalisedValues localisedValues;
-        KVDocument      patchManifest;
+        Localizations localizations;
+        KVDocument    patchManifest;
         using (var gameFileProvider = gameFileProviderFactory.Create())
         {
-            localisedValues = await new LocalisedValuesBuilder(gameFileProvider)
+            localizations = await new LocalizationsBuilder(gameFileProvider)
                 .WithPatchNotes(StringUtils.CleanPatchNote)
                 .BuildAsync()
                 .ConfigureAwait(false);

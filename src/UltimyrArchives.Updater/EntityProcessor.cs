@@ -27,13 +27,13 @@ internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileP
 
     private async Task<Entity[]> GetEntitiesAsync()
     {
-        LocalisedValues localisedValues;
+        Localizations localizations;
 
         using var gameFileProvider = gameFileProviderFactory.Create();
-        localisedValues = await new LocalisedValuesBuilder(gameFileProvider)
+        localizations = await new LocalizationsBuilder(gameFileProvider)
             .WithAbilities(StringUtils.CleanSimple) // TODO should 'clean' here or later when formatting values? 
             .WithDota(StringUtils.CleanSimple)
-            .WithHeroLoreAsync(StringUtils.CleanSimple)
+            .WithHeroLore(StringUtils.CleanSimple)
             .BuildAsync()
             .ConfigureAwait(false);
 

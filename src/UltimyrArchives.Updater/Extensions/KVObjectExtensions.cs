@@ -1,5 +1,4 @@
 ﻿using Magus.Common.Extensions;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Text.RegularExpressions;
 
