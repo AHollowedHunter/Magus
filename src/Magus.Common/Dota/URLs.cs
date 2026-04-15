@@ -12,6 +12,7 @@ public static class URLs
     public const string HeroCrop = DotaCdn + "images/dota_react/heroes/crops/";
     public const string Ability = DotaCdn + "images/dota_react/abilities/";
     public const string Item = DotaCdn + "images/dota_react/items/";
+    public const string Units = DotaCdn + "images/dota_react/units/";
 
     public const string StrengthIcon = DotaCdn + "images/dota_react/icons/hero_strength.png";
     public const string AgilityIcon = DotaCdn + "images/dota_react/icons/hero_agility.png";

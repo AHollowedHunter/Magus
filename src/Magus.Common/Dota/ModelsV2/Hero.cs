@@ -12,6 +12,10 @@ public class Hero
     public int Id { get; init; }
 
     public short HeroOrderId { get; init; }
+    
+    public bool IsEnabled { get; init; }
+    
+    public bool InCaptainsMode { get; init; }
 
     public required string[] NameAliases { get; init; } // Not localised
 

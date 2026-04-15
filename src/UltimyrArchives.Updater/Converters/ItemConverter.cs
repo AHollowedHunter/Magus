@@ -5,10 +5,8 @@ using UltimyrArchives.Updater.Extensions;
 
 namespace UltimyrArchives.Updater.Converters;
 
-public sealed class ItemConverter(KVObject baseAbility, KVObject abilityIds) : AbilityConverter<Item>(baseAbility)
+public sealed class ItemConverter(KVObject baseAbility, Dictionary<string, int> itemAbilityIds) : AbilityConverter<Item>(baseAbility)
 {
-    private readonly Dictionary<string, int> _itemAbilityIds = ConvertAbilityIds(abilityIds, "ItemAbilities");
-    
     public override Item Convert(string name, KVObject item)
     {
         // TEST
@@ -22,7 +20,7 @@ public sealed class ItemConverter(KVObject baseAbility, KVObject abilityIds) : A
         return new Item
         {
             InternalName          = name,
-            Id                    = _itemAbilityIds[name],
+            Id                    = itemAbilityIds[name],
             AbilityValues         = item.GetValueOrDefault("AbilityValues", []).Select(ItemAbilityValueConverter).ToArray(),
             AbilitySharedCooldown = item.GetStringOrDefault("AbilitySharedCooldown", formatProvider: CultureInfo.InvariantCulture),
             MaxLevel              = item.GetByteOrDefault("MaxLevel", 1, formatProvider: CultureInfo.InvariantCulture),

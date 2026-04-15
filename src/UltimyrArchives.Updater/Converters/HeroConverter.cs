@@ -1,6 +1,7 @@
 ﻿using Magus.Common.Dota.Enums;
 using Magus.Common.Dota.ModelsV2;
 using UltimyrArchives.Updater.Extensions;
+using ValveResourceFormat.Serialization.KeyValues;
 
 namespace UltimyrArchives.Updater.Converters;
 
@@ -13,6 +14,8 @@ public sealed class HeroConverter(KVObject baseHero) : IKVObjectConverter<Hero>
         InternalName       = name,
         Id                 = kvHero["HeroID"].ToInt32(CultureInfo.InvariantCulture),
         HeroOrderId        = kvHero["HeroOrderID"].ToInt16(CultureInfo.InvariantCulture),
+        IsEnabled          = kvHero.GetBooleanProperty("Enabled"),
+        InCaptainsMode     = kvHero.GetBooleanProperty("CMEnabled"),
         NameAliases        = kvHero.GetValueOrDefault("NameAliases").ParseArray<string>(),
         HeroGlowColor      = ParseColor(kvHero.GetValueOrDefault("HeroGlowColor")),
         SimilarHeroes      = kvHero.GetValueOrDefault("SimilarHeroes").ParseArray<int>(),

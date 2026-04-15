@@ -44,7 +44,7 @@ public static class LanguageMap
             ["ukrainian"]  = CultureInfo.GetCultureInfo("uk"),
             ["vietnamese"] = CultureInfo.GetCultureInfo("vi"),
         };
-        Languages = Map.Keys.ToArray();
+        Languages = Map.Keys.ToArray().AsReadOnly();
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public static class LanguageMap
 
     public static CultureInfo DefaultCulture => Map[DefaultLanguage];
 
-    public static string[] Languages { get; }
+    public static IReadOnlyCollection<string> Languages { get; }
 
     public static CultureInfo GetCulture(string language) => Map.GetValueOrDefault(language, DefaultCulture);
 }

@@ -12,6 +12,17 @@ namespace UltimyrArchives.Updater;
 
 internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileProviderFactory gameFileProviderFactory)
 {
+    private static readonly string[] HeroInvalidKeys = ["Version", "npc_dota_hero_target_dummy", "npc_dota_hero_base"];
+    private static readonly string[] AbilityInvalidKeys = ["Version", "dota_base_ability", "dota_empty_ability", "default_attack"];
+
+    private static readonly Func<KVOPair, bool> HeroFilter = pair
+        => !HeroInvalidKeys.Any(x => x.Equals(pair.Key, StringComparison.InvariantCultureIgnoreCase));
+
+    private static readonly Func<KVOPair, bool> AbilityFilter = pair
+        => !AbilityInvalidKeys.Any(x => x.Equals(pair.Key, StringComparison.InvariantCultureIgnoreCase));
+
+    private static readonly Func<KVOPair, bool> NotVersion = pair => pair.Key is not "Version";
+
     public async Task<IReadOnlyList<Entity>> GetProcessedAsync()
     {
         logger.LogInformation("Processing Entities.");
@@ -37,46 +48,35 @@ internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileP
             .BuildAsync()
             .ConfigureAwait(false);
 
-        // FROM TEST
-
-        // Test abilities  
         var kvSerializerOptions = new KVSerializerOptions { HasEscapeSequences = true };
-        var abilityIds          = await gameFileProvider.GetPak01KVFileAsync(Pak01.NpcAbilityIds, kvSerializerOptions);
-        var npcAbilities        = await gameFileProvider.GetPak01KVFileAsync(Pak01.NpcAbilities, kvSerializerOptions);
-        var itemFile            = await gameFileProvider.GetPak01KVFileAsync(Pak01.Items, kvSerializerOptions);
-        var baseAbility         = npcAbilities.GetSingleValue(InternalName.AbilityBase);
-        var abilityConverter    = new UnitAbilityConverter(baseAbility, abilityIds);
-        var itemConverter       = new ItemConverter(baseAbility, abilityIds);
+        var kvAbilityIds        = await gameFileProvider.GetPak01KVFileAsync(Pak01.NpcAbilityIds, kvSerializerOptions);
+        var kvAbilities         = await gameFileProvider.GetPak01KVFileAsync(Pak01.NpcAbilities, kvSerializerOptions);
+        var kvItems             = await gameFileProvider.GetPak01KVFileAsync(Pak01.Items, kvSerializerOptions);
+        var kvHeroes            = await gameFileProvider.GetPak01KVFileAsync(Pak01.NpcHeroes, kvSerializerOptions);
 
-        Dictionary<string, UnitAbility> unitAbilities = ConvertEntity(
-            npcAbilities.Root.Where(x => x.Value != baseAbility && x.Key is not "Version"),
-            abilityConverter);
-        Dictionary<string, Item> items = ConvertEntity(itemFile.Root.Where(x => x.Key is not "Version"), itemConverter);
+        var baseAbility      = kvAbilities.GetSingleValue(InternalName.AbilityBase);
+        var baseHero         = kvHeroes.GetSingleValue(InternalName.HeroBase);
+        var itemConverter    = new ItemConverter(baseAbility, ConvertAbilityIds(kvAbilityIds, "ItemAbilities"));
+        var abilityConverter = new UnitAbilityConverter(baseAbility, ConvertAbilityIds(kvAbilityIds, "UnitAbilities"));
+        var heroConverter    = new HeroConverter(baseHero);
 
-
-        var heroObjects    = await gameFileProvider.GetPak01KVFileAsync(Pak01.NpcHeroes, new KVSerializerOptions { HasEscapeSequences = true });
-        var baseHeroObject = heroObjects.GetSingleValue(InternalName.HeroBase);
-        var heroConverter  = new HeroConverter(baseHeroObject);
-        Dictionary<string, Hero> heroes = ConvertEntity(
-            heroObjects.Root.Where(x => x.Value.GetBooleanOrDefault("Enabled", false, CultureInfo.InvariantCulture)),
-            heroConverter);
-        foreach ((string heroName, _) in heroes)
+        var items         = ConvertEntities(kvItems.Root.Where(NotVersion), itemConverter);
+        var unitAbilities = ConvertEntities(kvAbilities.Root.Where(AbilityFilter), abilityConverter);
+        var heroes        = ConvertEntities(kvHeroes.Root.Where(HeroFilter), heroConverter);
+        foreach (var heroName in heroes.Keys)
         {
             var heroAbilityFile = await gameFileProvider.GetPak01KVFileAsync(Pak01.GetHeroAbilities(heroName));
-            unitAbilities.AddRange(
-                ConvertEntity(heroAbilityFile.Root.Where(x => x.Key is not "Version"), abilityConverter));
+            unitAbilities.AddRange(ConvertEntities(heroAbilityFile.Root.Where(NotVersion), abilityConverter));
         }
-        // END TEST
 
-
-        // TODO process
+        // TODO processc
 
         return [];
     }
 
-    private Dictionary<string, TEntity> ConvertEntity<TEntity>(IEnumerable<KVOPair> entities, IKVObjectConverter<TEntity> converter)
+    private Dictionary<string, TEntity> ConvertEntities<TEntity>(IEnumerable<KVOPair> entities, IKVObjectConverter<TEntity> converter)
     {
-        Dictionary<string, TEntity> converted = [];
+        Dictionary<string, TEntity> converted = new(StringComparer.InvariantCultureIgnoreCase);
         foreach ((string name, KVObject entity) in entities)
         {
             if (entity.Count is 0)
@@ -97,5 +97,18 @@ internal sealed class EntityProcessor(ILogger<EntityProcessor> logger, GameFileP
         }
 
         return converted;
+    }
+
+    private Dictionary<string, int> ConvertAbilityIds(KVObject kvAbilityIds, string groupKey)
+    {
+        Dictionary<string, int> abilityIds = new(StringComparer.InvariantCultureIgnoreCase);
+        foreach ((string name, KVObject ability) in kvAbilityIds[groupKey]["Locked"])
+        {
+            var abilityId = ability.ToInt32(CultureInfo.InvariantCulture);
+            if (!abilityIds.TryAdd(name, abilityId))
+                logger.LogWarning("Possible duplicate ability_id for {name}, tried adding {newId} alongside {existingId}", name, abilityId, abilityIds[name]);
+        }
+
+        return abilityIds;
     }
 }

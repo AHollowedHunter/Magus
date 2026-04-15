@@ -10,24 +10,6 @@ public abstract class AbilityConverter<TEntity>(KVObject baseAbility) : IKVObjec
     
     public abstract TEntity Convert(string name, KVObject ability);
 
-    protected static Dictionary<string, int> ConvertAbilityIds(KVObject kvAbilityIds, string groupKey)
-    {
-        Dictionary<string, int> abilityIds = [];
-        foreach ((string name, KVObject ability) in kvAbilityIds[groupKey]["Locked"])
-        {
-            var abilityId = ability.ToInt32(CultureInfo.InvariantCulture);
-            if (abilityIds.TryAdd(name, ability.ToInt32(CultureInfo.InvariantCulture)) is false)
-                // TODO improve logging/handling
-                Log.Warning(
-                    "Possible duplicate ability_id for {name}, tried adding {newId} alongside {existingId}",
-                    name,
-                    abilityId,
-                    abilityIds[name]);
-        }
-
-        return abilityIds;
-    }
-
     private static BaseAbilityValues ConvertBaseAbility(KVObject baseAbility) => new()
     {
         AbilityType               = baseAbility["AbilityType"].ToEnum<AbilityType>(),

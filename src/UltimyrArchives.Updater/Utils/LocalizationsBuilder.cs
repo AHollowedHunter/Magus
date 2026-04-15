@@ -1,6 +1,5 @@
 ﻿using Magus.Common.Dota;
 using Serilog;
-using System.Diagnostics;
 using UltimyrArchives.Updater.DotaFilePaths;
 using ValueConverter = System.Func<string, string>;
 
@@ -88,19 +87,20 @@ internal sealed class LocalizationsBuilder
         return this;
     }
 
-    private async ValueTask AddValues(Dictionary<string, string> dictionary, string language, string path, Func<string, string>? valueConverter = null)
+    private async ValueTask AddValues(Dictionary<string, string> dictionary, string language, string path, ValueConverter? valueConverter = null)
     {
-        KVDocument doc = await _gameFileProvider.GetPak01KVFileAsync(path, new KVSerializerOptions() { HasEscapeSequences = true });
+        KVDocument doc = await _gameFileProvider.GetPak01KVFileAsync(path, new KVSerializerOptions { HasEscapeSequences = true });
         // Some files keep tokens directly under root, e.g. PatchNotes
-        KVObject tokens = doc.Root.GetValueOrDefault("Tokens") ?? doc;
+        KVObject tokens  = doc.Root.GetValueOrDefault("Tokens") ?? doc;
+        var      culture = LanguageMap.GetCulture(language);
         foreach (var tokenPair in tokens)
         {
-            var value = tokenPair.Value.ToString(LanguageMap.GetCulture(language));
+            var value = tokenPair.Value.ToString(culture);
             if (valueConverter != null)
                 value = valueConverter(value);
             if (!dictionary.TryAdd(tokenPair.Key, value))
                 Log.Warning("Failed to add value for '{Language}' '{TokenPairKey}' as it already exists.", language, tokenPair.Key);
-                // throw new InvalidOperationException($"Failed to add value for ('{language}', '{tokenPair.Key}') as it already exists.");
+            // throw new InvalidOperationException($"Failed to add value for ('{language}', '{tokenPair.Key}') as it already exists.");
         }
     }
 }

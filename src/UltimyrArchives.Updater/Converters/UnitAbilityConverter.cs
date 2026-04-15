@@ -7,10 +7,8 @@ using ValveResourceFormat.Serialization.KeyValues;
 
 namespace UltimyrArchives.Updater.Converters;
 
-public sealed class UnitAbilityConverter(KVObject baseAbility, KVObject abilityIds) : AbilityConverter<UnitAbility>(baseAbility)
+public sealed class UnitAbilityConverter(KVObject baseAbility, Dictionary<string, int> unitAbilityIds) : AbilityConverter<UnitAbility>(baseAbility)
 {
-    private readonly Dictionary<string, int> _unitAbilityIds = ConvertAbilityIds(abilityIds, "UnitAbilities");
-    
     public override UnitAbility Convert(string name, KVObject ability)
     {
         var abilityType = ability.GetEnumOrDefault("AbilityType", BaseAbility.AbilityType);
@@ -26,7 +24,7 @@ public sealed class UnitAbilityConverter(KVObject baseAbility, KVObject abilityI
         return new UnitAbility
         {
             InternalName          = name,
-            Id                    = _unitAbilityIds[name],
+            Id                    = unitAbilityIds[name],
             AbilityValues         = ability.GetValueOrDefault("AbilityValues", []).Select(UnitAbilityValueConverter).ToArray(),
             AbilitySharedCooldown = ability.GetStringOrDefault("AbilitySharedCooldown", formatProvider: CultureInfo.InvariantCulture),
             MaxLevel              = maxLevel,
@@ -63,6 +61,7 @@ public sealed class UnitAbilityConverter(KVObject baseAbility, KVObject abilityI
             HasShardUpgrade    = ability.GetBooleanOrDefault("HasShardUpgrade", formatProvider: CultureInfo.InvariantCulture),
         };
     }
+
     private static IAbilityValue UnitAbilityValueConverter(KVOPair kvoPair)
     {
         (string name, KVObject kvObject) = kvoPair;
@@ -97,5 +96,4 @@ public sealed class UnitAbilityConverter(KVObject baseAbility, KVObject abilityI
             LinkedSpecialBonusOperation = kvObject.GetStringOrDefault("LinkedSpecialBonusOperation", formatProvider: CultureInfo.InvariantCulture),
         };
     }
-
 }
