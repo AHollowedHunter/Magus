@@ -134,7 +134,13 @@ public class EntityUpdater
         var heroAbilityFiles = Directory.GetFiles(Dota2GameFiles.HeroesFolder);
         foreach (var file in heroAbilityFiles)
         {
-            mixedAbilities.AddRange(await _kvSerializer.GetKVObjectFromLocalUri(file, false));
+            // 7.41f >= hero abilities now under 'AbilityDefinitions' of hero object 
+            var heroObject         = await _kvSerializer.GetKVObjectFromLocalUri(file, false);
+            var abilityDefinitions = heroObject.Children.Single().Children.SingleOrDefault(c => c.Name == "AbilityDefinitions");
+            if (abilityDefinitions is not null)
+                mixedAbilities.AddRange(abilityDefinitions);
+            else
+                _logger.LogWarning("No 'AbilityDefinitions' found for {internalName}", heroObject.Name);
         }
         //
 
