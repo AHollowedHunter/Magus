@@ -140,7 +140,7 @@ public class EntityUpdater
             if (abilityDefinitions is not null)
                 mixedAbilities.AddRange(abilityDefinitions);
             else
-                _logger.LogWarning("No 'AbilityDefinitions' found for {internalName}", heroObject.Name);
+                _logger.LogWarning("No 'AbilityDefinitions' found in {fileName}", file);
         }
         //
 
