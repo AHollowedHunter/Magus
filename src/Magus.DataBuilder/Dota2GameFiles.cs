@@ -4,13 +4,16 @@ public static class Dota2GameFiles
 {
     public static string BasePath { get; set; }
 
-    public static string PatchNotes   => BasePath + "/patchnotes/patchnotes.vdpn";
-    public static string NpcAbilities => BasePath + "/scripts/npc/npc_abilities.txt";
-    public static string NpcHeroes    => BasePath + "/scripts/npc/npc_heroes.txt";
-    public static string Items        => BasePath + "/scripts/npc/items.txt";
-    public static string NeutralItems => BasePath + "/scripts/npc/neutral_items.txt";
-    public static string NpcUnits     => BasePath + "/scripts/npc/npc_units.txt";
-    public static string NpcAbilityIds     => BasePath + "/scripts/npc/npc_ability_ids.txt";
+    public static string NpcFolder => BasePath + "/scripts/npc";
+    public static string HeroesFolder => NpcFolder + "/heroes";
+
+    public static string PatchNotes    => BasePath + "/patchnotes/patchnotes.vdpn";
+    public static string NpcAbilities  => NpcFolder + "/npc_abilities.txt";
+    public static string NpcHeroes     => NpcFolder + "/npc_heroes.txt";
+    public static string Items         => NpcFolder + "/items.txt";
+    public static string NeutralItems  => NpcFolder + "/neutral_items.txt";
+    public static string NpcUnits      => NpcFolder + "/npc_units.txt";
+    public static string NpcAbilityIds => NpcFolder + "/npc_ability_ids.txt";
 
     public static class Localization
     {
@@ -20,8 +23,8 @@ public static class Dota2GameFiles
         private static string HeroLoreBase   => BasePath + "/resource/localization/hero_lore_{0}.txt";
 
         public static string GetPatchNotes(string language) => string.Format(PatchNotesBase, language);
-        public static string GetAbilities(string language)  => string.Format(AbilitiesBase, language);
-        public static string GetDota(string language)       => string.Format(DotaBase, language);
-        public static string GetHeroLore(string language)   => string.Format(HeroLoreBase, language);
+        public static string GetAbilities(string language) => string.Format(AbilitiesBase, language);
+        public static string GetDota(string language) => string.Format(DotaBase, language);
+        public static string GetHeroLore(string language) => string.Format(HeroLoreBase, language);
     }
 }

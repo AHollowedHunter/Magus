@@ -131,14 +131,16 @@ public class EntityUpdater
 
         // bodge this
         var mixedAbilities = (await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcAbilities, false)).Children.ToList();
-        var heroAbilityFiles = Directory.GetFiles(Dota2GameFiles.BasePath + "/scripts/npc/heroes");
+        var heroAbilityFiles = Directory.GetFiles(Dota2GameFiles.HeroesFolder);
         foreach (var file in heroAbilityFiles)
         {
             mixedAbilities.AddRange(await _kvSerializer.GetKVObjectFromLocalUri(file, false));
         }
         //
 
-        var heroes         = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcHeroes);
+        // 7.41f moved all hero definitions completely to separate files, uses #base to include
+        // see https://github.com/ValveResourceFormat/ValveKeyValue#includes
+        var heroes         = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NpcHeroes, directory: Dota2GameFiles.NpcFolder);
         var items          = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.Items);
         var neutralItems   = await _kvSerializer.GetKVObjectFromLocalUri(Dota2GameFiles.NeutralItems);
 
